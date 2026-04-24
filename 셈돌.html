@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>정수와 유리수: 셈돌 상쇄 & 부호 스위치 시뮬레이터</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            touch-action: pan-x pan-y; 
+        }
+        h2 { color: #333; margin-bottom: 10px; }
+        
+        /* 탭 디자인 */
+        .tabs { margin-bottom: 15px; }
+        .tab-btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #4da6ff;
+            background-color: white;
+            color: #4da6ff;
+            border-radius: 10px 10px 0 0;
+            margin: 0 5px;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background-color: #4da6ff;
+            color: white;
+            border-bottom: none;
+        }
+
+        .controls { 
+            margin: 0 auto 20px; 
+            padding: 20px; 
+            background: white; 
+            display: inline-block; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            border-top-left-radius: 0;
+        }
+        
+        input[type="number"] { 
+            width: 60px; 
+            text-align: center; 
+            font-size: 18px; 
+            margin: 0 10px; 
+            padding: 8px; 
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        button { 
+            padding: 10px 15px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            margin: 5px; 
+            font-weight: bold; 
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .btn-generate { background-color: #4da6ff; }
+        .btn-auto { background-color: #ff9933; }
+        .btn-switch { background-color: #e74c3c; animation: pulse 1.5s infinite; }
+        .btn-reset { background-color: #999; }
+        button:hover { filter: brightness(0.9); transform: translateY(-1px); }
+        button:active { transform: translateY(1px); box-shadow: none; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #board {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 3px dashed #87ceeb;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            touch-action: none; 
+        }
+
+        .stone {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            color: white;
+            font-size: 24px;
+            box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, background 0.3s ease, border 0.3s ease;
+        }
+        .stone:active { cursor: grabbing; }
+        
+        /* 1번째 수 셈돌 (실선) */
+        .positive { background: radial-gradient(circle at 30% 30%, #66b3ff, #1a8cff); border: 2px solid #0066cc; }
+        .negative { background: radial-gradient(circle at 30% 30%, #ff9966, #ff5c33); border: 2px solid #cc2900; }
+
+        /* 2번째 수 셈돌 (점선으로 시각적 분리) */
+        .group2 { border-style: dashed !important; border-width: 3px !important; }
+
+        /* 정답 입력부 디자인 */
+        #answerArea {
+            margin-top: 25px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        #eq-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            vertical-align: middle;
+        }
+
+        /* 양수 기호(+) 입력을 위해 text 타입으로 변경 */
+        #user-answer {
+            width: 80px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            border: 3px solid #4da6ff;
+            border-radius: 8px;
+            padding: 5px;
+            margin: 0 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .btn-check {
+            background-color: #2ecc71;
+            font-size: 20px;
+            padding: 10px 20px;
+            vertical-align: middle;
+        }
+
+        .instruction { color: #666; font-size: 15px; margin-bottom: 15px; font-weight: bold; }
+        .badge { display: inline-block; background: #e74c3c; color: white; font-size: 12px; padding: 2px 8px; border-radius: 10px; vertical-align: top; margin-left: 5px;}
+    </style>
+</head>
+<body>
+
+    <h2>🔍 방탈출 단서: 셈돌 상쇄 시뮬레이터</h2>
+    
+    <div class="tabs">
+        <button id="tab-add" class="tab-btn active" onclick="setMode('add')">➕ 덧셈 모드</button>
+        <button id="tab-sub" class="tab-btn" onclick="setMode('sub')">➖ 뺄셈 모드</button>
+    </div>
+
+    <div class="controls">
+        첫 번째 수: <input type="number" id="num1" value="4" min="-15" max="15">
+        두 번째 수: <input type="number" id="num2" value="-3" min="-15" max="15">
+        <br><br>
+        <button class="btn-generate" onclick="generateStones()">1. 셈돌 놓기</button>
+        
+        <button id="btn-switch" class="btn-switch" style="display: none;" onclick="flipSign()">2. 부호 스위치 (덧셈 변환)</button>
+        
+        <button id="btn-auto" class="btn-auto" onclick="autoCalculate()">2. 자동 상쇄(계산)</button>
+        <button class="btn-reset" onclick="resetBoard()">초기화</button>
+    </div>
+    
+    <div id="instruction-text" class="instruction">💡 부호가 다른 셈돌을 서로 부딪혀 0을 만들어 보세요!</div>
+
+    <div id="board"></div>
+    
+    <div id="answerArea">
+        <span id="eq-text">식: </span>
+        <input type="text" id="user-answer" placeholder="+2, -3">
+        <button class="btn-check" onclick="checkAnswer()">정답 확인</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('board');
+        let stones = [];
+        let isAutoCalculating = false;
+        let currentMode = 'add'; 
+        let isFlipped = false; 
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('tab-add').classList.toggle('active', mode === 'add');
+            document.getElementById('tab-sub').classList.toggle('active', mode === 'sub');
+            
+            if(mode === 'sub') {
+                document.getElementById('instruction-text').innerHTML = "💡 뺄셈은 부호 스위치를 눌러 덧셈으로 먼저 바꿔야 합니다! <span class='badge'>점선 테두리 = 2번째 수</span>";
+            } else {
+                document.getElementById('instruction-text').innerHTML = "💡 부호가 다른 셈돌을 서로 부딪혀 0을 만들어 보세요! <span class='badge'>점선 테두리 = 2번째 수</span>";
+            }
+            resetBoard();
+        }
+
+        function generateStones() {
+            board.innerHTML = '';
+            stones = [];
+            isAutoCalculating = false;
+            isFlipped = false;
+            document.getElementById('user-answer').value = '';
+
+            const n1 = parseInt(document.getElementById('num1').value) || 0;
+            const n2 = parseInt(document.getElementById('num2').value) || 0;
+
+            const boardWidth = board.clientWidth;
+            const boardHeight = board.clientHeight;
+
+            createStones(n1, 20, boardWidth / 2 - 60, boardHeight, 'left');
+            createStones(n2, boardWidth / 2 + 20, boardWidth - 60, boardHeight, 'right');
+
+            if(currentMode === 'sub') {
+                document.getElementById('btn-switch').style.display = 'inline-block';
+                document.getElementById('btn-auto').style.display = 'none';
+            } else {
+                document.getElementById('btn-switch').style.display = 'none';
+                document.getElementById('btn-auto').style.display = 'inline-block';
+            }
+
+            updateEquation();
+        }
+
+        function createStones(num, minX, maxX, boardHeight, side) {
+            const count = Math.abs(num);
+            const sign = num >= 0 ? '+' : '-';
+            const type = num >= 0 ? 'positive' : 'negative';
+
+            for (let i = 0; i < count; i++) {
+                const stone = document.createElement('div');
+                stone.className = `stone ${type}`;
+                
+                // 두 번째 수 셈돌(오른쪽)에 group2 클래스 추가하여 점선 테두리 적용
+                if (side === 'right') {
+                    stone.classList.add('group2');
+                }
+
+                stone.innerText = sign;
+                stone.dataset.sign = sign;
+                stone.dataset.active = "true";
+                stone.dataset.side = side; 
+
+                const x = Math.random() * (maxX - minX) + minX;
+                const y = Math.random() * (boardHeight - 80) + 20;
+                
+                stone.style.left = x + 'px';
+                stone.style.top = y + 'px';
+                
+                makeDraggable(stone);
+                board.appendChild(stone);
+                stones.push(stone);
+            }
+        }
+
+        function flipSign() {
+            if (currentMode !== 'sub' || isFlipped) return;
+            
+            let rightStones = stones.filter(s => s.dataset.side === 'right' && s.dataset.active === "true");
+            
+            rightStones.forEach(stone => {
+                stone.style.transform = 'rotateY(180deg) scale(1.2)';
+                
+                setTimeout(() => {
+                    if (stone.dataset.sign === '+') {
+                        stone.dataset.sign = '-';
+                        stone.className = 'stone negative group2';
+                        stone.innerText = '-';
+                    } else {
+                        stone.dataset.sign = '+';
+                        stone.className = 'stone positive group2';
+                        stone.innerText = '+';
+                    }
+                    stone.style.transform = 'rotateY(0deg) scale(1)';
+                }, 200); 
+            });
+
+            isFlipped = true;
+            document.getElementById('btn-switch').style.display = 'none';
+            document.getElementById('btn-auto').style.display = 'inline-block';
+            document.getElementById('instruction-text').innerHTML = "💡 덧셈으로 바뀌었습니다! 이제 다른 부호끼리 부딪혀 상쇄해보세요. <span class='badge'>점선 테두리 = 뒤집힌 2번째 수</span>";
+            
+            updateEquation();
+        }
+
+        function makeDraggable(stone) {
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            stone.addEventListener('pointerdown', (e) => {
+                if(isAutoCalculating || stone.dataset.active === "false") return;
+                
+                if(currentMode === 'sub' && !isFlipped) {
+                    alert("먼저 '부호 스위치'를 눌러 덧셈으로 변환해 주세요!");
+                    return;
+                }
+
+                isDragging = true;
+                const rect = stone.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                
+                stone.style.zIndex = 1000;
+                stone.style.transition = 'none'; 
+                stone.setPointerCapture(e.pointerId);
+            });
+
+            stone.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                
+                const boardRect = board.getBoundingClientRect();
+                let x = e.clientX - boardRect.left - offsetX;
+                let y = e.clientY - boardRect.top - offsetY;
+                
+                x = Math.max(0, Math.min(x, boardRect.width - 45));
+                y = Math.max(0, Math.min(y, boardRect.height - 45));
+
+                stone.style.left = x + 'px';
+                stone.style.top = y + 'px';
+                
+                checkCollision(stone);
+            });
+
+            stone.addEventListener('pointerup', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                stone.style.zIndex = 10;
+                stone.style.transition = 'transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, background 0.3s ease, border 0.3s ease'; 
+                stone.releasePointerCapture(e.pointerId);
+            });
+        }
+
+        function checkCollision(movedStone) {
+            if (movedStone.dataset.active === "false") return;
+            const rect1 = movedStone.getBoundingClientRect();
+            
+            for (let i = 0; i < stones.length; i++) {
+                let target = stones[i];
+                if (target === movedStone || target.dataset.active === "false") continue;
+                if (target.dataset.sign === movedStone.dataset.sign) continue; 
+                
+                const rect2 = target.getBoundingClientRect();
+                const overlap = !(rect1.right < rect2.left + 15 || 
+                                  rect1.left > rect2.right - 15 || 
+                                  rect1.bottom < rect2.top + 15 || 
+                                  rect1.top > rect2.bottom - 15);
+                
+                if (overlap) {
+                    cancelPair(movedStone, target);
+                    break; 
+                }
+            }
+        }
+
+        function cancelPair(s1, s2) {
+            s1.dataset.active = "false";
+            s2.dataset.active = "false";
+            
+            s1.style.transform = 'scale(1.5)';
+            s2.style.transform = 'scale(1.5)';
+            s1.style.opacity = '0';
+            s2.style.opacity = '0';
+            s1.innerText = '0';
+            s2.innerText = '0';
+            
+            setTimeout(() => {
+                if(s1.parentNode) s1.remove();
+                if(s2.parentNode) s2.remove();
+                stones = stones.filter(s => s.dataset.active === "true");
+            }, 300);
+        }
+
+        function autoCalculate() {
+            if(isAutoCalculating) return;
+            
+            if(currentMode === 'sub' && !isFlipped) {
+                alert("먼저 '부호 스위치'를 눌러 덧셈으로 변환해 주세요!");
+                return;
+            }
+
+            isAutoCalculating = true;
+
+            let posStones = stones.filter(s => s.dataset.sign === '+' && s.dataset.active === "true");
+            let negStones = stones.filter(s => s.dataset.sign === '-' && s.dataset.active === "true");
+
+            const pairsCount = Math.min(posStones.length, negStones.length);
+            if(pairsCount === 0) {
+                isAutoCalculating = false;
+                return;
+            }
+
+            const centerX = board.clientWidth / 2 - 22;
+            const centerY = board.clientHeight / 2 - 22;
+
+            for (let i = 0; i < pairsCount; i++) {
+                setTimeout(() => {
+                    let p = posStones[i];
+                    let n = negStones[i];
+                    
+                    p.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+                    n.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+                    p.style.left = centerX + 'px';
+                    p.style.top = centerY + 'px';
+                    n.style.left = centerX + 'px';
+                    n.style.top = centerY + 'px';
+                    
+                    setTimeout(() => { cancelPair(p, n); }, 400);
+                    
+                    if (i === pairsCount - 1) {
+                        setTimeout(() => { isAutoCalculating = false; }, 800);
+                    }
+                }, i * 600); 
+            }
+        }
+
+        function updateEquation() {
+            const n1 = parseInt(document.getElementById('num1').value) || 0;
+            const n2 = parseInt(document.getElementById('num2').value) || 0;
+            
+            const sign1 = n1 > 0 ? '+' + n1 : n1;
+            const sign2 = n2 > 0 ? '+' + n2 : n2;
+            
+            let eqString = "";
+            
+            if (currentMode === 'add') {
+                eqString = `식: (${sign1}) + (${sign2}) = `;
+            } else {
+                if (!isFlipped) {
+                    eqString = `식: (${sign1}) - (${sign2}) = `;
+                } else {
+                    const flippedN2 = -n2;
+                    const sign2Flipped = flippedN2 > 0 ? '+' + flippedN2 : flippedN2;
+                    eqString = `식: (${sign1}) + (${sign2Flipped}) = `;
+                }
+            }
+            
+            document.getElementById('eq-text').innerText = eqString;
+        }
+
+        // 정답 검사 로직 (+ 부호 강제 적용)
+        function checkAnswer() {
+            const n1 = parseInt(document.getElementById('num1').value) || 0;
+            const n2 = parseInt(document.getElementById('num2').value) || 0;
+            const userStr = document.getElementById('user-answer').value.trim();
+            
+            if (userStr === "") {
+                alert("정답 칸에 숫자를 입력해 주세요!");
+                return;
+            }
+
+            let correctAnswer = 0;
+            if (currentMode === 'add') {
+                correctAnswer = n1 + n2;
+            } else {
+                correctAnswer = n1 - n2;
+            }
+
+            // 올바른 문자열 형식 만들기 (양수면 무조건 +를 붙임)
+            let correctStr = correctAnswer > 0 ? "+" + correctAnswer : correctAnswer.toString();
+
+            if (userStr === correctStr || (correctAnswer === 0 && userStr === "0")) {
+                alert("🎉 완벽합니다! 정답입니다!");
+            } else if (userStr === correctAnswer.toString() && correctAnswer > 0) {
+                // 숫자는 맞췄으나 + 기호를 안 쓴 경우
+                alert("🎉 완벽합니다! 정답입니다!");
+            } else {
+                alert("🤔 아쉽네요. 남은 셈돌의 개수와 부호를 다시 한번 확인해 볼까요?");
+            }
+        }
+
+        function resetBoard() {
+            document.getElementById('num1').value = '4';
+            document.getElementById('num2').value = '-3';
+            board.innerHTML = '';
+            document.getElementById('user-answer').value = '';
+            stones = [];
+            isAutoCalculating = false;
+            isFlipped = false;
+            
+            document.getElementById('btn-switch').style.display = currentMode === 'sub' ? 'inline-block' : 'none';
+            document.getElementById('btn-auto').style.display = currentMode === 'sub' ? 'none' : 'inline-block';
+            
+            updateEquation();
+        }
+
+        window.onload = () => setMode('add');
+    </script>
+</body>
+</html>

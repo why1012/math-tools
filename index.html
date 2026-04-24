@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>중등 수학 통합 시뮬레이터</title>
+    <style>
+        :root { --sidebar-width: 260px; --secondary-color: #2c3e50; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        #wrapper { display: flex; width: 100vw; height: 100vh; }
+        
+        /* 사이드바 */
+        #sidebar { width: var(--sidebar-width); background: var(--secondary-color); color: white; transition: 0.3s; position: relative; flex-shrink: 0; }
+        #sidebar.collapsed { margin-left: -260px; }
+        
+        /* 접기 버튼 */
+        #toggle-btn { position: absolute; right: -40px; top: 10px; width: 40px; height: 40px; background: var(--secondary-color); color: white; border: none; cursor: pointer; border-radius: 0 5px 5px 0; }
+        
+        .menu-item { padding: 20px; cursor: pointer; font-weight: bold; }
+        .menu-item.active { background: #1a252f; color: #4da6ff; }
+        
+        /* 메인 영역 */
+        #main-content { flex-grow: 1; background: white; }
+        iframe { width: 100%; height: 100%; border: none; display: none; }
+        iframe.active { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <h2 style="text-align:center;">수학 탐구 도구함</h2>
+        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+        <div class="menu-item active" onclick="switchTool('semdol-frame', this)">🔘 셈돌 상쇄</div>
+        <div class="menu-item" onclick="switchTool('rail-frame', this)">🛤️ 레일바이크</div>
+    </nav>
+
+    <main id="main-content">
+        <iframe id="semdol-frame" class="active" src="셈돌.html"></iframe>
+        <iframe id="rail-frame" src="레일바이크.html"></iframe>
+    </main>
+</div>
+
+<script>
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function switchTool(id, el) {
+        document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
+    }
+</script>
+</body>
+</html>
