@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>곱셈의 법칙 양팔 저울 시뮬레이터</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; text-align: center; background-color: #f8f9fa; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; }
+        .subtitle { color: #7f8c8d; margin-bottom: 20px; }
+
+        /* 탭 디자인 */
+        .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        .tab-btn { padding: 10px 25px; font-size: 16px; font-weight: bold; cursor: pointer; border: 2px solid #3498db; background: white; color: #3498db; border-radius: 30px; transition: 0.3s; }
+        .tab-btn.active { background: #3498db; color: white; }
+
+        /* 컨트롤 패널 */
+        .controls { background: #eef2f5; padding: 20px; border-radius: 15px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 15px; font-size: 18px; font-weight: bold; }
+        input[type="number"] { width: 50px; font-size: 18px; text-align: center; border: 2px solid #bdc3c7; border-radius: 8px; margin: 0 5px; outline: none;}
+        input[type="number"]:focus { border-color: #3498db; }
+        
+        .action-btns button { padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 10px; margin: 0 5px; color: white; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-left { background: #e74c3c; }
+        .btn-right { background: #3498db; }
+        .btn-reset { background: #95a5a6; }
+        button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* 양팔 저울 CSS (시소 스타일) */
+        .scale-container { position: relative; height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; margin-top: 20px; padding-bottom: 40px;}
+        
+        .beam-wrapper { position: relative; width: 750px; height: 16px; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .beam { width: 100%; height: 100%; background: #2c3e50; border-radius: 8px; position: absolute; top: 0; left: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        
+        /* 위로 솟은 접시 (시소 형태) */
+        .pan-wrapper { position: absolute; bottom: 8px; display: flex; flex-direction: column; align-items: center; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: bottom center; }
+        .pan-wrapper.left { left: 20px; }
+        .pan-wrapper.right { right: 20px; }
+        
+        .pan-plate { width: 300px; min-height: 20px; background: #7f8c8d; border-radius: 10px; display: flex; justify-content: center; align-items: flex-end; padding: 10px; gap: 8px; flex-wrap: wrap; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); border-bottom: 6px solid #636e72; }
+        .strut { width: 16px; height: 40px; background: #95a5a6; border-radius: 4px 4px 0 0; border: 2px solid #7f8c8d; border-bottom: none; }
+        
+        .base { width: 80px; height: 100px; background: #34495e; clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%); position: relative; z-index: 10; margin-top: -8px; box-shadow: inset 0 20px 20px rgba(0,0,0,0.2); }
+        .pivot { width: 24px; height: 24px; background: #f1c40f; border-radius: 50%; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); z-index: 11; border: 4px solid #2c3e50; }
+
+        /* 물건(무게추) 디자인 */
+        .grid-block { padding: 6px; border: 3px solid rgba(44, 62, 80, 0.5); border-radius: 8px; background: rgba(255, 255, 255, 0.6); box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        
+        /* 결합법칙 내부 묶음(Sub-group) 강조용 CSS */
+        .sub-group { display: flex; gap: 4px; padding: 4px; background: rgba(44, 62, 80, 0.1); border-radius: 6px; justify-content: center; margin-bottom: 4px; }
+        .sub-group:last-child { margin-bottom: 0; }
+
+        .item { width: 16px; height: 16px; border-radius: 50%; background: #e74c3c; box-shadow: inset -2px -2px rgba(0,0,0,0.3); }
+        .item.blue { background: #3498db; }
+        .item.green { background: #2ecc71; }
+
+        /* 수식 영역 */
+        #formula-display { font-size: 38px; font-weight: 900; color: #2c3e50; margin-top: 10px; min-height: 50px; letter-spacing: 2px; }
+        .highlight { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚖️ 곱셈의 법칙 양팔 저울</h2>
+    <div class="subtitle">수식을 설정하고 왼쪽, 오른쪽 접시를 자유롭게 올려 수평을 확인해 보세요.</div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="setMode('comm', this)">교환법칙</button>
+        <button class="tab-btn" onclick="setMode('assoc', this)">결합법칙</button>
+        <button class="tab-btn" onclick="setMode('dist', this)">분배법칙</button>
+    </div>
+
+    <div class="controls">
+        <div class="input-group" id="input-area">
+            <!-- JS로 동적 생성 -->
+        </div>
+        <div class="action-btns">
+            <button id="btn-left" class="btn-left" onclick="placeLeft()">왼쪽 접시에 올리기</button>
+            <button id="btn-right" class="btn-right" onclick="placeRight()">오른쪽 접시에 올리기</button>
+            <button class="btn-reset" onclick="resetScale()">초기화</button>
+        </div>
+    </div>
+
+    <div class="scale-container">
+        <div class="beam-wrapper" id="beam">
+            <div class="beam"></div>
+            
+            <div class="pan-wrapper left" id="pan-wrap-left">
+                <div class="pan-plate" id="pan-left"></div>
+                <div class="strut"></div>
+            </div>
+            
+            <div class="pan-wrapper right" id="pan-wrap-right">
+                <div class="pan-plate" id="pan-right"></div>
+                <div class="strut"></div>
+            </div>
+        </div>
+        <div class="pivot"></div>
+        <div class="base"></div>
+    </div>
+
+    <div id="formula-display">? = ?</div>
+</div>
+
+<script>
+    let currentMode = 'comm';
+    let leftPlaced = false;
+    let rightPlaced = false;
+    let leftText = "?";
+    let rightText = "?";
+
+    const beam = document.getElementById('beam');
+    const panWrapLeft = document.getElementById('pan-wrap-left');
+    const panWrapRight = document.getElementById('pan-wrap-right');
+    const panLeft = document.getElementById('pan-left');
+    const panRight = document.getElementById('pan-right');
+    const formulaDisplay = document.getElementById('formula-display');
+    const btnLeft = document.getElementById('btn-left');
+    const btnRight = document.getElementById('btn-right');
+
+    function setMode(mode, el) {
+        currentMode = mode;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        el.classList.add('active');
+        
+        let html = '';
+        if(mode === 'comm') {
+            html = `A: <input type="number" id="valA" value="3" min="1" max="5"> × B: <input type="number" id="valB" value="4" min="1" max="5">`;
+        } else if(mode === 'assoc') {
+            html = `A: <input type="number" id="valA" value="2" min="1" max="4"> × B: <input type="number" id="valB" value="3" min="1" max="4"> × C: <input type="number" id="valC" value="4" min="1" max="4">`;
+        } else if(mode === 'dist') {
+            html = `A: <input type="number" id="valA" value="3" min="1" max="5"> × ( B: <input type="number" id="valB" value="2" min="1" max="5"> + C: <input type="number" id="valC" value="3" min="1" max="5"> )`;
+        }
+        document.getElementById('input-area').innerHTML = html;
+        resetScale();
+    }
+
+    // 기본 Grid Block (교환/분배 법칙 용도)
+    function createGridBlock(cols, rows, colorClass) {
+        let group = document.createElement('div');
+        group.className = 'grid-block';
+        group.style.display = 'grid';
+        group.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+        group.style.gap = '3px';
+        
+        for(let i=0; i < cols * rows; i++) {
+            let item = document.createElement('div');
+            item.className = `item ${colorClass}`;
+            group.appendChild(item);
+        }
+        return group;
+    }
+
+    // ★ 결합법칙용 중첩 블록 (A개씩 B묶음 구조를 명확히 보여줌)
+    function createNestedBlock(itemsPerGroup, numGroups, colorClass) {
+        let outerGroup = document.createElement('div');
+        outerGroup.className = 'grid-block';
+        outerGroup.style.display = 'flex';
+        outerGroup.style.flexDirection = 'column'; // 묶음들을 위아래로 쌓음
+        
+        for(let i=0; i < numGroups; i++) {
+            let innerGroup = document.createElement('div');
+            innerGroup.className = 'sub-group'; // 묶음 배경색/테두리 적용
+            
+            for(let j=0; j < itemsPerGroup; j++) {
+                let item = document.createElement('div');
+                item.className = `item ${colorClass}`;
+                innerGroup.appendChild(item);
+            }
+            outerGroup.appendChild(innerGroup);
+        }
+        return outerGroup;
+    }
+
+    // 분배법칙용 혼합 상자
+    function createMixedGridBlock(cols, rows) {
+        let group = document.createElement('div');
+        group.className = 'grid-block';
+        group.style.display = 'grid';
+        group.style.gridTemplateColumns = `repeat(${cols + rows}, auto)`;
+        group.style.gap = '3px';
+        
+        for(let i=0; i<cols; i++) {
+            let item = document.createElement('div');
+            item.className = 'item blue';
+            group.appendChild(item);
+        }
+        for(let i=0; i<rows; i++) {
+            let item = document.createElement('div');
+            item.className = 'item green';
+            group.appendChild(item);
+        }
+        return group;
+    }
+
+    function updateFormulaText() {
+        let eq = (leftPlaced && rightPlaced) ? '<span class="highlight">=</span>' : '=';
+        formulaDisplay.innerHTML = `${leftText} ${eq} ${rightText}`;
+    }
+
+    function placeLeft() {
+        const a = parseInt(document.getElementById('valA').value) || 1;
+        const b = parseInt(document.getElementById('valB').value) || 1;
+        panLeft.innerHTML = '';
+        
+        if (currentMode === 'comm') {
+            // A개씩 B묶음
+            for(let i=0; i<b; i++) panLeft.appendChild(createGridBlock(a, 1, ''));
+            leftText = `${a} × ${b}`;
+        } else if (currentMode === 'assoc') {
+            const c = parseInt(document.getElementById('valC').value) || 1;
+            // (A x B) x C : [A개씩 B묶음]이 들어있는 큰 상자가 C개
+            for(let i=0; i<c; i++) panLeft.appendChild(createNestedBlock(a, b, ''));
+            leftText = `(${a} × ${b}) × ${c}`;
+        } else if (currentMode === 'dist') {
+            const c = parseInt(document.getElementById('valC').value) || 1;
+            for(let i=0; i<a; i++) panLeft.appendChild(createMixedGridBlock(b, c));
+            leftText = `${a} × (${b} + ${c})`;
+        }
+
+        leftPlaced = true;
+        btnLeft.disabled = true;
+        updateScaleTilt();
+        updateFormulaText();
+    }
+
+    function placeRight() {
+        const a = parseInt(document.getElementById('valA').value) || 1;
+        const b = parseInt(document.getElementById('valB').value) || 1;
+        panRight.innerHTML = '';
+
+        if (currentMode === 'comm') {
+            // B개씩 A묶음
+            for(let i=0; i<a; i++) panRight.appendChild(createGridBlock(b, 1, 'blue'));
+            rightText = `${b} × ${a}`;
+        } else if (currentMode === 'assoc') {
+            const c = parseInt(document.getElementById('valC').value) || 1;
+            // A x (B x C) : [B개씩 C묶음]이 들어있는 큰 상자가 A개
+            for(let i=0; i<a; i++) panRight.appendChild(createNestedBlock(b, c, 'blue'));
+            rightText = `${a} × (${b} × ${c})`;
+        } else if (currentMode === 'dist') {
+            const c = parseInt(document.getElementById('valC').value) || 1;
+            for(let i=0; i<a; i++) panRight.appendChild(createGridBlock(b, 1, 'blue'));
+            for(let i=0; i<a; i++) panRight.appendChild(createGridBlock(c, 1, 'green'));
+            rightText = `(${a} × ${b}) + (${a} × ${c})`;
+        }
+
+        rightPlaced = true;
+        btnRight.disabled = true;
+        updateScaleTilt();
+        updateFormulaText();
+    }
+
+    function updateScaleTilt() {
+        let angle = 0;
+        if (leftPlaced && !rightPlaced) angle = -12;
+        else if (!leftPlaced && rightPlaced) angle = 12;
+        
+        beam.style.transform = `rotate(${angle}deg)`;
+        panWrapLeft.style.transform = `rotate(${-angle}deg)`;
+        panWrapRight.style.transform = `rotate(${-angle}deg)`;
+    }
+
+    function resetScale() {
+        leftPlaced = false;
+        rightPlaced = false;
+        leftText = "?";
+        rightText = "?";
+        panLeft.innerHTML = '';
+        panRight.innerHTML = '';
+        btnLeft.disabled = false;
+        btnRight.disabled = false;
+        updateScaleTilt();
+        updateFormulaText();
+    }
+
+    // 초기화 실행
+    setMode('comm', document.querySelector('.tab-btn.active'));
+</script>
+
+</body>
+</html>
