@@ -32,13 +32,15 @@
     <nav id="sidebar">
         <h2 style="text-align:center;">수학 탐구 도구함</h2>
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
-        <div class="menu-item active" onclick="switchTool('semdol-frame', this)">🔘 셈돌 상쇄</div>
+        <div class="menu-item active" onclick="switchTool('sieve-frame', this)">✔️ 에라스토테네스의 체</div>
+        <div class="menu-item" onclick="switchTool('semdol-frame', this)">🔘 셈돌 상쇄</div>
         <div class="menu-item" onclick="switchTool('rail-frame', this)">🛤️ 레일바이크</div>
         <div class="menu-item" onclick="switchTool('tumble-frame', this)">🤸‍♂️ 역수 텀블링</div>
     </nav>
 
     <main id="main-content">
-        <iframe id="semdol-frame" class="active" src="semdol.html"></iframe>
+        <iframe id="sieve-frame" class="active" src="sieve.html"></iframe>
+        <iframe id="semdol-frame" src="semdol.html"></iframe>
         <iframe id="rail-frame" src="railbike.html"></iframe>
         <iframe id="tumble-frame" src="tumble.html"></iframe>
     </main>
