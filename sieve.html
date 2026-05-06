@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>에라토스테네스의 체</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f9f9f9; }
+        h2 { color: #333; }
+        #grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 3px; max-width: 900px; margin: 20px auto; }
+        .cell { 
+            padding: 12px 0; border: 1px solid #ccc; border-radius: 4px; 
+            cursor: pointer; user-select: none; font-size: 15px; font-weight: bold;
+        }
+        .default { background-color: white; color: #333; }
+        .default:hover { background-color: #e0f7fa; }
+        .prime { background-color: #FFD700; color: black; box-shadow: 0 0 5px rgba(0,0,0,0.3); }
+        .eliminated { background-color: #e0e0e0; color: #a0a0a0; text-decoration: line-through; cursor: default; }
+        .one { background-color: #d3d3d3; color: #888; cursor: default; }
+        .btn-group { margin-bottom: 20px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; color: white; border: none; border-radius: 5px; margin: 0 5px; font-weight: bold;}
+        .btn-reset { background-color: #757575; }
+        .btn-auto { background-color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <h2>🔍 에라토스테네스의 체 (1 ~ 500)</h2>
+    <p>남아있는 수(소수)를 클릭하거나, 버튼을 눌러 한 번에 소수를 찾아보세요!</p>
+    
+    <div class="btn-group">
+        <button class="btn-reset" onclick="initGrid()">초기화 (다시 하기)</button>
+        <button class="btn-auto" onclick="showAllPrimes()">⚡ 한 번에 소수만 남기기</button>
+    </div>
+
+    <div id="grid"></div>
+
+    <script>
+        const limit = 500;
+        let cells = [];
+
+        function initGrid() {
+            const grid = document.getElementById("grid");
+            grid.innerHTML = "";
+            cells = [];
+
+            for (let i = 1; i <= limit; i++) {
+                const cell = document.createElement("div");
+                cell.textContent = i;
+                cell.className = "cell";
+                
+                if (i === 1) {
+                    cell.classList.add("one");
+                } else {
+                    cell.classList.add("default");
+                    cell.onclick = function() { handleCellClick(i); };
+                }
+                
+                grid.appendChild(cell);
+                cells[i] = cell;
+            }
+        }
+
+        function handleCellClick(num) {
+            const cell = cells[num];
+            if (cell.classList.contains("eliminated") || cell.classList.contains("prime")) return; 
+
+            cell.classList.remove("default");
+            cell.classList.add("prime");
+
+            let multiple = num * 2;
+            function eliminateNext() {
+                if (multiple <= limit) {
+                    const mCell = cells[multiple];
+                    if (!mCell.classList.contains("eliminated")) {
+                        mCell.classList.remove("default");
+                        mCell.classList.add("eliminated");
+                    }
+                    multiple += num;
+                    setTimeout(eliminateNext, 20);
+                }
+            }
+            eliminateNext();
+        }
+
+        function showAllPrimes() {
+            initGrid(); 
+            
+            let isPrime = new Array(limit + 1).fill(true);
+            isPrime[0] = false;
+            isPrime[1] = false;
+            
+            for (let p = 2; p <= limit; p++) {
+                if (isPrime[p]) {
+                    cells[p].classList.remove("default");
+                    cells[p].classList.add("prime");
+                    
+                    for (let i = p * 2; i <= limit; i += p) {
+                        isPrime[i] = false;
+                        cells[i].classList.remove("default");
+                        cells[i].classList.add("eliminated");
+                    }
+                }
+            }
+        }
+
+        window.onload = initGrid;
+    </script>
+</body>
+</html>
