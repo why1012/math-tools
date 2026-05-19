@@ -191,11 +191,18 @@
         World.add(engine.world, [leftGround, rightGround, backboard, rimBack, rimFront, blackWall, redSensor]);
 
         // 💡 프리미엄 2D 그래픽 에셋 로드 (Option A)
+        const stadiumImg = new Image();
         stadiumImg.src = './stadium_bg.png';
+        
+        const floorImg = new Image();
         floorImg.src = './court_floor.png';
+        
+        const ballImg = new Image();
         ballImg.src = './basketball.png';
-        hoopImg.src = './hoop_net.png';
 
+        const hoopImg = new Image();
+        hoopImg.src = './hoop_net.png';
+        
         // 플로어 반복 타일링 제거 (직접 스트레치하여 그림)
         const crowdTexture = createCrowdTexture();
 
