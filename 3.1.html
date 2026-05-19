@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수식 기호 생략 변환기 & 퀴즈</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f0fcf9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(2, 195, 154, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #02c39a;
+            font-size: 28px;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .tabs { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .tab-btn { padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 20px; border: 2px solid #02c39a; background-color: white; color: #02c39a; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background-color: #02c39a; color: white; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .examples { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; justify-content: center; }
+        .example-btn { background-color: #f2f6f5; color: #555; padding: 8px 16px; font-size: 14px; border-radius: 20px; cursor: pointer; border: none; transition: all 0.2s; }
+        .example-btn:hover { background-color: #e0e9e7; transform: translateY(-2px); }
+        
+        .calculator-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 300px; margin: 0 auto 25px auto; }
+        .calc-btn { background-color: #ffffff; border: 2px solid #eef2f1; border-radius: 12px; height: 50px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .calc-btn:hover { border-color: #02c39a; color: #02c39a; }
+        .calc-btn:active { transform: scale(0.95); }
+        .calc-btn.op { background-color: #e8f9f5; color: #02c39a; border-color: #b8ebd0; font-size: 24px; }
+        
+        .input-group { display: flex; gap: 10px; margin-bottom: 30px; }
+        input[type="text"] { flex: 1; padding: 15px; font-size: 20px; border: 2px solid #e0e0e0; border-radius: 12px; outline: none; }
+        input[type="text"]:focus { border-color: #02c39a; }
+        .action-btn { padding: 0 25px; font-size: 18px; font-weight: bold; background-color: #02c39a; color: white; border: none; border-radius: 12px; cursor: pointer; transition: background-color 0.2s; }
+        .action-btn:hover { background-color: #02a884; }
+
+        .result-box { text-align: center; padding: 40px 20px; background-color: #fcfdfe; border: 2px dashed #b8ebd0; border-radius: 16px; min-height: 80px; display: flex; align-items: center; justify-content: center; font-size: 32px; flex-direction: column; gap: 10px; }
+
+        .difficulty-options { display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto; }
+        .diff-btn { padding: 15px; font-size: 18px; font-weight: bold; background-color: #ffffff; color: #02c39a; border: 2px solid #02c39a; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .diff-btn:hover { background-color: #02c39a; color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(2, 195, 154, 0.3); }
+
+        .quiz-header { display: flex; justify-content: space-between; font-weight: bold; color: #555; margin-bottom: 20px; font-size: 18px; }
+        .question-box { background-color: #f8fdfb; padding: 20px; border-radius: 16px; font-size: 24px; text-align: center; margin-bottom: 20px; border: 1px solid #eef2f1; min-height: 60px;}
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .option-btn { background-color: white; border: 2px solid #eef2f1; padding: 15px; font-size: 20px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .option-btn:hover { border-color: #02c39a; background-color: #f0fcf9; }
+        .option-btn.correct { background-color: #d1f4eb; border-color: #02c39a; color: #018a6d; }
+        .option-btn.wrong { background-color: #feeceb; border-color: #ff6b6b; color: #d32f2f; }
+        .option-btn.half-correct { background-color: #fff8e1; border-color: #ffb300; color: #f57c00; }
+
+        #feedback { text-align: center; font-size: 18px; font-weight: bold; min-height: 60px; margin-bottom: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;}
+        #nextBtn { width: 100%; display: none; padding: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✨ 문자와 식 마스터 ✨</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('converter')">기호 생략 변환기</button>
+        <button class="tab-btn" onclick="switchTab('quiz')">무한 랜덤 퀴즈</button>
+    </div>
+
+    <div id="converterSection" class="section active">
+        <div class="examples">
+            <button class="example-btn" onclick="setExample('3 × a + 2 × b')">예: +,- 포함</button>
+            <button class="example-btn" onclick="setExample('x × (-2)')">예: 음수 곱</button>
+            <button class="example-btn" onclick="setExample('bca')">예: bca 정렬</button>
+            <button class="example-btn" onclick="setExample('x × y × x × y × y')">예: 거듭제곱</button>
+            <button class="example-btn" onclick="setExample('(a+1) × 2')">예: 괄호</button>
+            <button class="example-btn" onclick="setExample('-4 × x ÷ y')">예: 분수 (조건)</button>
+        </div>
+        <div class="calculator-pad">
+            <button class="calc-btn" onclick="insertSymbol('7')">7</button>
+            <button class="calc-btn" onclick="insertSymbol('8')">8</button>
+            <button class="calc-btn" onclick="insertSymbol('9')">9</button>
+            <button class="calc-btn op" onclick="insertSymbol('÷')">÷</button>
+            <button class="calc-btn" onclick="insertSymbol('4')">4</button>
+            <button class="calc-btn" onclick="insertSymbol('5')">5</button>
+            <button class="calc-btn" onclick="insertSymbol('6')">6</button>
+            <button class="calc-btn op" onclick="insertSymbol('×')">×</button>
+            <button class="calc-btn" onclick="insertSymbol('1')">1</button>
+            <button class="calc-btn" onclick="insertSymbol('2')">2</button>
+            <button class="calc-btn" onclick="insertSymbol('3')">3</button>
+            <button class="calc-btn op" onclick="insertSymbol('-')">-</button>
+            <button class="calc-btn" onclick="insertSymbol('0')">0</button>
+            <button class="calc-btn op" onclick="insertSymbol('(')">(</button>
+            <button class="calc-btn op" onclick="insertSymbol(')')">)</button>
+            <button class="calc-btn op" onclick="insertSymbol('+')">+</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="mathInput" placeholder="알파벳은 키보드로!" onkeypress="handleEnter(event)">
+            <button class="action-btn" onclick="processAndRender()">변환</button>
+        </div>
+        <div class="result-box" id="resultDisplay">
+            결과가 이곳에 나옵니다!
+        </div>
+    </div>
+
+    <div id="quizSection" class="section">
+        
+        <div id="quizSetup" style="text-align: center; padding: 20px 0;">
+            <h2 style="color: #555; margin-bottom: 30px;">도전할 난이도를 선택하세요!</h2>
+            <div class="difficulty-options">
+                <button class="diff-btn" onclick="startDynamicQuiz('easy')">🌱 하 (기본 개념)</button>
+                <button class="diff-btn" onclick="startDynamicQuiz('medium')">🌿 중 (응용, 거듭제곱)</button>
+                <button class="diff-btn" onclick="startDynamicQuiz('hard')">🔥 상 (+,- 혼합 계산)</button>
+            </div>
+        </div>
+
+        <div id="quizContent" style="display: none;">
+            <div class="quiz-header">
+                <span id="qCount">문제 1 / 10</span>
+                <span id="score">점수: 0점</span>
+            </div>
+            <div class="question-box" id="questionText">문제가 여기에 표시됩니다.</div>
+            <div class="options-grid" id="optionsBox"></div>
+            <div id="feedback"></div>
+            <button id="nextBtn" class="action-btn" onclick="nextQuestion()">다음 문제</button>
+        </div>
+
+        <div id="quizResult" style="display: none; text-align: center;">
+            <h2 style="color: #02c39a; font-size: 32px; margin-bottom: 10px;">🎉 퀴즈 완료! 🎉</h2>
+            <div class="result-box" id="finalScore" style="border:none; background:none;">100점</div>
+            <button class="action-btn" style="padding: 15px 30px; margin-top: 20px;" onclick="resetToSetup()">다른 난이도 도전하기</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+        if(tabName === 'converter') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('converterSection').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('quizSection').classList.add('active');
+            resetToSetup();
+        }
+    }
+
+    function insertSymbol(symbol) {
+        const input = document.getElementById('mathInput');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.substring(0, start) + symbol + text.substring(end);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + symbol.length;
+    }
+    function setExample(expr) { document.getElementById('mathInput').value = expr; processAndRender(); }
+    function handleEnter(e) { if(e.key === 'Enter') processAndRender(); }
+    
+    function processAndRender() {
+        let input = document.getElementById('mathInput').value;
+        if (!input.trim()) return;
+        let finalTex = parseExpression(input);
+        const resultDisplay = document.getElementById('resultDisplay');
+        resultDisplay.innerHTML = `\\( ${finalTex} \\)`;
+        MathJax.typesetPromise([resultDisplay]);
+    }
+
+    function parseExpression(expr) {
+        expr = expr.replace(/\s+/g, '').replace(/×/g, '*').replace(/÷/g, '/');
+        expr = expr.replace(/([a-zA-Z])(?=[a-zA-Z])/g, '$1*');
+        expr = expr.replace(/([0-9])(?=[a-zA-Z])/g, '$1*');
+        expr = expr.replace(/([a-zA-Z])(?=[0-9])/g, '$1*');
+        expr = expr.replace(/([0-9a-zA-Z])(?=\()/g, '$1*');
+        expr = expr.replace(/(\))(?=[0-9a-zA-Z\(])/g, '$1*');
+        let terms = [], currentTerm = "", depth = 0;
+        for (let i = 0; i < expr.length; i++) {
+            let c = expr[i];
+            if (c === '(') depth++;
+            if (c === ')') depth--;
+            if (depth === 0 && (c === '+' || c === '-')) {
+                if (i === 0 || '*/('.includes(expr[i-1])) currentTerm += c;
+                else { terms.push(currentTerm); currentTerm = c; }
+            } else currentTerm += c;
+        }
+        if (currentTerm) terms.push(currentTerm);
+        
+        let resultTex = "";
+        let globalDenVars = new Set(); // 분모의 문자를 수집할 집합
+
+        for (let i = 0; i < terms.length; i++) {
+            let term = terms[i], prefix = "";
+            if (term.startsWith('+')) { prefix = i === 0 ? "" : "+ "; term = term.substring(1); } 
+            else if (term.startsWith('-')) { prefix = i === 0 ? "-" : "- "; term = term.substring(1); }
+            
+            let processedTerm = processFractionAndProduct(term, globalDenVars); // 변수 수집용 Set 전달
+            
+            if (processedTerm.startsWith('-')) {
+                if (prefix === "+ ") prefix = "- ";
+                else if (prefix === "- ") prefix = "+ ";
+                else if (prefix === "-") prefix = "";
+                else prefix = "-";
+                processedTerm = processedTerm.substring(1);
+            }
+            resultTex += (prefix + processedTerm + " ");
+        }
+
+        let finalTex = resultTex.trim();
+        
+        // 분모에 문자가 있었다면 수학적 조건 추가 (b ≠ 0)
+        if (globalDenVars.size > 0) {
+            let varsArr = Array.from(globalDenVars).sort();
+            let condStrings = varsArr.map(v => `${v} \\neq 0`);
+            finalTex += ` \\quad (\\text{단, } ${condStrings.join(', ')})`;
+        }
+
+        return finalTex;
+    }
+
+    function processFractionAndProduct(term, denVarsSet) {
+        if (term.includes('/')) {
+            let parts = term.split('/'); 
+            let num = processProduct(parts[0]);
+            let denStr = parts[1];
+            let den = processProduct(denStr);
+            
+            // 분모에서 알파벳 문자 추출 및 수집
+            let matchVars = denStr.match(/[a-zA-Z]/g);
+            if (matchVars && denVarsSet) {
+                matchVars.forEach(v => denVarsSet.add(v));
+            }
+
+            let isNeg = false;
+            if (num.startsWith('-')) { isNeg = !isNeg; num = num.substring(1); }
+            if (den.startsWith('-')) { isNeg = !isNeg; den = den.substring(1); }
+            return `${isNeg ? "-" : ""}\\frac{${num}}{${den}}`;
+        }
+        return processProduct(term);
+    }
+
+    function processProduct(expr) {
+        if (!expr) return "";
+        let factors = expr.split('*'), numbers = [], vars = {}, parens = [];
+        for (let factor of factors) {
+            if (factor.startsWith('(') && factor.endsWith(')') && !isNaN(factor.slice(1, -1))) numbers.push(parseFloat(factor.slice(1, -1)));
+            else if (factor.startsWith('(') && factor.endsWith(')')) parens.push(factor);
+            else if (!isNaN(factor)) numbers.push(parseFloat(factor));
+            else vars[factor] = (vars[factor] || 0) + 1;
+        }
+        let numProduct = 1, hasNum = false;
+        for (let n of numbers) { numProduct *= n; hasNum = true; }
+        let resultStr = "", hasVarsOrParens = Object.keys(vars).length > 0 || parens.length > 0;
+        if (hasNum) {
+            if (numProduct === -1 && hasVarsOrParens) resultStr += "-";
+            else if (numProduct !== 1 || !hasVarsOrParens) resultStr += numProduct;
+        }
+        let sortedVars = Object.keys(vars).sort();
+        for (let v of sortedVars) {
+            if (vars[v] === 1) resultStr += v;
+            else resultStr += `${v}^${vars[v]}`;
+        }
+        for (let p of parens) resultStr += p;
+        return resultStr;
+    }
+
+    // --- 🎲 무한 랜덤 퀴즈 엔진 ---
+    let dynamicQuizData = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isAnswered = false;
+
+    function resetToSetup() {
+        document.getElementById('quizResult').style.display = 'none';
+        document.getElementById('quizContent').style.display = 'none';
+        document.getElementById('quizSetup').style.display = 'block';
+    }
+
+    function startDynamicQuiz(level) {
+        dynamicQuizData = [];
+        let generatedQs = new Set(); // 중복 방지를 위한 Set
+        let attempts = 0; // 무한 루프 방지용
+
+        // 10문제가 채워질 때까지 반복 (중복 없이)
+        while(dynamicQuizData.length < 10 && attempts < 100) {
+            let qData = generateRandomQuestion(level);
+            if (!generatedQs.has(qData.q)) {
+                generatedQs.add(qData.q);
+                dynamicQuizData.push(qData);
+            }
+            attempts++;
+        }
+        
+        currentQuestionIndex = 0;
+        score = 0;
+        document.getElementById('quizSetup').style.display = 'none';
+        document.getElementById('quizResult').style.display = 'none';
+        document.getElementById('quizContent').style.display = 'block';
+        
+        loadQuestion();
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function generateRandomQuestion(level) {
+        const vars = ['a', 'b', 'x', 'y'];
+        const nums = [2, 3, 4, 5, 6, 7];
+        
+        let v1 = vars[Math.floor(Math.random() * vars.length)];
+        let v2 = vars[Math.floor(Math.random() * vars.length)];
+        while(v1 === v2) v2 = vars[Math.floor(Math.random() * vars.length)];
+        let v3 = vars[Math.floor(Math.random() * vars.length)];
+        while(v3 === v1 || v3 === v2) v3 = vars[Math.floor(Math.random() * vars.length)];
+        
+        let n1 = nums[Math.floor(Math.random() * nums.length)];
+        let n2 = nums[Math.floor(Math.random() * nums.length)];
+        while(n1 === n2) n2 = nums[Math.floor(Math.random() * nums.length)];
+
+        let type = Math.floor(Math.random() * 4); 
+        let q = "", ans = "", halfAns = null, wrongs = [];
+        let condVars = []; // 분모 조건용 변수 저장 배열
+
+        if (level === 'easy') {
+            if (type === 0) { 
+                q = `\\( ${n1} \\times ${v1} \\)`;
+                ans = `\\( ${n1}${v1} \\)`;
+                wrongs = [`\\( ${v1}${n1} \\)`, `\\( ${n1}+${v1} \\)`, `\\( ${v1} \\times ${n1} \\)`];
+            } else if (type === 1) { 
+                q = `\\( ${v1} \\times (-${n1}) \\)`;
+                ans = `\\( -${n1}${v1} \\)`;
+                wrongs = [`\\( ${v1}-${n1} \\)`, `\\( -${v1}${n1} \\)`, `\\( ${n1}-${v1} \\)`];
+            } else if (type === 2) { 
+                let [s1, s2] = [v1, v2].sort();
+                let q_v1 = s2, q_v2 = s1; 
+                q = `\\( ${q_v1} \\times ${q_v2} \\)`;
+                ans = `\\( ${s1}${s2} \\)`;
+                halfAns = `\\( ${q_v1}${q_v2} \\)`;
+                wrongs = [`\\( 2${s1}${s2} \\)`, `\\( ${s1}+${s2} \\)`];
+            } else { 
+                q = `\\( ${v1} \\div ${n1} \\)`;
+                ans = `\\( \\frac{${v1}}{${n1}} \\)`;
+                wrongs = [`\\( \\frac{${n1}}{${v1}} \\)`, `\\( ${n1}${v1} \\)`, `\\( ${v1}${n1} \\)`];
+            }
+        } 
+        else if (level === 'medium') {
+            if (type === 0) { 
+                let [s1, s2] = [v1, v2].sort();
+                q = `\\( ${v2} \\times ${v1} \\times ${v1} \\)`;
+                ans = s1 === v1 ? `\\( ${v1}^2 ${v2} \\)` : `\\( ${v2} ${v1}^2 \\)`;
+                halfAns = s1 === v1 ? `\\( ${v2} ${v1}^2 \\)` : `\\( ${v1}^2 ${v2} \\)`;
+                wrongs = [`\\( 2${v1}${v2} \\)`, `\\( (${v1}${v2})^2 \\)`]; 
+            } else if (type === 1) { 
+                q = `\\( (${v1} + ${v2}) \\times ${n1} \\)`;
+                ans = `\\( ${n1}(${v1}+${v2}) \\)`;
+                wrongs = [`\\( (${v1}+${v2})${n1} \\)`, `\\( ${n1}${v1}+${v2} \\)`, `\\( ${v1}+${n1}${v2} \\)`];
+            } else if (type === 2) { 
+                let [s1, s3] = [v1, v3].sort(); 
+                q = `\\( ${v1} \\div ${v2} \\times ${v3} \\)`;
+                ans = `\\( \\frac{${s1}${s3}}{${v2}} \\)`;
+                halfAns = `\\( \\frac{${s3}${s1}}{${v2}} \\)`;
+                condVars.push(v2); // 분모에 v2가 있음
+                wrongs = [`\\( \\frac{${v1}}{${v2}${v3}} \\)`, `\\( \\frac{${v2}${v3}}{${v1}} \\)`];
+            } else { 
+                let isDec = Math.random() > 0.5;
+                if(isDec) {
+                    q = `\\( 0.1 \\times ${v1} \\)`;
+                    ans = `\\( 0.1${v1} \\)`;
+                    wrongs = [`\\( 0.${v1} \\)`, `\\( 1.0${v1} \\)`, `\\( ${v1}0.1 \\)`];
+                } else {
+                    q = `\\( ${v1} \\times (-1) \\)`;
+                    ans = `\\( -${v1} \\)`;
+                    wrongs = [`\\( -1${v1} \\)`, `\\( ${v1}-1 \\)`, `\\( 1-${v1} \\)`];
+                }
+            }
+        } 
+        else { 
+            if (type === 0) { 
+                q = `\\( ${n1} \\times ${v1} \\times ${v1} + ${v2} \\div ${n2} \\)`;
+                ans = `\\( ${n1}${v1}^2 + \\frac{${v2}}{${n2}} \\)`;
+                wrongs = [`\\( ${n1}${v1}^2 + \\frac{${n2}}{${v2}} \\)`, `\\( (${n1}${v1})^2 + \\frac{${v2}}{${n2}} \\)`, `\\( 2${n1}${v1} + \\frac{${v2}}{${n2}} \\)`];
+            } else if (type === 1) { 
+                q = `\\( (${v1} - ${v2}) \\div ${n1} - ${v3} \\times ${n2} \\)`;
+                ans = `\\( \\frac{${v1}-${v2}}{${n1}} - ${n2}${v3} \\)`;
+                wrongs = [`\\( \\frac{${v1}-${v2}}{${n1}} + ${n2}${v3} \\)`, `\\( \\frac{${v1}-${v2}}{${n1}} - ${v3}${n2} \\)`, `\\( \\frac{${v1}}{${n1}} - ${v2} - ${n2}${v3} \\)`];
+            } else if (type === 2) { 
+                q = `\\( -${v1} \\div (-${v2}) \\times ${n1} \\)`;
+                ans = `\\( \\frac{${n1}${v1}}{${v2}} \\)`;
+                condVars.push(v2); // 분모에 v2가 있음
+                wrongs = [`\\( -\\frac{${n1}${v1}}{${v2}} \\)`, `\\( \\frac{${v1}}{${n1}${v2}} \\)`, `\\( -\\frac{${v1}}{${n1}${v2}} \\)`];
+            } else { 
+                q = `\\( ${v1} \\div ${v2} \\div ${v3} \\)`;
+                let [s2, s3] = [v2, v3].sort(); 
+                ans = `\\( \\frac{${v1}}{${s2}${s3}} \\)`;
+                halfAns = `\\( \\frac{${v1}}{${s3}${s2}} \\)`; 
+                condVars.push(v2, v3); // 분모에 v2, v3가 있음
+                wrongs = [`\\( \\frac{${v1}${s2}}{${s3}} \\)`, `\\( \\frac{${s2}${s3}}{${v1}} \\)`];
+            }
+        }
+
+        let allOptions = [ans];
+        if (halfAns) allOptions.push(halfAns);
+        
+        for (let w of wrongs) {
+            if (!allOptions.includes(w)) allOptions.push(w);
+        }
+        
+        while(allOptions.length < 4) {
+            let pad = `\\( ${Math.floor(Math.random()*9)+1}${v1}${v2} \\)`;
+            if (!allOptions.includes(pad)) allOptions.push(pad);
+        }
+        allOptions = allOptions.slice(0, 4); 
+        
+        shuffleArray(allOptions);
+        let ansIndex = allOptions.indexOf(ans);
+
+        // 생성된 문제 정보 반환
+        return { q: q, opts: allOptions, ans: ansIndex, halfAnsText: halfAns, condVars: condVars };
+    }
+
+    function loadQuestion() {
+        isAnswered = false;
+        let qData = dynamicQuizData[currentQuestionIndex];
+        
+        document.getElementById('qCount').innerText = `문제 ${currentQuestionIndex + 1} / 10`;
+        document.getElementById('score').innerText = `점수: ${score}점`;
+        document.getElementById('questionText').innerHTML = `다음 식을 간단히 나타내시오.<br><br>${qData.q}`;
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('nextBtn').style.display = 'none';
+
+        let optionsHtml = "";
+        qData.opts.forEach((opt, index) => {
+            optionsHtml += `<button class="option-btn" onclick="checkAnswer(${index}, this)">${opt}</button>`;
+        });
+        document.getElementById('optionsBox').innerHTML = optionsHtml;
+
+        MathJax.typesetPromise([document.getElementById('quizSection')]);
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        if(isAnswered) return; 
+        isAnswered = true;
+
+        let qData = dynamicQuizData[currentQuestionIndex];
+        let buttons = document.querySelectorAll('.option-btn');
+        let selectedText = qData.opts[selectedIndex];
+
+        // ✨ 분모 조건이 있는 경우 하단에 표시할 설명 생성 ✨
+        let condHtml = "";
+        if (qData.condVars && qData.condVars.length > 0) {
+            let condStrs = qData.condVars.sort().map(v => `\\(${v} \\neq 0\\)`);
+            condHtml = `<span style="font-size:15px; color:#555; font-weight:normal;">💡 수학적 조건: 분모가 0이 될 수 없으므로 ${condStrs.join(', ')} 조건이 포함됩니다.</span>`;
+        }
+
+        if(selectedIndex === qData.ans) {
+            btnElement.classList.add('correct');
+            document.getElementById('feedback').innerHTML = `<span>⭕ 딩동댕! 완벽해요!</span>${condHtml}`;
+            document.getElementById('feedback').style.color = "#02c39a";
+            score += 10;
+        } 
+        else if (qData.halfAnsText && selectedText === qData.halfAnsText) {
+            btnElement.classList.add('half-correct');
+            buttons[qData.ans].classList.add('correct'); 
+            document.getElementById('feedback').innerHTML = `<span>🔺 정답! 하지만 문자는 알파벳 순서대로 쓰는 게 좋아요! (+5점)</span>${condHtml}`;
+            document.getElementById('feedback').style.color = "#f57c00";
+            score += 5;
+        } 
+        else {
+            btnElement.classList.add('wrong');
+            buttons[qData.ans].classList.add('correct'); 
+            document.getElementById('feedback').innerHTML = `<span>❌ 아쉽네요! 초록색이 정답이에요.</span>${condHtml}`;
+            document.getElementById('feedback').style.color = "#ff6b6b";
+        }
+        
+        document.getElementById('score').innerText = `점수: ${score}점`;
+
+        // 피드백 영역 수식 재렌더링 (조건 수식이 있을 수 있으므로)
+        if (condHtml) {
+            MathJax.typesetPromise([document.getElementById('feedback')]);
+        }
+
+        document.getElementById('nextBtn').style.display = 'block';
+        if(currentQuestionIndex === 9) document.getElementById('nextBtn').innerText = "결과 보기";
+        else document.getElementById('nextBtn').innerText = "다음 문제";
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if(currentQuestionIndex < 10) loadQuestion();
+        else showResult();
+    }
+
+    function showResult() {
+        document.getElementById('quizContent').style.display = 'none';
+        document.getElementById('quizResult').style.display = 'block';
+        
+        let msg = "";
+        if(score === 100) msg = "퍼펙트! 💯 이제 식 줄이기는 눈 감고도 하겠네요!";
+        else if(score >= 80) msg = "훌륭해요! 👏 조금만 더 연습하면 완벽 마스터!";
+        else if(score >= 50) msg = "잘했어요! 😉 헷갈리는 규칙은 변환기에서 다시 확인해봐요.";
+        else msg = "포기하지 마세요! 💪 기초 난이도부터 차근차근 다시 도전해볼까요?";
+
+        document.getElementById('finalScore').innerHTML = `최종 점수: <strong>${score}점</strong><br><br><span style="font-size:20px; color:#555;">${msg}</span>`;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>맞춤형 방정식 대수블록 실험실</title>
+    <style>
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background-color: #f4f6f9; 
+            margin: 0; 
+            padding: 20px; 
+            touch-action: none; 
+        }
+        h2 { color: #2c3e50; margin-bottom: 5px; }
+        .instruction { color: #666; margin-bottom: 20px; font-size: 15px; text-align: center; }
+        
+        .toolbar { 
+            background: white; 
+            padding: 15px 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            display: flex; 
+            gap: 20px; 
+            margin-bottom: 20px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        .control-group { display: flex; align-items: center; gap: 8px; border-right: 2px solid #eee; padding-right: 20px; }
+        .control-group:last-child { border-right: none; padding-right: 0; }
+        
+        input[type="number"] { width: 45px; padding: 6px; font-size: 16px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+        .btn { padding: 10px 15px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-x { background-color: #4CAF50; color: white; }
+        .btn-one { background-color: #FFEB3B; color: black; }
+        .btn-clear { background-color: #78909c; color: white; }
+
+        /* 작업 영역 (좌변/우변 분리 및 빛나는 효과 추가) */
+        #workspace { 
+            width: 100%; 
+            max-width: 900px; 
+            height: 500px; 
+            background-color: white; 
+            border: 4px dashed #b0bec5; 
+            position: relative; 
+            overflow: hidden; 
+            border-radius: 15px; 
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* 좌우 분할선과 등호 마크 */
+        .divider {
+            position: absolute;
+            left: 50%; top: 0; bottom: 0;
+            width: 4px;
+            background-color: #cfd8dc;
+            transform: translateX(-50%);
+            z-index: 0;
+            transition: background-color 0.3s;
+        }
+        .equals-sign {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 10px 20px;
+            font-size: 40px;
+            font-weight: bold;
+            border-radius: 50%;
+            border: 4px solid #cfd8dc;
+            color: #cfd8dc;
+            z-index: 1;
+            transition: all 0.3s;
+        }
+        .side-label {
+            position: absolute;
+            top: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #90a4ae;
+            z-index: 0;
+        }
+        .left-label { left: 20px; }
+        .right-label { right: 20px; }
+
+        /* 빛나는 효과 상태 클래스 */
+        .glow-neutral { border-color: #b0bec5; box-shadow: inset 0 0 10px rgba(0,0,0,0.05); }
+        .glow-green { 
+            border-color: #4CAF50 !important; border-style: solid !important;
+            box-shadow: 0 0 25px rgba(76, 175, 80, 0.6), inset 0 0 20px rgba(76, 175, 80, 0.2) !important; 
+        }
+        .glow-green .divider { background-color: #4CAF50; }
+        .glow-green .equals-sign { border-color: #4CAF50; color: #4CAF50; box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+        
+        .glow-red { 
+            border-color: #F44336 !important; border-style: solid !important;
+            box-shadow: 0 0 25px rgba(244, 67, 54, 0.6), inset 0 0 20px rgba(244, 67, 54, 0.2) !important; 
+        }
+        .glow-red .divider { background-color: #F44336; }
+        .glow-red .equals-sign { border-color: #F44336; color: #F44336; content: "≠"; box-shadow: 0 0 15px rgba(244, 67, 54, 0.5); }
+
+        /* 블록 공통 디자인 */
+        .block { 
+            position: absolute; cursor: grab; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 24px; user-select: none; border: 2px solid rgba(0,0,0,0.4); 
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.2); border-radius: 2px; box-sizing: border-box; transition: box-shadow 0.1s;
+            z-index: 5;
+        }
+        .block:active { cursor: grabbing; box-shadow: 8px 8px 15px rgba(0,0,0,0.3); z-index: 1000 !important; }
+        .block-x { background-color: #4CAF50; color: white; }
+        .block-one { background-color: #FFEB3B; color: black; }
+
+        /* 툴팁 디자인 */
+        .block::before, .block::after {
+            position: absolute; font-size: 16px; font-weight: bold; color: #d32f2f; opacity: 0; transition: opacity 0.2s ease-in-out;
+            pointer-events: none; background: rgba(255, 255, 255, 0.95); padding: 4px 8px; border-radius: 6px; border: 2px solid #d32f2f; white-space: nowrap; z-index: 10;
+        }
+        .block:hover::before, .block:hover::after, .block:active::before, .block:active::after { opacity: 1; }
+        .block::before { content: attr(data-width); top: -35px; left: 50%; transform: translateX(-50%); }
+        .block::after { content: attr(data-height); left: -45px; top: 50%; transform: translateY(-50%); }
+
+        /* 수식 표시창 */
+        #expression-display { 
+            margin-top: 25px; font-size: 36px; font-weight: bold; color: #333; background: white; 
+            padding: 15px 40px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 2px solid #eee;
+            transition: all 0.3s;
+        }
+        .text-green { color: #2E7D32 !important; border-color: #C8E6C9 !important; background-color: #E8F5E9 !important; }
+        .text-red { color: #C62828 !important; border-color: #FFCDD2 !important; background-color: #FFEBEE !important; }
+    </style>
+</head>
+<body>
+
+    <h2>⚖️ 방정식 대수블록 실험실</h2>
+    <div class="instruction">블록을 좌변과 우변으로 드래그해 옮기며 양변의 무게(식)를 맞춰보세요!<br>(같은 길이끼리 자석처럼 붙습니다. 더블클릭 시 삭제)</div>
+    
+    <div class="toolbar">
+        <div class="control-group">
+            <span style="font-weight: bold; color: #388E3C;">[ x 블록 ]</span>
+            세로: <span style="font-weight:bold;">x</span> &nbsp;|&nbsp; 가로: <input type="number" id="x-width" value="1" min="1" max="10">
+            <button class="btn btn-x" onclick="addXBlock()">+ 추가</button>
+        </div>
+        
+        <div class="control-group">
+            <span style="font-weight: bold; color: #F57F17;">[ 상수 블록 ]</span>
+            가로: <input type="number" id="c-width" value="1" min="1" max="10">
+            세로: <input type="number" id="c-height" value="1" min="1" max="10">
+            <button class="btn btn-one" onclick="addConstBlock()">+ 추가</button>
+        </div>
+        
+        <button class="btn btn-clear" onclick="clearWorkspace()">🗑️ 모두 지우기</button>
+    </div>
+
+    <div id="workspace" class="glow-neutral">
+        <div class="side-label left-label">좌변 (Left)</div>
+        <div class="side-label right-label">우변 (Right)</div>
+        <div class="divider"></div>
+        <div class="equals-sign" id="eq-sign">=</div>
+    </div>
+
+    <div id="expression-display">
+        <span id="left-exp">0</span> 
+        <span id="center-exp" style="margin: 0 15px;">=</span> 
+        <span id="right-exp">0</span>
+    </div>
+
+    <script>
+        const workspace = document.getElementById('workspace');
+        const eqSign = document.getElementById('eq-sign');
+        const expDisplay = document.getElementById('expression-display');
+        const leftExpSpan = document.getElementById('left-exp');
+        const rightExpSpan = document.getElementById('right-exp');
+        const centerExpSpan = document.getElementById('center-exp');
+        
+        let isDragging = false;
+        let currentBlock = null;
+        let offsetX = 0, offsetY = 0;
+        
+        const SNAP_THRESHOLD = 25;
+
+        // 식을 예쁘게 문자열로 포맷팅하는 헬퍼 함수
+        function formatExpression(xVal, constVal) {
+            if (xVal === 0 && constVal === 0) return "0";
+            let exp = "";
+            if (xVal > 0) exp += (xVal === 1 ? "x" : xVal + "x");
+            if (constVal > 0) {
+                if (xVal > 0) exp += " + " + constVal;
+                else exp += constVal;
+            }
+            return exp;
+        }
+
+        // 💡 핵심 로직: 블록들의 위치를 실시간으로 스캔하여 양변의 식을 계산하고 이펙트를 발동시킴
+        function updateExpressionAndGlow() {
+            let leftX = 0, leftConst = 0;
+            let rightX = 0, rightConst = 0;
+            
+            const centerX = workspace.clientWidth / 2;
+            const allBlocks = document.querySelectorAll('.block');
+
+            allBlocks.forEach(b => {
+                // 블록의 중심점을 기준으로 좌/우변 소속을 결정
+                const blockCenterX = b.offsetLeft + (b.offsetWidth / 2);
+                
+                const w = parseInt(b.dataset.width);
+                const isXBlock = b.dataset.height === 'x';
+                
+                if (blockCenterX < centerX) {
+                    if (isXBlock) leftX += w;
+                    else leftConst += parseInt(b.dataset.width) * parseInt(b.dataset.height);
+                } else {
+                    if (isXBlock) rightX += w;
+                    else rightConst += parseInt(b.dataset.width) * parseInt(b.dataset.height);
+                }
+            });
+
+            const leftStr = formatExpression(leftX, leftConst);
+            const rightStr = formatExpression(rightX, rightConst);
+            
+            leftExpSpan.innerText = leftStr;
+            rightExpSpan.innerText = rightStr;
+
+            // 상태 평가 (아무것도 없으면 중립, 다르면 빨강, 같으면 초록)
+            workspace.classList.remove('glow-neutral', 'glow-green', 'glow-red');
+            expDisplay.classList.remove('text-green', 'text-red');
+
+            if (leftX === 0 && leftConst === 0 && rightX === 0 && rightConst === 0) {
+                workspace.classList.add('glow-neutral');
+                eqSign.innerText = "=";
+                centerExpSpan.innerText = "=";
+            } else if (leftX === rightX && leftConst === rightConst) {
+                workspace.classList.add('glow-green');
+                expDisplay.classList.add('text-green');
+                eqSign.innerText = "=";
+                centerExpSpan.innerText = "=";
+            } else {
+                workspace.classList.add('glow-red');
+                expDisplay.classList.add('text-red');
+                eqSign.innerText = "≠";
+                centerExpSpan.innerText = "≠";
+            }
+        }
+
+        function addXBlock() {
+            const w = parseInt(document.getElementById('x-width').value) || 1;
+            const block = document.createElement('div');
+            block.classList.add('block', 'block-x');
+            block.dataset.width = w;
+            block.dataset.height = 'x'; 
+            block.innerText = w === 1 ? 'x' : w + 'x';
+            block.style.width = (w * 40) + 'px';
+            block.style.height = '120px'; 
+            setupBlock(block);
+        }
+
+        function addConstBlock() {
+            const w = parseInt(document.getElementById('c-width').value) || 1;
+            const h = parseInt(document.getElementById('c-height').value) || 1;
+            const area = w * h;
+            const block = document.createElement('div');
+            block.classList.add('block', 'block-one');
+            block.dataset.width = w;
+            block.dataset.height = h;
+            block.innerText = area;
+            block.style.width = (w * 40) + 'px';
+            block.style.height = (h * 40) + 'px';
+            setupBlock(block);
+        }
+
+        function setupBlock(block) {
+            // 기본적으로 블록 생성 시 '좌변(왼쪽)'에 무작위 생성되도록 유도
+            const startX = (workspace.clientWidth / 4) - 20 + (Math.random() * 80 - 40);
+            const startY = (workspace.clientHeight / 2) - 60 + (Math.random() * 80 - 40);
+            block.style.left = startX + 'px';
+            block.style.top = startY + 'px';
+
+            function dragStart(e) {
+                isDragging = true;
+                currentBlock = block;
+                const rect = block.getBoundingClientRect();
+                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+                offsetX = clientX - rect.left;
+                offsetY = clientY - rect.top;
+                workspace.appendChild(block); // 끌고 있는 블록을 가장 앞으로
+            }
+
+            block.addEventListener('mousedown', dragStart);
+            block.addEventListener('touchstart', dragStart, {passive: false});
+            block.addEventListener('dblclick', () => { block.remove(); updateExpressionAndGlow(); });
+
+            workspace.appendChild(block);
+            updateExpressionAndGlow();
+        }
+
+        function dragMove(e) {
+            if (isDragging && currentBlock) {
+                e.preventDefault(); 
+                const wsRect = workspace.getBoundingClientRect();
+                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+
+                let newX = clientX - wsRect.left - offsetX;
+                let newY = clientY - wsRect.top - offsetY;
+
+                // 스냅(자석) 로직
+                const allBlocks = document.querySelectorAll('.block');
+                for (let b of allBlocks) {
+                    if (b === currentBlock) continue;
+                    
+                    const bRect = { left: parseFloat(b.style.left), top: parseFloat(b.style.top), width: b.offsetWidth, height: b.offsetHeight };
+                    const cRect = { left: newX, top: newY, width: currentBlock.offsetWidth, height: currentBlock.offsetHeight };
+
+                    if (cRect.height === bRect.height) {
+                        if (Math.abs((cRect.left + cRect.width) - bRect.left) < SNAP_THRESHOLD && Math.abs(cRect.top - bRect.top) < SNAP_THRESHOLD) {
+                            newX = bRect.left - cRect.width + 2; newY = bRect.top; break;
+                        }
+                        if (Math.abs(cRect.left - (bRect.left + bRect.width)) < SNAP_THRESHOLD && Math.abs(cRect.top - bRect.top) < SNAP_THRESHOLD) {
+                            newX = bRect.left + bRect.width - 2; newY = bRect.top; break;
+                        }
+                    }
+                    if (cRect.width === bRect.width) {
+                        if (Math.abs((cRect.top + cRect.height) - bRect.top) < SNAP_THRESHOLD && Math.abs(cRect.left - bRect.left) < SNAP_THRESHOLD) {
+                            newX = bRect.left; newY = bRect.top - cRect.height + 2; break;
+                        }
+                        if (Math.abs(cRect.top - (bRect.top + bRect.height)) < SNAP_THRESHOLD && Math.abs(cRect.left - bRect.left) < SNAP_THRESHOLD) {
+                            newX = bRect.left; newY = bRect.top + bRect.height - 2; break;
+                        }
+                    }
+                }
+
+                if (newX < 0) newX = 0;
+                if (newY < 0) newY = 0;
+                if (newX + currentBlock.offsetWidth > wsRect.width) newX = wsRect.width - currentBlock.offsetWidth;
+                if (newY + currentBlock.offsetHeight > wsRect.height) newY = wsRect.height - currentBlock.offsetHeight;
+
+                currentBlock.style.left = newX + 'px';
+                currentBlock.style.top = newY + 'px';
+                
+                // 💡 드래그 중에도 실시간으로 양변을 평가하여 이펙트 발동
+                updateExpressionAndGlow();
+            }
+        }
+
+        document.addEventListener('mousemove', dragMove);
+        document.addEventListener('touchmove', dragMove, {passive: false});
+
+        function dragEnd() {
+            if (isDragging && currentBlock) {
+                isDragging = false;
+                currentBlock = null;
+                updateExpressionAndGlow();
+            }
+        }
+
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
+
+        window.clearWorkspace = function() {
+            document.querySelectorAll('.block').forEach(b => b.remove());
+            updateExpressionAndGlow();
+        }
+    </script>
+</body>
+</html>
