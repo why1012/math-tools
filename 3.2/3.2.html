@@ -154,7 +154,6 @@
         const engine = Engine.create();
         const container = document.getElementById('game-container');
         
-        // 💡 16:9 캔버스 베이스 면적 고정 수치 선언
         const width = 1200;
         const height = 675;
 
@@ -175,16 +174,15 @@
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
             
-            // iframe 임베딩 시 부모 패널 비율 보정 연산
             const scaleX = windowWidth / width;
             const scaleY = windowHeight / height;
-            const scale = Math.min(scaleX, scaleY, 1); // 1배수 이상으로 커지는 것은 방지
+            const scale = Math.min(scaleX, scaleY, 1);
             
             container.style.transform = `scale(${scale})`;
         }
         window.addEventListener('resize', resizeGame);
         window.addEventListener('DOMContentLoaded', resizeGame);
-        setTimeout(resizeGame, 200); // 아이패드 렌더링 딜레이 보정 방어코드
+        setTimeout(resizeGame, 200);
 
         const stadiumImg = new Image(); stadiumImg.src = './stadium_bg.png';
         const floorImg = new Image(); floorImg.src = './court_floor.png';
@@ -364,21 +362,34 @@
                 ctx.shadowBlur = timeLeft <= 10 ? 12 : 4;
                 ctx.fillText(timeLeft, width / 2 - 85, sbY + 75);
 
+                // 💡 [수정 영역] 로마자 x 및 결합형 점수판 시스템
                 ctx.shadowBlur = 0;
                 ctx.font = '800 13px "Pretendard", sans-serif';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('SCORE', width / 2 + 85, sbY + 22);
+                ctx.fillText('SCORE', width / 2 + 85, sbY + 24); 
                 
-                ctx.font = 'normal 900 22px "Times New Roman", Times, serif';
-                ctx.fillStyle = '#facc15';
-                ctx.fillText('x', width / 2 + 85, sbY + 44);
-
-                ctx.font = '900 42px "Pretendard", sans-serif';
-                ctx.fillStyle = '#38bdf8';
+                ctx.save();
                 ctx.shadowColor = '#38bdf8';
-                ctx.shadowBlur = 8;
-                ctx.fillText(x_score, width / 2 + 85, sbY + 84);
+                ctx.shadowBlur = 10;
                 
+                // 1. 수학 변수 로마자 "x"를 정통 이탤릭 서체로 출력
+                ctx.font = 'italic 900 44px "Times New Roman", Times, serif';
+                ctx.fillStyle = '#facc15'; 
+                ctx.textAlign = 'right';
+                ctx.fillText('x', width / 2 + 70, sbY + 82);
+                
+                // 2. 등호 기호 " =" 출력
+                ctx.font = '900 38px "Pretendard", sans-serif';
+                ctx.fillStyle = '#e2e8f0';
+                ctx.textAlign = 'left';
+                ctx.fillText(' = ', width / 2 + 70, sbY + 80);
+                
+                // 3. 변수 대입 개수 출력
+                ctx.font = '900 44px "Pretendard", sans-serif';
+                ctx.fillStyle = '#38bdf8'; 
+                ctx.fillText(x_score, width / 2 + 120, sbY + 82);
+                
+                ctx.restore();
                 ctx.restore();
             } else {
                 ctx.fillStyle = '#0b111a';
@@ -434,7 +445,6 @@
             ctx.fillStyle = '#ea580c';
             ctx.fillRect(rimBackX - 4, hoopY - 2, 8, 8);
             
-            // 💡 세련되게 수정된 3D 그물망 호출
             drawNet(ctx, hoopX - 15, hoopY + 4);
 
             ctx.lineCap = 'round';
@@ -448,7 +458,7 @@
             ctx.restore();
         }
 
-        // 💡 리얼 베지어 체인 메시 링 그물 그래픽 엔진 전면 업그레이드
+        // 💡 리얼 베지어 체인 메시 링 그물 그래픽 엔진 업그레이드
         function drawNet(ctx, cx, cy) {
             ctx.save();
             ctx.lineWidth = 2.5;
@@ -458,7 +468,6 @@
             const segments = 6;
             const step = nWidth / segments;
 
-            // 1단계: 반투명 화이트 실크 그물 그림자 레이어 추가
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
             for (let j = 1; j <= 4; j++) {
                 const ratio = j / 4;
@@ -469,7 +478,6 @@
                 ctx.stroke();
             }
 
-            // 2단계: 프리미엄 다이아몬드 교차 체인 드로잉
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
             const topY = cy;
             const midY1 = cy + drop * 0.3;
@@ -509,7 +517,6 @@
                 ctx.stroke();
             }
 
-            // 3단계: 림 결속 매듭 고리(Loop) 마감 처리
             ctx.fillStyle = 'rgba(235, 245, 255, 0.95)';
             for (let i = 0; i <= segments; i++) {
                 const x = getX(i, segments, 0);
