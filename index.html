@@ -10,37 +10,32 @@
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Pretendard', sans-serif;}
         #wrapper { display: flex; width: 100vw; height: 100vh; }
         
-        /* 사이드바 기본 디자인 */
         #sidebar { width: var(--sidebar-width); background: var(--secondary-color); color: white; transition: 0.3s; position: relative; flex-shrink: 0; overflow-y: auto; }
         #sidebar.collapsed { margin-left: -260px; }
         
-        /* 접기 버튼 */
         #toggle-btn { position: absolute; right: -40px; top: 10px; width: 40px; height: 40px; background: var(--secondary-color); color: white; border: none; cursor: pointer; border-radius: 0 5px 5px 0; z-index: 10; }
         
-        /* 📂 단원 폴더(대메뉴) 디자인 */
         .folder-title { 
             padding: 15px 20px; font-size: 16px; font-weight: 900; background: #34495e; 
             cursor: pointer; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid rgba(255,255,255,0.05); user-select: none;
         }
         .folder-title:hover { background: #415b76; }
+        .folder-title::after { content: '▼'; font-size: 11px; color: #bdc3c7; transition: 0.3s; }
         
-        /* 💡 화살표 아이콘 상태 수정 */
-        .folder-title::after { content: '▼'; font-size: 11px; color: #bdc3c7; }
+        /* 💡 기본적으로 접혀있는 상태의 화살표 */
         .folder-title.collapsed::after { content: '▶'; }
 
-        /* 📄 폴더 내부 서브 메뉴 컨테이너 */
         .folder-content { 
             max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; background: #1f2c39;
         }
+        /* 💡 기본적으로 메뉴가 숨겨져 있도록 설정 */
         .folder-content.hidden { max-height: 0 !important; }
 
-        /* 개별 수학 도구 아이템 */
         .menu-item { padding: 15px 20px 15px 35px; cursor: pointer; font-weight: bold; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.02); }
         .menu-item:hover { background: #2c3e50; }
         .menu-item.active { background: #1a252f; color: #4da6ff; }
         
-        /* 메인 영역 */
         #main-content { flex-grow: 1; background: #080d14; position: relative; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         iframe.active { display: block; }
@@ -53,21 +48,21 @@
         <h2 style="text-align:center; margin: 20px 0; font-size: 20px;">수학 탐구 도구함</h2>
         <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
         
-        <div class="folder-title" onclick="toggleFolder('folder1', this)">📁 1단원. 수와 연산</div>
-        <div id="folder1" class="folder-content">
+        <div class="folder-title collapsed" onclick="toggleFolder('folder1', this)">📁 1단원. 수와 연산</div>
+        <div id="folder1" class="folder-content hidden">
             <div class="menu-item active" onclick="switchTool('sieve-frame', this)">✔️ 에라토스테네스의 체</div>
         </div>
 
-        <div class="folder-title" onclick="toggleFolder('folder2', this)">📁 2단원. 문자와 식 (정수와 유리수)</div>
-        <div id="folder2" class="folder-content">
+        <div class="folder-title collapsed" onclick="toggleFolder('folder2', this)">📁 2단원. 정수와 유리수</div>
+        <div id="folder2" class="folder-content hidden">
             <div class="menu-item" onclick="switchTool('semdol-frame', this)">🔘 셈돌 상쇄</div>
             <div class="menu-item" onclick="switchTool('rail-frame', this)">🛤️ 레일바이크</div>
             <div class="menu-item" onclick="switchTool('times-frame', this)">✖️ 곱셈의 계산법칙</div>
             <div class="menu-item" onclick="switchTool('tumble-frame', this)">🤸‍♂️ 역수 텀블링</div>
         </div>
 
-        <div class="folder-title" onclick="toggleFolder('folder3', this)">📁 3단원. 문자와 식 마스터</div>
-        <div id="folder3" class="folder-content">
+        <div class="folder-title collapsed" onclick="toggleFolder('folder3', this)">📁 3단원. 문자와 식</div>
+        <div id="folder3" class="folder-content hidden">
             <div class="menu-item" onclick="switchTool('xyz-frame', this)">✨ 문자와 식 마스터</div>
             <div class="menu-item" onclick="switchTool('new-folder-frame', this)">🏀 3점슛 챌린지</div>
             <div class="menu-item" onclick="switchTool('block-frame', this)">🧱 대수블록 실험실</div>
@@ -92,7 +87,7 @@
     function toggleFolder(id, el) {
         const content = document.getElementById(id);
         content.classList.toggle('hidden');
-        el.classList.toggle('collapsed'); // 💡 화살표 방향 전환을 위한 클래스 토글 구조 수정
+        el.classList.toggle('collapsed');
     }
 
     function switchTool(id, el) {
