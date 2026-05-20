@@ -8,13 +8,33 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; touch-action: none; background-color: #0b111a; }
-        canvas { display: block; width: 100% !important; height: 100% !important; position: absolute; top: 0; left: 0; z-index: 1; }
+        /* 💡 기본 배경을 세련된 단색 어두운 네이비로 고정 */
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif; touch-action: none; 
+            background-color: #080d14; 
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* 💡 게임판을 감싸는 고정 비율(16:9)의 액자형 컨테이너 */
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;  /* 패드 해상도를 고려한 최대 가로폭 */
+            max-height: 675px;  /* 16:9 비율 유지 */
+            background-color: #0b111a;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+            overflow: hidden;
+        }
         
-        /* 💡 글래스모피즘 UI 패널 */
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* 💡 UI 레이아웃이 액자 안에서만 고정되도록 절대 좌표 수정 */
         #game-ui { 
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 5; 
-            background: rgba(10, 15, 26, 0.75); 
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 5; 
+            background: rgba(10, 15, 26, 0.8); 
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             padding: 12px 18px; border-radius: 24px; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.15); 
@@ -47,87 +67,90 @@
         .power-bar-bg { width: 100%; height: 8px; background-color: rgba(0,0,0,0.5); border-radius: 4px; overflow: hidden; margin-top: 4px; }
         .power-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b, #ef4444); transition: width 0.05s linear; }
         
-        /* 💡 퀴즈 UI 디자인 */
-        .overlay { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         #quiz-overlay { display: none; }
         
-        .box-panel { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 24px; text-align: center; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
-        .box-panel h2 { margin-top: 0; color: #1565c0; font-size: 30px; font-weight: 900; }
-        .box-panel p { font-size: 19px; line-height: 1.6; color: #2c3e50; }
+        .box-panel { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 24px; text-align: center; max-width: 450px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .box-panel h2 { margin-top: 0; color: #1565c0; font-size: 28px; font-weight: 900; }
+        .box-panel p { font-size: 17px; line-height: 1.6; color: #2c3e50; }
         .box-panel button { 
-            padding: 16px 30px; font-size: 19px; margin: 12px 0; cursor: pointer; border: none; border-radius: 12px; 
+            padding: 14px 24px; font-size: 18px; margin: 10px 0; cursor: pointer; border: none; border-radius: 12px; 
             background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; display: block; width: 100%; 
             font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 0 #2c7230; 
         }
         .box-panel button:active { transform: translateY(2px); box-shadow: 0 2px 0 #2c7230; }
-        .box-panel input { padding: 12px; font-size: 24px; width: 100px; text-align: center; border: 3px solid #b0bec5; border-radius: 12px; color: #1565c0; font-weight: 900; background: white; }
+        .box-panel input { padding: 10px; font-size: 22px; width: 90px; text-align: center; border: 3px solid #b0bec5; border-radius: 12px; color: #1565c0; font-weight: 900; background: white; }
     </style>
 </head>
 <body>
 
-    <div id="start-overlay" class="overlay">
-        <div class="box-panel">
-            <h2 style="font-size: 34px; color: #d84315;">🏀 60초 타임어택 3점 슛!</h2>
-            <p>제한 시간 <strong>60초</strong> 동안 최대한 많은 골을 넣으세요.<br>화살표가 원하는 방향에 왔을 때 버튼을 눌러 각도를 고정하고, 힘을 모아 공을 던집니다!</p>
-            <button onclick="startGame()" style="background: linear-gradient(135deg, #ff5722 0%, #d84315 100%); font-size: 22px; box-shadow: 0 4px 0 #ac2600;">게임 시작!</button>
-        </div>
-    </div>
+    <div id="game-container">
 
-    <div id="game-ui">
-        <div style="display:none;">
-            <span id="time-left">60초</span>
-            <span id="score">0개</span>
-        </div>
-        <div class="control-group">
-            <button id="btn-fix-angle" onclick="fixAngle()">🎯 조준선 멈추기</button>
-            <button id="btn-throw" disabled>🏀 누르고 있으면 힘이 모입니다!</button>
-        </div>
-        <div class="control-group">
-            <div style="font-size: 13px; font-weight: 700; color: #94a3b8; padding-left: 4px;">POWER GAUGE</div>
-            <div class="power-bar-bg">
-                <div class="power-bar-fill" id="power-fill"></div>
+        <div id="start-overlay" class="overlay">
+            <div class="box-panel">
+                <h2 style="font-size: 30px; color: #d84315;">🏀 60초 타임어택 3점 슛!</h2>
+                <p>제한 시간 <strong>60초</strong> 동안 최대한 많은 골을 넣으세요.<br>화살표가 원하는 방향에 왔을 때 버튼을 눌러 각도를 고정하고, 힘을 모아 공을 던집니다!</p>
+                <button onclick="startGame()" style="background: linear-gradient(135deg, #ff5722 0%, #d84315 100%); font-size: 20px; box-shadow: 0 4px 0 #ac2600;">게임 시작!</button>
             </div>
         </div>
-    </div>
 
-    <div id="quiz-overlay" class="overlay">
-        <div id="quiz-step-1" class="box-panel">
-            <h2>⏱️ 경기 종료!</h2>
-            <p>우리가 방금 센 <strong style="color:#1976d2; font-size: 24px;">x</strong>는 무엇을 의미할까요?</p>
-            <button onclick="checkQuiz1(1)">1. 내가 던진 총 횟수</button>
-            <button onclick="checkQuiz1(2)">2. 60초 동안 성공한 3점 슛의 개수</button>
-            <button onclick="checkQuiz1(3)">3. 골대에 맞고 튕겨나온 횟수</button>
-            <p id="quiz1-feedback" style="color:#d32f2f; font-weight:bold;"></p>
-        </div>
-
-        <div id="quiz-step-2" class="box-panel" style="display:none;">
-            <h2>🎯 대입하여 식의 값 구하기</h2>
-            <div style="font-size: 40px; font-weight: 900; margin: 20px 0; color: #1565c0; letter-spacing: 2px; text-shadow: 2px 2px 0 rgba(0,0,0,0.1);">
-                3x = ?
+        <div id="game-ui">
+            <div style="display:none;">
+                <span id="time-left">60초</span>
+                <span id="score">0개</span>
             </div>
-            <p>여러분이 이번 판에 성공한 슛의 개수를 떠올리며<br>아래 문자 <strong>x</strong>의 값을 직접 맞추어 조절해보세요!</p>
-            
-            <div style="font-size: 26px; margin: 25px 0; font-weight:bold; color: #455a64;">
-                x = <input type="number" id="param-x-input" min="0" max="100" value="0">
+            <div class="control-group">
+                <button id="btn-fix-angle" onclick="fixAngle()">🎯 조준선 멈추기</button>
+                <button id="btn-throw" disabled>🏀 누르고 있으면 힘이 모입니다!</button>
             </div>
-            <button id="btn-confirm-x" onclick="confirmX()" style="background: #0288d1; box-shadow: 0 4px 0 #01579b;">확인</button>
-            
-            <div id="final-answer-box" style="display:none; margin-top: 30px; border-top: 2px dashed #b0bec5; padding-top: 25px;">
-                <p>문자 x 자리에 <strong id="selected-x" style="color:#1976d2; font-size:22px;"></strong>를 <strong style="color:#d32f2f;">대입</strong>하여 계산한 최종 점수는 몇 점일까요?</p>
-                <div style="font-size: 30px; margin: 20px 0; font-weight: bold; color: #263238;">
-                    3 × <span id="substituted-x" style="color:#1976d2;"></span> = <input type="number" id="final-score-input" placeholder="?">
+            <div class="control-group">
+                <div style="font-size: 12px; font-weight: 700; color: #94a3b8; padding-left: 4px;">POWER GAUGE</div>
+                <div class="power-bar-bg">
+                    <div class="power-bar-fill" id="power-fill"></div>
                 </div>
-                <button onclick="checkQuiz2()" style="background: #f57c00; box-shadow: 0 4px 0 #c46400;">정답 확인</button>
             </div>
-            <p id="quiz2-feedback" style="color:#d32f2f; font-weight:bold; margin-top: 15px;"></p>
         </div>
 
-        <div id="quiz-step-3" class="box-panel" style="display:none;">
-            <h2>🎉 완벽하게 이해했네요!</h2>
-            <p>방금처럼 문자에 숫자를 쏙 집어넣는 것을 <strong>'대입'</strong>이라고 부르고,<br>
-               계산해서 나온 결과를 <strong>'식의 값'</strong>이라고 합니다.</p>
-            <button onclick="location.reload()" style="background: #0288d1; margin-top: 20px; box-shadow: 0 4px 0 #01579b;">다시 도전하기</button>
+        <div id="quiz-overlay" class="overlay">
+            <div id="quiz-step-1" class="box-panel">
+                <h2>⏱️ 경기 종료!</h2>
+                <p>우리가 방금 센 <strong style="color:#1976d2; font-size: 24px;">x</strong>는 무엇을 의미할까요?</p>
+                <button onclick="checkQuiz1(1)">1. 내가 던진 총 횟수</button>
+                <button onclick="checkQuiz1(2)">2. 60초 동안 성공한 3점 슛의 개수</button>
+                <button onclick="checkQuiz1(3)">3. 골대에 맞고 튕겨나온 횟수</button>
+                <p id="quiz1-feedback" style="color:#d32f2f; font-weight:bold;"></p>
+            </div>
+
+            <div id="quiz-step-2" class="box-panel" style="display:none;">
+                <h2>🎯 대입하여 식의 값 구하기</h2>
+                <div style="font-size: 40px; font-weight: 900; margin: 20px 0; color: #1565c0; letter-spacing: 2px; text-shadow: 2px 2px 0 rgba(0,0,0,0.1);">
+                    3x = ?
+                </div>
+                <p>여러분이 이번 판에 성공한 슛의 개수를 떠올리며<br>아래 문자 <strong>x</strong>의 값을 직접 맞추어 조절해보세요!</p>
+                
+                <div style="font-size: 26px; margin: 25px 0; font-weight:bold; color: #455a64;">
+                    x = <input type="number" id="param-x-input" min="0" max="100" value="0">
+                </div>
+                <button id="btn-confirm-x" onclick="confirmX()" style="background: #0288d1; box-shadow: 0 4px 0 #01579b;">확인</button>
+                
+                <div id="final-answer-box" style="display:none; margin-top: 30px; border-top: 2px dashed #b0bec5; padding-top: 25px;">
+                    <p>문자 x 자리에 <strong id="selected-x" style="color:#1976d2; font-size:22px;"></strong>를 <strong style="color:#d32f2f;">대입</strong>하여 계산한 최종 점수는 몇 점일까요?</p>
+                    <div style="font-size: 30px; margin: 20px 0; font-weight: bold; color: #263238;">
+                        3 × <span id="substituted-x" style="color:#1976d2;"></span> = <input type="number" id="final-score-input" placeholder="?">
+                    </div>
+                    <button onclick="checkQuiz2()" style="background: #f57c00; box-shadow: 0 4px 0 #c46400;">정답 확인</button>
+                </div>
+                <p id="quiz2-feedback" style="color:#d32f2f; font-weight:bold; margin-top: 15px;"></p>
+            </div>
+
+            <div id="quiz-step-3" class="box-panel" style="display:none;">
+                <h2>🎉 완벽하게 이해했네요!</h2>
+                <p>방금처럼 문자에 숫자를 쏙 집어넣는 것을 <strong>'대입'</strong>이라고 부르고,<br>
+                   계산해서 나온 결과를 <strong>'식의 값'</strong>이라고 합니다.</p>
+                <button onclick="location.reload()" style="background: #0288d1; margin-top: 20px; box-shadow: 0 4px 0 #01579b;">다시 도전하기</button>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -135,24 +158,23 @@
 
         const engine = Engine.create();
         
-        // 💡 패드 및 모바일 기기를 고려한 화면 정밀 크기 추출
-        const width = window.innerWidth || document.documentElement.clientWidth || 800;
-        const height = window.innerHeight || document.documentElement.clientHeight || 600;
+        // 💡 액자 크기를 추적하여 물리 좌표계 고정
+        const container = document.getElementById('game-container');
+        const width = container.clientWidth || 1000;
+        const height = container.clientHeight || 562;
 
         const render = Render.create({
-            element: document.body,
+            element: container, // 💡 body가 아닌 game-container 내부에 가둠
             engine: engine,
             options: {
                 width: width,
                 height: height,
                 wireframes: false,
                 background: 'transparent',
-                // 💡 고해상도 패드 기기에서 화면이 줌인되어 깨지는 버그 차단
                 pixelRatio: window.devicePixelRatio || 1 
             }
         });
 
-        // 💡 그래픽 에셋 선언 및 로드
         const stadiumImg = new Image(); stadiumImg.src = './stadium_bg.png';
         const floorImg = new Image(); floorImg.src = './court_floor.png';
         const ballImg = new Image(); ballImg.src = './basketball.png';
@@ -179,33 +201,33 @@
         let power = 0;
         let pressInterval = null;
 
-        // 💡 화면 종횡비에 연동되는 동적 물리 시스템 적용
-        const anchorX = width * 0.15 < 120 ? 120 : width * 0.15; 
-        const anchorY = height - 250; 
+        // 액자형 고정 스케일에 맞춘 좌표 밸런싱
+        const anchorX = 140; 
+        const anchorY = height - 120; 
         let ball;
 
-        const leftWidth = anchorX * 2.2;
-        const leftGround = Bodies.rectangle(leftWidth/2, height - 20, leftWidth, 40, { isStatic: true, render: { visible: false } });
+        const leftWidth = 320;
+        const leftGround = Bodies.rectangle(leftWidth/2, height - 10, leftWidth, 20, { isStatic: true, render: { visible: false } });
         
-        const hoopX = width - (width * 0.22 < 200 ? 200 : width * 0.22); 
-        const rightWidth = width - (hoopX - 200);
-        const rightGround = Bodies.rectangle((hoopX - 200) + rightWidth/2, height - 20, rightWidth, 40, { isStatic: true, render: { visible: false } });
+        const hoopX = width - 160; 
+        const rightWidth = width - (hoopX - 150);
+        const rightGround = Bodies.rectangle((hoopX - 150) + rightWidth/2, height - 10, rightWidth, 20, { isStatic: true, render: { visible: false } });
         
-        const hoopY = height - (height * 0.55 < 350 ? 350 : height * 0.55); 
-        const backboard = Bodies.rectangle(hoopX + 75, hoopY - 50, 20, 160, { isStatic: true, render: { visible: false } });
+        const hoopY = height - 260; 
+        const backboard = Bodies.rectangle(hoopX + 65, hoopY - 40, 15, 130, { isStatic: true, render: { visible: false } });
         
-        const rimBack = Bodies.rectangle(hoopX + 45, hoopY, 10, 10, { isStatic: true, render: { visible: false } }); 
-        const rimFront = Bodies.rectangle(hoopX - 85, hoopY, 10, 10, { isStatic: true, render: { visible: false } }); 
+        const rimBack = Bodies.rectangle(hoopX + 35, hoopY, 8, 8, { isStatic: true, render: { visible: false } }); 
+        const rimFront = Bodies.rectangle(hoopX - 65, hoopY, 8, 8, { isStatic: true, render: { visible: false } }); 
         
-        const blackWall = Bodies.rectangle(hoopX - 20, hoopY + 15, 90, 5, { isStatic: true, isSensor: true, render: { visible: false } });
-        const redSensor = Bodies.rectangle(hoopX - 20, hoopY + 20, 90, 10, { isStatic: true, isSensor: true, render: { visible: false } });
+        const blackWall = Bodies.rectangle(hoopX - 15, hoopY + 12, 70, 4, { isStatic: true, isSensor: true, render: { visible: false } });
+        const redSensor = Bodies.rectangle(hoopX - 15, hoopY + 16, 70, 8, { isStatic: true, isSensor: true, render: { visible: false } });
 
         World.add(engine.world, [leftGround, rightGround, backboard, rimBack, rimFront, blackWall, redSensor]);
 
         function createBall() {
-            ball = Bodies.circle(anchorX, anchorY, 20, { 
+            ball = Bodies.circle(anchorX, anchorY, 16, { 
                 restitution: 0.7, 
-                density: 0.005, 
+                density: 0.006, 
                 render: { visible: false }
             });
             World.add(engine.world, ball);
@@ -242,7 +264,7 @@
             }
 
             if (ballActive) {
-                if (ball.velocity.y < 0 && (ball.position.y - 20) > (blackWall.position.y + 2.5)) {
+                if (ball.velocity.y < 0 && (ball.position.y - 16) > (blackWall.position.y + 2)) {
                     blackWall.isSensor = false; 
                 } else {
                     blackWall.isSensor = true; 
@@ -272,7 +294,7 @@
 
             if (gameStarted && !isShooting) {
                 const angleRad = -angleDeg * (Math.PI / 180);
-                const arrowLength = 100;
+                const arrowLength = 80;
                 const endX = ball.position.x + Math.cos(angleRad) * arrowLength;
                 const endY = ball.position.y + Math.sin(angleRad) * arrowLength;
 
@@ -281,13 +303,13 @@
                 ctx.lineTo(endX, endY);
                 ctx.strokeStyle = isAngleFixed ? 'rgba(255, 87, 34, 0.9)' : 'rgba(255, 255, 255, 0.6)';
                 ctx.lineWidth = isAngleFixed ? 5 : 3;
-                ctx.setLineDash(isAngleFixed ? [] : [10, 10]);
+                ctx.setLineDash(isAngleFixed ? [] : [8, 8]);
                 ctx.stroke();
                 ctx.setLineDash([]);
                 
                 if(isAngleFixed){
                     ctx.beginPath();
-                    ctx.arc(endX, endY, 6, 0, 2 * Math.PI);
+                    ctx.arc(endX, endY, 5, 0, 2 * Math.PI);
                     ctx.fillStyle = '#ff5722';
                     ctx.fill();
                 }
@@ -302,50 +324,50 @@
                 ctx.drawImage(stadiumImg, 0, 0, width, height);
                 
                 ctx.save();
-                const sbWidth = 360;
-                const sbHeight = 110;
+                const sbWidth = 340;
+                const sbHeight = 100;
                 const sbX = width / 2 - sbWidth / 2;
-                const sbY = 35;
+                const sbY = 20;
 
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.roundRect(sbX, sbY, sbWidth, sbHeight, 20);
+                ctx.roundRect(sbX, sbY, sbWidth, sbHeight, 16);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 ctx.beginPath();
-                ctx.moveTo(width / 2, sbY + 20);
-                ctx.lineTo(width / 2, sbY + sbHeight - 20);
+                ctx.moveTo(width / 2, sbY + 15);
+                ctx.lineTo(width / 2, sbY + sbHeight - 15);
                 ctx.stroke();
 
                 ctx.textAlign = 'center';
-                ctx.font = '800 14px "Pretendard", sans-serif';
+                ctx.font = '800 13px "Pretendard", sans-serif';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('COUNTDOWN', width / 2 - 90, sbY + 32);
+                ctx.fillText('COUNTDOWN', width / 2 - 85, sbY + 28);
                 
-                ctx.font = '900 48px "Pretendard", sans-serif';
+                ctx.font = '900 42px "Pretendard", sans-serif';
                 ctx.fillStyle = timeLeft <= 10 ? '#ef4444' : '#f97316';
                 ctx.shadowColor = timeLeft <= 10 ? '#ef4444' : '#f97316';
-                ctx.shadowBlur = timeLeft <= 10 ? 15 : 5;
-                ctx.fillText(timeLeft, width / 2 - 90, sbY + 82);
+                ctx.shadowBlur = timeLeft <= 10 ? 12 : 4;
+                ctx.fillText(timeLeft, width / 2 - 85, sbY + 75);
 
                 ctx.shadowBlur = 0;
-                ctx.font = '800 14px "Pretendard", sans-serif';
+                ctx.font = '800 13px "Pretendard", sans-serif';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('SCORE', width / 2 + 90, sbY + 24);
+                ctx.fillText('SCORE', width / 2 + 85, sbY + 22);
                 
-                ctx.font = 'normal 900 24px "Times New Roman", Times, serif';
+                ctx.font = 'normal 900 22px "Times New Roman", Times, serif';
                 ctx.fillStyle = '#facc15';
-                ctx.fillText('x', width / 2 + 90, sbY + 48);
+                ctx.fillText('x', width / 2 + 85, sbY + 44);
 
-                ctx.font = '900 48px "Pretendard", sans-serif';
+                ctx.font = '900 42px "Pretendard", sans-serif';
                 ctx.fillStyle = '#38bdf8';
                 ctx.shadowColor = '#38bdf8';
-                ctx.shadowBlur = 10;
-                ctx.fillText(x_score, width / 2 + 90, sbY + 92);
+                ctx.shadowBlur = 8;
+                ctx.fillText(x_score, width / 2 + 85, sbY + 84);
                 
                 ctx.restore();
             } else {
@@ -355,71 +377,61 @@
         }
 
         function draw3DCourtFloor(ctx) {
-            const floorY = height - 40;
+            const floorY = height - 20;
             if (floorImg.complete && floorImg.naturalWidth > 0) {
-                const shiftX = -70; 
-                const drawWidth = Math.max(width - shiftX, 1500);
-                ctx.drawImage(floorImg, shiftX, floorY, drawWidth, 40);
-                
+                ctx.drawImage(floorImg, 0, floorY, width, 20);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-                ctx.fillRect(anchorX - 3, floorY, 6, 40);
+                ctx.fillRect(anchorX - 2, floorY, 4, 20);
             } else {
                 ctx.fillStyle = '#dca46a';
-                ctx.fillRect(0, floorY, width, 40);
+                ctx.fillRect(0, floorY, width, 20);
             }
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.fillRect(0, floorY, width, 4);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(0, floorY, width, 2);
         }
 
         function draw3DHoopAssets(ctx) {
-            const backboardX = hoopX + 75;
-            const backboardY = hoopY - 130;
-            const rimFrontX = hoopX - 85;
-            const rimBackX = hoopX + 45;
+            const backboardX = hoopX + 65;
+            const backboardY = hoopY - 110;
+            const rimFrontX = hoopX - 65;
+            const rimBackX = hoopX + 35;
             
             ctx.save();
             ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 14;
+            ctx.lineWidth = 10;
             ctx.beginPath();
-            ctx.moveTo(backboardX + 20, backboardY + 80);
-            ctx.lineTo(width + 50, backboardY + 140);
+            ctx.moveTo(backboardX + 15, backboardY + 60);
+            ctx.lineTo(width + 30, backboardY + 110);
             ctx.stroke();
 
             ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.roundRect(backboardX, backboardY, 20, 160, 4);
+            ctx.roundRect(backboardX, backboardY, 15, 130, 4);
             ctx.fill();
             ctx.stroke();
             
             ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.roundRect(backboardX - 4, hoopY - 40, 4, 50, 2);
+            ctx.roundRect(backboardX - 3, hoopY - 30, 3, 40, 2);
             ctx.stroke();
 
             ctx.fillStyle = '#c2410c';
-            ctx.fillRect(rimBackX, hoopY - 2, backboardX - rimBackX, 8);
+            ctx.fillRect(rimBackX, hoopY - 2, backboardX - rimBackX, 6);
 
             ctx.fillStyle = '#ea580c';
-            ctx.fillRect(rimBackX - 5, hoopY - 3, 10, 10);
+            ctx.fillRect(rimBackX - 4, hoopY - 2, 8, 8);
             
-            drawNet(ctx, hoopX - 20, hoopY + 4);
+            drawNet(ctx, hoopX - 15, hoopY + 3);
 
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#f97316';
-            ctx.lineWidth = 8;
+            ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.moveTo(rimFrontX, hoopY);
             ctx.lineTo(rimBackX, hoopY);
-            ctx.stroke();
-            
-            ctx.strokeStyle = '#c2410c';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(rimFrontX + 2, hoopY + 2);
-            ctx.lineTo(rimBackX - 2, hoopY + 2);
             ctx.stroke();
 
             ctx.restore();
@@ -427,26 +439,25 @@
 
         function drawNet(ctx, cx, cy) {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             
-            const nWidth = 120;
+            const nWidth = 100;
             const segments = 6;
             const step = nWidth / segments;
-            const drop = 90;
+            const drop = 70;
             
             for(let i=0; i<=segments; i++) {
                 const x = (cx - nWidth/2) + i * step;
-                const endX = (cx - nWidth/2 + 20) + i * ((nWidth-40)/segments);
+                const endX = (cx - nWidth/2 + 15) + i * ((nWidth-30)/segments);
                 ctx.moveTo(x, cy);
                 ctx.lineTo(endX, cy + drop);
             }
             
             for(let j=1; j<=3; j++) {
                 const y = cy + (drop/4) * j;
-                const shrinkX = j * 6;
+                const shrinkX = j * 5;
                 ctx.moveTo(cx - nWidth/2 + shrinkX, y);
-                // 💡 문법 오류 완벽 수정 완료 (cx 뒤에 빼기 기호 반영)
                 ctx.lineTo(cx - nWidth/2 - shrinkX, y); 
             }
             ctx.stroke();
@@ -457,16 +468,16 @@
             ctx.translate(b.position.x, b.position.y);
             ctx.rotate(b.angle);
 
-            const r = 20;
-            const ballGrad = ctx.createRadialGradient(-6, -6, 0, 0, 0, r);
+            const r = 16;
+            const ballGrad = ctx.createRadialGradient(-5, -5, 0, 0, 0, r);
             ballGrad.addColorStop(0, '#fdba74');
             ballGrad.addColorStop(0.4, '#f97316');
             ballGrad.addColorStop(1, '#c2410c');
             
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetX = 4;
-            ctx.shadowOffsetY = 10;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 6;
 
             ctx.beginPath();
             ctx.arc(0, 0, r, 0, 2 * Math.PI);
@@ -475,7 +486,7 @@
 
             ctx.shadowColor = 'transparent';
             ctx.strokeStyle = '#431407';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 1.2;
             
             ctx.beginPath(); 
             ctx.moveTo(-r, 0); ctx.lineTo(r, 0); 
@@ -486,11 +497,11 @@
             ctx.stroke();
             
             ctx.beginPath(); 
-            ctx.arc(14, 0, 14, Math.PI/2 + 0.3, 3*Math.PI/2 - 0.3); 
+            ctx.arc(11, 0, 11, Math.PI/2 + 0.3, 3*Math.PI/2 - 0.3); 
             ctx.stroke();
             
             ctx.beginPath(); 
-            ctx.arc(-14, 0, 14, -Math.PI/2 + 0.3, Math.PI/2 - 0.3); 
+            ctx.arc(-11, 0, 11, -Math.PI/2 + 0.3, Math.PI/2 - 0.3); 
             ctx.stroke();
 
             ctx.restore();
@@ -564,7 +575,7 @@
             btnThrow.disabled = true;
 
             const angleRad = -angleDeg * (Math.PI / 180);
-            const forceMagnitude = (power / 100) * 0.8; 
+            const forceMagnitude = (power / 100) * 0.55; // 스케일 다운에 맞춘 가속 힘 밸런스 조정
             
             Body.applyForce(ball, ball.position, {
                 x: Math.cos(angleRad) * forceMagnitude,
