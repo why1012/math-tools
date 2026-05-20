@@ -2,19 +2,41 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>중등 수학 통합 시뮬레이터</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
-        :root { --sidebar-width: 260px; --secondary-color: #2c3e50; }
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Pretendard', sans-serif;}
-        #wrapper { display: flex; width: 100vw; height: 100vh; }
+        :root { --sidebar-width: 260px; --secondary-color: #2c3e50; --topbar-height: 54px; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Pretendard', sans-serif; background: #080d14; }
         
-        #sidebar { width: var(--sidebar-width); background: var(--secondary-color); color: white; transition: 0.3s; position: relative; flex-shrink: 0; overflow-y: auto; }
+        /* 전체 레이아웃 */
+        #wrapper { display: flex; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* 사이드바 */
+        #sidebar { 
+            width: var(--sidebar-width); background: var(--secondary-color); color: white; 
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; overflow-y: auto; z-index: 100;
+        }
         #sidebar.collapsed { margin-left: -260px; }
         
-        #toggle-btn { position: absolute; right: -40px; top: 10px; width: 40px; height: 40px; background: var(--secondary-color); color: white; border: none; cursor: pointer; border-radius: 0 5px 5px 0; z-index: 10; }
-        
+        /* 💡 메인 영역 (탑바 + 게임창) - 사이드바에 맞춰 유연하게 크기 조절 */
+        #main-wrapper { 
+            flex: 1; min-width: 0; display: flex; flex-direction: column; transition: 0.3s ease; 
+        }
+
+        /* 💡 탑바 및 토글 버튼 (버튼을 오른쪽으로 완전히 분리) */
+        #top-bar {
+            height: var(--topbar-height); background: #1f2c39; display: flex; align-items: center; 
+            padding: 0 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 10;
+        }
+        #toggle-btn {
+            background: #34495e; color: white; border: none; padding: 8px 14px; 
+            cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        #toggle-btn:hover { background: #415b76; }
+
+        /* 폴더 및 메뉴 디자인 */
         .folder-title { 
             padding: 15px 20px; font-size: 16px; font-weight: 900; background: #34495e; 
             cursor: pointer; display: flex; justify-content: space-between; align-items: center;
@@ -22,31 +44,31 @@
         }
         .folder-title:hover { background: #415b76; }
         .folder-title::after { content: '▼'; font-size: 11px; color: #bdc3c7; transition: 0.3s; }
-        
-        /* 💡 기본적으로 접혀있는 상태의 화살표 */
         .folder-title.collapsed::after { content: '▶'; }
 
-        .folder-content { 
-            max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; background: #1f2c39;
-        }
-        /* 💡 기본적으로 메뉴가 숨겨져 있도록 설정 */
+        .folder-content { max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; background: #1f2c39; }
         .folder-content.hidden { max-height: 0 !important; }
 
         .menu-item { padding: 15px 20px 15px 35px; cursor: pointer; font-weight: bold; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.02); }
         .menu-item:hover { background: #2c3e50; }
         .menu-item.active { background: #1a252f; color: #4da6ff; }
         
-        #main-content { flex-grow: 1; background: #080d14; position: relative; }
+        /* iframe 컨테이너 */
+        #iframe-container { flex-grow: 1; position: relative; width: 100%; height: calc(100% - var(--topbar-height)); }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         iframe.active { display: block; }
+
+        /* 💡 스마트폰/패드 모바일 대응 로직 */
+        @media (max-width: 768px) {
+            #sidebar { position: absolute; height: 100%; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+        }
     </style>
 </head>
 <body>
 
 <div id="wrapper">
     <nav id="sidebar">
-        <h2 style="text-align:center; margin: 20px 0; font-size: 20px;">수학 탐구 도구함</h2>
-        <button id="toggle-btn" onclick="toggleSidebar()">☰</button>
+        <h2 style="text-align:center; margin: 25px 0 20px 0; font-size: 20px;">수학 탐구 도구함</h2>
         
         <div class="folder-title collapsed" onclick="toggleFolder('folder1', this)">📁 1단원. 수와 연산</div>
         <div id="folder1" class="folder-content hidden">
@@ -69,20 +91,37 @@
         </div>
     </nav>
 
-    <main id="main-content">
-        <iframe id="sieve-frame" class="active" src="sieve.html"></iframe>
-        <iframe id="semdol-frame" src="semdol.html"></iframe>
-        <iframe id="rail-frame" src="railbike.html"></iframe>
-        <iframe id="times-frame" src="timesrule.html"></iframe>
-        <iframe id="tumble-frame" src="tumble.html"></iframe>
-        <iframe id="xyz-frame" src="3.1.html"></iframe>
-        <iframe id="new-folder-frame" src="3.2/3.2.html"></iframe>
-        <iframe id="block-frame" src="3.3.html"></iframe>
-    </main>
+    <div id="main-wrapper">
+        <header id="top-bar">
+            <button id="toggle-btn" onclick="toggleSidebar()">☰ 메뉴 열기</button>
+        </header>
+        <main id="iframe-container">
+            <iframe id="sieve-frame" class="active" src="sieve.html"></iframe>
+            <iframe id="semdol-frame" src="semdol.html"></iframe>
+            <iframe id="rail-frame" src="railbike.html"></iframe>
+            <iframe id="times-frame" src="timesrule.html"></iframe>
+            <iframe id="tumble-frame" src="tumble.html"></iframe>
+            <iframe id="xyz-frame" src="3.1.html"></iframe>
+            <iframe id="new-folder-frame" src="3.2/3.2.html"></iframe>
+            <iframe id="block-frame" src="3.3.html"></iframe>
+        </main>
+    </div>
 </div>
 
 <script>
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-btn');
+
+    // 모바일 접속 시 기본으로 사이드바 닫기
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+        }
+    });
+
+    function toggleSidebar() { 
+        sidebar.classList.toggle('collapsed'); 
+    }
     
     function toggleFolder(id, el) {
         const content = document.getElementById(id);
@@ -95,6 +134,11 @@
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
+
+        // 스마트폰에서 메뉴 선택 시 사이드바 자동 닫기 기능
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+        }
     }
 </script>
 </body>
