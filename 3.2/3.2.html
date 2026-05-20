@@ -8,7 +8,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         
-        /* 💡 기본 배경을 세련된 단색 어두운 네이비로 고정 */
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
             font-family: 'Pretendard', 'Malgun Gothic', sans-serif; touch-action: none; 
@@ -16,22 +15,20 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* 💡 게임판을 감싸는 고정 비율(16:9)의 액자형 컨테이너 */
+        /* 💡 어떤 패드 화면이든 잘리지 않고 스케일을 압축 변환하는 상자 컨테이너 */
         #game-container {
             position: relative;
-            width: 100%;
-            height: 100%;
-            max-width: 1200px;  /* 패드 해상도를 고려한 최대 가로폭 */
-            max-height: 675px;  /* 16:9 비율 유지 */
+            width: 1200px;
+            height: 675px;
             background-color: #0b111a;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
             border-radius: 16px;
             overflow: hidden;
+            transform-origin: center center;
         }
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* 💡 UI 레이아웃이 액자 안에서만 고정되도록 절대 좌표 수정 */
         #game-ui { 
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 5; 
             background: rgba(10, 15, 26, 0.8); 
@@ -85,7 +82,6 @@
 <body>
 
     <div id="game-container">
-
         <div id="start-overlay" class="overlay">
             <div class="box-panel">
                 <h2 style="font-size: 30px; color: #d84315;">🏀 60초 타임어택 3점 슛!</h2>
@@ -150,35 +146,49 @@
                 <button onclick="location.reload()" style="background: #0288d1; margin-top: 20px; box-shadow: 0 4px 0 #01579b;">다시 도전하기</button>
             </div>
         </div>
-
     </div>
 
     <script>
         const { Engine, Render, Runner, World, Bodies, Events, Composite, Body } = Matter;
 
         const engine = Engine.create();
-        
-        // 💡 액자 크기를 추적하여 물리 좌표계 고정
         const container = document.getElementById('game-container');
-        const width = container.clientWidth || 1000;
-        const height = container.clientHeight || 562;
+        
+        // 💡 16:9 캔버스 베이스 면적 고정 수치 선언
+        const width = 1200;
+        const height = 675;
 
         const render = Render.create({
-            element: container, // 💡 body가 아닌 game-container 내부에 가둠
+            element: container,
             engine: engine,
             options: {
                 width: width,
                 height: height,
                 wireframes: false,
                 background: 'transparent',
-                pixelRatio: window.devicePixelRatio || 1 
+                pixelRatio: 1 
             }
         });
+
+        // 💡 패드 해상도가 작아져도 비율을 보존하며 축소 렌더링되게 매칭하는 오토 사이징 함수
+        function resizeGame() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // iframe 임베딩 시 부모 패널 비율 보정 연산
+            const scaleX = windowWidth / width;
+            const scaleY = windowHeight / height;
+            const scale = Math.min(scaleX, scaleY, 1); // 1배수 이상으로 커지는 것은 방지
+            
+            container.style.transform = `scale(${scale})`;
+        }
+        window.addEventListener('resize', resizeGame);
+        window.addEventListener('DOMContentLoaded', resizeGame);
+        setTimeout(resizeGame, 200); // 아이패드 렌더링 딜레이 보정 방어코드
 
         const stadiumImg = new Image(); stadiumImg.src = './stadium_bg.png';
         const floorImg = new Image(); floorImg.src = './court_floor.png';
         const ballImg = new Image(); ballImg.src = './basketball.png';
-        const hoopImg = new Image(); hoopImg.src = './hoop_net.png';
 
         let gameStarted = false;
         let gameEnded = false;
@@ -201,20 +211,19 @@
         let power = 0;
         let pressInterval = null;
 
-        // 액자형 고정 스케일에 맞춘 좌표 밸런싱
-        const anchorX = 140; 
+        const anchorX = 150; 
         const anchorY = height - 120; 
         let ball;
 
-        const leftWidth = 320;
+        const leftWidth = 350;
         const leftGround = Bodies.rectangle(leftWidth/2, height - 10, leftWidth, 20, { isStatic: true, render: { visible: false } });
         
-        const hoopX = width - 160; 
-        const rightWidth = width - (hoopX - 150);
-        const rightGround = Bodies.rectangle((hoopX - 150) + rightWidth/2, height - 10, rightWidth, 20, { isStatic: true, render: { visible: false } });
+        const hoopX = width - 200; 
+        const rightWidth = width - (hoopX - 180);
+        const rightGround = Bodies.rectangle((hoopX - 180) + rightWidth/2, height - 10, rightWidth, 20, { isStatic: true, render: { visible: false } });
         
-        const hoopY = height - 260; 
-        const backboard = Bodies.rectangle(hoopX + 65, hoopY - 40, 15, 130, { isStatic: true, render: { visible: false } });
+        const hoopY = height - 320; 
+        const backboard = Bodies.rectangle(hoopX + 65, hoopY - 50, 15, 150, { isStatic: true, render: { visible: false } });
         
         const rimBack = Bodies.rectangle(hoopX + 35, hoopY, 8, 8, { isStatic: true, render: { visible: false } }); 
         const rimFront = Bodies.rectangle(hoopX - 65, hoopY, 8, 8, { isStatic: true, render: { visible: false } }); 
@@ -225,9 +234,9 @@
         World.add(engine.world, [leftGround, rightGround, backboard, rimBack, rimFront, blackWall, redSensor]);
 
         function createBall() {
-            ball = Bodies.circle(anchorX, anchorY, 16, { 
-                restitution: 0.7, 
-                density: 0.006, 
+            ball = Bodies.circle(anchorX, anchorY, 18, { 
+                restitution: 0.75, 
+                density: 0.005, 
                 render: { visible: false }
             });
             World.add(engine.world, ball);
@@ -237,6 +246,7 @@
         window.startGame = function() {
             document.getElementById('start-overlay').style.display = 'none';
             gameStarted = true;
+            resizeGame();
             
             timerInterval = setInterval(() => {
                 if (timeLeft > 0) {
@@ -264,7 +274,7 @@
             }
 
             if (ballActive) {
-                if (ball.velocity.y < 0 && (ball.position.y - 16) > (blackWall.position.y + 2)) {
+                if (ball.velocity.y < 0 && (ball.position.y - 18) > (blackWall.position.y + 2)) {
                     blackWall.isSensor = false; 
                 } else {
                     blackWall.isSensor = true; 
@@ -294,7 +304,7 @@
 
             if (gameStarted && !isShooting) {
                 const angleRad = -angleDeg * (Math.PI / 180);
-                const arrowLength = 80;
+                const arrowLength = 90;
                 const endX = ball.position.x + Math.cos(angleRad) * arrowLength;
                 const endY = ball.position.y + Math.sin(angleRad) * arrowLength;
 
@@ -392,30 +402,30 @@
 
         function draw3DHoopAssets(ctx) {
             const backboardX = hoopX + 65;
-            const backboardY = hoopY - 110;
+            const backboardY = hoopY - 120;
             const rimFrontX = hoopX - 65;
             const rimBackX = hoopX + 35;
             
             ctx.save();
             ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 10;
+            ctx.lineWidth = 12;
             ctx.beginPath();
-            ctx.moveTo(backboardX + 15, backboardY + 60);
-            ctx.lineTo(width + 30, backboardY + 110);
+            ctx.moveTo(backboardX + 15, backboardY + 70);
+            ctx.lineTo(width + 30, backboardY + 130);
             ctx.stroke();
 
             ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.strokeStyle = '#e2e8f0';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.roundRect(backboardX, backboardY, 15, 130, 4);
+            ctx.roundRect(backboardX, backboardY, 15, 150, 4);
             ctx.fill();
             ctx.stroke();
             
             ctx.strokeStyle = '#ef4444';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.roundRect(backboardX - 3, hoopY - 30, 3, 40, 2);
+            ctx.roundRect(backboardX - 3, hoopY - 30, 3, 45, 2);
             ctx.stroke();
 
             ctx.fillStyle = '#c2410c';
@@ -424,7 +434,8 @@
             ctx.fillStyle = '#ea580c';
             ctx.fillRect(rimBackX - 4, hoopY - 2, 8, 8);
             
-            drawNet(ctx, hoopX - 15, hoopY + 3);
+            // 💡 세련되게 수정된 3D 그물망 호출
+            drawNet(ctx, hoopX - 15, hoopY + 4);
 
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#f97316';
@@ -437,30 +448,77 @@
             ctx.restore();
         }
 
+        // 💡 리얼 베지어 체인 메시 링 그물 그래픽 엔진 전면 업그레이드
         function drawNet(ctx, cx, cy) {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
+            ctx.save();
+            ctx.lineWidth = 2.5;
             
-            const nWidth = 100;
+            const nWidth = 96;
+            const drop = 85;
             const segments = 6;
             const step = nWidth / segments;
-            const drop = 70;
-            
-            for(let i=0; i<=segments; i++) {
-                const x = (cx - nWidth/2) + i * step;
-                const endX = (cx - nWidth/2 + 15) + i * ((nWidth-30)/segments);
-                ctx.moveTo(x, cy);
-                ctx.lineTo(endX, cy + drop);
+
+            // 1단계: 반투명 화이트 실크 그물 그림자 레이어 추가
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            for (let j = 1; j <= 4; j++) {
+                const ratio = j / 4;
+                const y = cy + drop * ratio;
+                const shrink = ratio * 14;
+                ctx.beginPath();
+                ctx.ellipse(cx, y, (nWidth / 2) - shrink, 6 - (ratio * 3), 0, 0, Math.PI);
+                ctx.stroke();
             }
-            
-            for(let j=1; j<=3; j++) {
-                const y = cy + (drop/4) * j;
-                const shrinkX = j * 5;
-                ctx.moveTo(cx - nWidth/2 + shrinkX, y);
-                ctx.lineTo(cx - nWidth/2 - shrinkX, y); 
+
+            // 2단계: 프리미엄 다이아몬드 교차 체인 드로잉
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            const topY = cy;
+            const midY1 = cy + drop * 0.3;
+            const midY2 = cy + drop * 0.65;
+            const botY = cy + drop;
+
+            const getX = (i, total, yRatio) => {
+                const startX = (cx - nWidth / 2) + i * (nWidth / total);
+                const centerDist = startX - cx;
+                return cx + centerDist * (1 - yRatio * 0.28); 
+            };
+
+            for (let i = 0; i < segments; i++) {
+                const xTop1 = getX(i, segments, 0);
+                const xTop2 = getX(i + 1, segments, 0);
+                
+                const xMid1_1 = getX(i + 0.5, segments, 0.3);
+                const xMid1_2 = getX(i - 0.5, segments, 0.3);
+
+                const xMid2_1 = getX(i, segments, 0.65);
+                const xMid2_2 = getX(i + 1, segments, 0.65);
+
+                const xBot = getX(i + 0.5, segments, 1.0);
+
+                ctx.beginPath();
+                ctx.moveTo(xTop1, topY);
+                ctx.bezierCurveTo(xTop1, topY + 10, xMid1_1, midY1 - 10, xMid1_1, midY1);
+                ctx.bezierCurveTo(xMid1_1, midY1 + 10, xMid2_1, midY2 - 10, xMid2_1, midY2);
+                ctx.bezierCurveTo(xMid2_1, midY2 + 10, xBot, botY - 5, xBot, botY);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(xTop2, topY);
+                ctx.bezierCurveTo(xTop2, topY + 10, xMid1_2, midY1 - 10, xMid1_2, midY1);
+                ctx.bezierCurveTo(xMid1_2, midY1 + 10, xMid2_2, midY2 - 10, xMid2_2, midY2);
+                ctx.bezierCurveTo(xMid2_2, midY2 + 10, xBot, botY - 5, xBot, botY);
+                ctx.stroke();
             }
-            ctx.stroke();
+
+            // 3단계: 림 결속 매듭 고리(Loop) 마감 처리
+            ctx.fillStyle = 'rgba(235, 245, 255, 0.95)';
+            for (let i = 0; i <= segments; i++) {
+                const x = getX(i, segments, 0);
+                ctx.beginPath();
+                ctx.arc(x, topY + 1, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            ctx.restore();
         }
 
         function draw3DBasketball(ctx, b) {
@@ -468,7 +526,7 @@
             ctx.translate(b.position.x, b.position.y);
             ctx.rotate(b.angle);
 
-            const r = 16;
+            const r = 18;
             const ballGrad = ctx.createRadialGradient(-5, -5, 0, 0, 0, r);
             ballGrad.addColorStop(0, '#fdba74');
             ballGrad.addColorStop(0.4, '#f97316');
@@ -497,11 +555,11 @@
             ctx.stroke();
             
             ctx.beginPath(); 
-            ctx.arc(11, 0, 11, Math.PI/2 + 0.3, 3*Math.PI/2 - 0.3); 
+            ctx.arc(12, 0, 12, Math.PI/2 + 0.3, 3*Math.PI/2 - 0.3); 
             ctx.stroke();
             
             ctx.beginPath(); 
-            ctx.arc(-11, 0, 11, -Math.PI/2 + 0.3, Math.PI/2 - 0.3); 
+            ctx.arc(-12, 0, 12, -Math.PI/2 + 0.3, Math.PI/2 - 0.3); 
             ctx.stroke();
 
             ctx.restore();
@@ -575,7 +633,7 @@
             btnThrow.disabled = true;
 
             const angleRad = -angleDeg * (Math.PI / 180);
-            const forceMagnitude = (power / 100) * 0.55; // 스케일 다운에 맞춘 가속 힘 밸런스 조정
+            const forceMagnitude = (power / 100) * 0.58; 
             
             Body.applyForce(ball, ball.position, {
                 x: Math.cos(angleRad) * forceMagnitude,
