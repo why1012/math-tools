@@ -2,24 +2,30 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>3점 슛! 식의 값 구하기 (3D Texture Mod)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         
         body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            position: fixed; /* 💡 iOS 모바일 강제 팽창 버그 완벽 차단 */
-            overflow: hidden; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; touch-action: none; 
-            background-color: #080d14; 
+            margin: 0; padding: 0; width: 100vw; height: 100vh; 
+            background-color: #080d14; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; 
+            touch-action: none; overflow: hidden; position: fixed; /* iOS 모바일 스크롤 바운스 완벽 차단 */
         }
 
+        /* 💡 화면 중앙 정렬의 정석 기법 도입 */
         #game-container {
-            position: absolute; top: 0; left: 0; /* 플렉스박스 의존 탈피 */
-            width: 1200px; height: 675px; background-color: #0b111a; 
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); border-radius: 16px; overflow: hidden; 
-            transform-origin: 0 0; /* 변환 기준점을 0,0으로 고정 후 JS로 연산 */
+            position: absolute;
+            left: 50%; top: 50%;
+            width: 1200px; height: 675px;
+            background-color: #0b111a;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+            overflow: hidden;
+            /* 중심을 (50%, 50%)로 잡고 스케일을 조정 */
+            transform: translate(-50%, -50%) scale(1);
+            transform-origin: center center;
         }
         
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
@@ -46,7 +52,7 @@
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         #quiz-overlay { display: none; }
         
-        .box-panel { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 24px; text-align: center; max-width: 450px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .box-panel { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 24px; text-align: center; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
         .box-panel h2 { margin-top: 0; color: #1565c0; font-size: 28px; font-weight: 900; }
         .box-panel p { font-size: 17px; line-height: 1.6; color: #2c3e50; }
         .box-panel button { padding: 14px 24px; font-size: 18px; margin: 10px 0; cursor: pointer; border: none; border-radius: 12px; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; display: block; width: 100%; font-weight: bold; }
@@ -56,7 +62,7 @@
         #portrait-warning { display: none; }
         @media screen and (max-width: 768px) and (orientation: portrait) {
             #portrait-warning {
-                display: flex; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                display: flex; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
                 background: #0b111a; z-index: 9999; color: white; flex-direction: column;
                 align-items: center; justify-content: center; font-size: 22px; font-weight: bold; text-align: center;
             }
@@ -137,21 +143,22 @@
             options: { width: width, height: height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio || 1 }
         });
 
-        // 💡 [핵심] 절대 좌표계 오토 스케일링 함수 (모바일 브라우저 버그 무력화)
+        // 💡 [핵심 해결] 중앙 정렬된 엘리먼트를 스케일만 조절하여 완벽하게 가두기
         function resizeGame() {
-            const winW = window.innerWidth || document.documentElement.clientWidth;
-            const winH = window.innerHeight || document.documentElement.clientHeight;
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
             if(winW === 0 || winH === 0) return;
 
+            // 너비와 높이 중 더 작은 쪽에 맞추어 화면에 쏙 들어가도록 배율 계산
             const scale = Math.min(winW / 1200, winH / 675);
-            const left = (winW - (1200 * scale)) / 2;
-            const top = (winH - (675 * scale)) / 2;
             
-            container.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
+            // translate(-50%, -50%)를 유지한 상태로 스케일 적용 (절대 좌표 버그 차단)
+            container.style.transform = `translate(-50%, -50%) scale(${scale})`;
         }
+        
         window.addEventListener('resize', resizeGame);
-        // iframe 노출 딜레이를 잡아내기 위해 주기적으로 크기 보정
-        setInterval(resizeGame, 100);
+        // 간헐적인 모바일 렌더링 지연 대응
+        setInterval(resizeGame, 300);
 
         const stadiumImg = new Image(); stadiumImg.src = './stadium_bg.png';
         const floorImg = new Image(); floorImg.src = './court_floor.png';
