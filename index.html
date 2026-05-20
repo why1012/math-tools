@@ -24,14 +24,16 @@
             border-bottom: 1px solid rgba(255,255,255,0.05); user-select: none;
         }
         .folder-title:hover { background: #415b76; }
-        .folder-title::after { content: '▼'; font-size: 11px; transition: 0.3s; color: #bdc3c7; }
+        
+        /* 💡 화살표 아이콘 상태 수정 */
+        .folder-title::after { content: '▼'; font-size: 11px; color: #bdc3c7; }
         .folder-title.collapsed::after { content: '▶'; }
 
         /* 📄 폴더 내부 서브 메뉴 컨테이너 */
         .folder-content { 
             max-height: 500px; overflow: hidden; transition: max-height 0.3s ease-out; background: #1f2c39;
         }
-        .folder-content.hidden { max-height: 0; }
+        .folder-content.hidden { max-height: 0 !important; }
 
         /* 개별 수학 도구 아이템 */
         .menu-item { padding: 15px 20px 15px 35px; cursor: pointer; font-weight: bold; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.02); }
@@ -39,7 +41,7 @@
         .menu-item.active { background: #1a252f; color: #4da6ff; }
         
         /* 메인 영역 */
-        #main-content { flex-grow: 1; background: white; }
+        #main-content { flex-grow: 1; background: #080d14; position: relative; }
         iframe { width: 100%; height: 100%; border: none; display: none; }
         iframe.active { display: block; }
     </style>
@@ -87,11 +89,10 @@
 <script>
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
     
-    // 💡 폴더를 열고 접는 자바스크립트 함수
     function toggleFolder(id, el) {
         const content = document.getElementById(id);
         content.classList.toggle('hidden');
-        el.classList.toggle('collapsed');
+        el.classList.toggle('collapsed'); // 💡 화살표 방향 전환을 위한 클래스 토글 구조 수정
     }
 
     function switchTool(id, el) {
