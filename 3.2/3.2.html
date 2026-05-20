@@ -8,9 +8,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         
-        body { margin: 0; overflow: hidden; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; touch-action: none; background-color: #0b111a; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; touch-action: none; background-color: #0b111a; }
+        canvas { display: block; width: 100% !important; height: 100% !important; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* 💡 글래스모피즘 UI 패널 - 더 깊고 세련되게 업그레이드 */
+        /* 💡 글래스모피즘 UI 패널 */
         #game-ui { 
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 5; 
             background: rgba(10, 15, 26, 0.75); 
@@ -130,19 +131,30 @@
     </div>
 
     <script>
-        const { Engine, Render, Runner, World, Bodies, Events, Composite, Body, Query } = Matter;
+        const { Engine, Render, Runner, World, Bodies, Events, Composite, Body } = Matter;
 
         const engine = Engine.create();
+        
+        // 브라우저 너비와 높이를 안전하게 가져오기 (iframe 렌더링 대비)
+        const width = window.innerWidth || document.documentElement.clientWidth || 800;
+        const height = window.innerHeight || document.documentElement.clientHeight || 600;
+
         const render = Render.create({
             element: document.body,
             engine: engine,
             options: {
-                width: window.innerWidth,
-                height: window.innerHeight,
+                width: width,
+                height: height,
                 wireframes: false,
-                background: 'transparent' // CSS 배경을 투과시키기 위해 투명 처리
+                background: 'transparent'
             }
         });
+
+        // 💡 고정 자산 이미지 객체들 명시적 선언 완료
+        const stadiumImg = new Image(); stadiumImg.src = './stadium_bg.png';
+        const floorImg = new Image(); floorImg.src = './court_floor.png';
+        const ballImg = new Image(); ballImg.src = './basketball.png';
+        const hoopImg = new Image(); hoopImg.src = './hoop_net.png';
 
         let gameStarted = false;
         let gameEnded = false;
@@ -166,20 +178,17 @@
         let pressInterval = null;
 
         const anchorX = 150;
-        const anchorY = window.innerHeight - 350; 
+        const anchorY = height - 350; 
         let ball;
 
         const leftWidth = 350;
-        // 💡 물리 바닥은 유지하되 커스텀 렌더링으로 3D 질감 처리
-        const leftGround = Bodies.rectangle(leftWidth/2, window.innerHeight - 20, leftWidth, 40, { isStatic: true, render: { visible: false } });
+        const leftGround = Bodies.rectangle(leftWidth/2, height - 20, leftWidth, 40, { isStatic: true, render: { visible: false } });
         
-        const hoopX = window.innerWidth - 250; 
-        const rightWidth = window.innerWidth - (hoopX - 200);
-        const rightGround = Bodies.rectangle((hoopX - 200) + rightWidth/2, window.innerHeight - 20, rightWidth, 40, { isStatic: true, render: { visible: false } });
+        const hoopX = width - 250; 
+        const rightWidth = width - (hoopX - 200);
+        const rightGround = Bodies.rectangle((hoopX - 200) + rightWidth/2, height - 20, rightWidth, 40, { isStatic: true, render: { visible: false } });
         
-        const hoopY = window.innerHeight - 450;
-        // 시각적 이미지에 맞춘 충돌 영역 재설정 (허공에 있던 기존 벽 삭제)
-        // 백보드를 림에 더 가깝게 당기고 길이 상단으로 1.2배 연장 (130 -> 160)
+        const hoopY = height - 450;
         const backboard = Bodies.rectangle(hoopX + 75, hoopY - 50, 20, 160, { isStatic: true, render: { visible: false } });
         
         const rimBack = Bodies.rectangle(hoopX + 45, hoopY, 10, 10, { isStatic: true, render: { visible: false } }); 
@@ -190,27 +199,11 @@
 
         World.add(engine.world, [leftGround, rightGround, backboard, rimBack, rimFront, blackWall, redSensor]);
 
-        // 💡 프리미엄 2D 그래픽 에셋 로드 (Option A)
-        const stadiumImg = new Image();
-        stadiumImg.src = './stadium_bg.png';
-        
-        const floorImg = new Image();
-        floorImg.src = './court_floor.png';
-        
-        const ballImg = new Image();
-        ballImg.src = './basketball.png';
-
-        const hoopImg = new Image();
-        hoopImg.src = './hoop_net.png';
-        
-        // 플로어 반복 타일링 제거 (직접 스트레치하여 그림)
-        const crowdTexture = createCrowdTexture();
-
         function createBall() {
             ball = Bodies.circle(anchorX, anchorY, 20, { 
                 restitution: 0.7, 
                 density: 0.005, 
-                render: { visible: false } // 커스텀 렌더링을 위해 물리 바디는 숨김
+                render: { visible: false }
             });
             World.add(engine.world, ball);
         }
@@ -252,7 +245,7 @@
                     blackWall.isSensor = true; 
                 }
 
-                if (ball.position.y > window.innerHeight + 50) {
+                if (ball.position.y > height + 50) {
                     ballActive = false; 
                     resetTurn();
                 }
@@ -269,17 +262,11 @@
             }
         });
 
-        // 💡 핵심: afterRender에서 3D 질감 에셋을 직접 드로잉 (2D 물리 바디 위에)
         Events.on(render, 'afterRender', function() {
             const ctx = render.context;
-
-            // [1] Stadium & Crowd (image_0554cc, image_05577a 참고)
             drawStadiumAndCrowd(ctx);
-
-            // [2] 나무 코트 바닥 (3D 질감)
             draw3DCourtFloor(ctx);
 
-            // [3] 조준선
             if (gameStarted && !isShooting) {
                 const angleRad = -angleDeg * (Math.PI / 180);
                 const arrowLength = 100;
@@ -303,30 +290,20 @@
                 }
             }
 
-            // [4] 3D 농구공 (물리 바디 위치에)
-            if (ball) {
-                draw3DBasketball(ctx, ball);
-            }
-
-            // [5] 3D 골대 에셋 (에셋 질감)
+            if (ball) { draw3DBasketball(ctx, ball); }
             draw3DHoopAssets(ctx);
         });
 
-        // --- 💡 3D 질감 드로잉 유틸리티 함수들 ---
-
         function drawStadiumAndCrowd(ctx) {
             if (stadiumImg.complete && stadiumImg.naturalWidth > 0) {
-                // Background
-                ctx.drawImage(stadiumImg, 0, 0, window.innerWidth, window.innerHeight);
+                ctx.drawImage(stadiumImg, 0, 0, width, height);
                 
-                // Holographic Scoreboard UI
                 ctx.save();
                 const sbWidth = 360;
                 const sbHeight = 110;
-                const sbX = window.innerWidth / 2 - sbWidth / 2;
+                const sbX = width / 2 - sbWidth / 2;
                 const sbY = 35;
 
-                // Glass backdrop
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.lineWidth = 1;
@@ -335,126 +312,98 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // Vertical Divider
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 ctx.beginPath();
-                ctx.moveTo(window.innerWidth / 2, sbY + 20);
-                ctx.lineTo(window.innerWidth / 2, sbY + sbHeight - 20);
+                ctx.moveTo(width / 2, sbY + 20);
+                ctx.lineTo(width / 2, sbY + sbHeight - 20);
                 ctx.stroke();
 
                 ctx.textAlign = 'center';
-                
-                // Left side: Time
                 ctx.font = '800 14px "Pretendard", sans-serif';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('COUNTDOWN', window.innerWidth / 2 - 90, sbY + 32);
+                ctx.fillText('COUNTDOWN', width / 2 - 90, sbY + 32);
                 
                 ctx.font = '900 48px "Pretendard", sans-serif';
                 ctx.fillStyle = timeLeft <= 10 ? '#ef4444' : '#f97316';
                 ctx.shadowColor = timeLeft <= 10 ? '#ef4444' : '#f97316';
                 ctx.shadowBlur = timeLeft <= 10 ? 15 : 5;
-                ctx.fillText(timeLeft, window.innerWidth / 2 - 90, sbY + 82);
+                ctx.fillText(timeLeft, width / 2 - 90, sbY + 82);
 
-                // Right side: Score
                 ctx.shadowBlur = 0;
                 ctx.font = '800 14px "Pretendard", sans-serif';
                 ctx.fillStyle = '#94a3b8';
-                ctx.fillText('SCORE', window.innerWidth / 2 + 90, sbY + 24);
+                ctx.fillText('SCORE', width / 2 + 90, sbY + 24);
                 
-                // 수학 기호 x 강조 (정직한 로마체)
                 ctx.font = 'normal 900 24px "Times New Roman", Times, serif';
                 ctx.fillStyle = '#facc15';
-                ctx.fillText('x', window.innerWidth / 2 + 90, sbY + 48);
+                ctx.fillText('x', width / 2 + 90, sbY + 48);
 
                 ctx.font = '900 48px "Pretendard", sans-serif';
                 ctx.fillStyle = '#38bdf8';
                 ctx.shadowColor = '#38bdf8';
                 ctx.shadowBlur = 10;
-                ctx.fillText(x_score, window.innerWidth / 2 + 90, sbY + 92);
+                ctx.fillText(x_score, width / 2 + 90, sbY + 92);
                 
                 ctx.restore();
             } else {
                 ctx.fillStyle = '#0b111a';
-                ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+                ctx.fillRect(0, 0, width, height);
             }
         }
 
         function draw3DCourtFloor(ctx) {
-            const floorY = window.innerHeight - 40;
+            const floorY = height - 40;
             if (floorImg.complete && floorImg.naturalWidth > 0) {
-                // 바닥 이미지를 고정 폭으로 그려서 3점 라인이 공 위치(anchorX)에 고정되게 함
                 const shiftX = -70; 
-                const drawWidth = Math.max(window.innerWidth - shiftX, 1500);
+                const drawWidth = Math.max(width - shiftX, 1500);
                 ctx.drawImage(floorImg, shiftX, floorY, drawWidth, 40);
                 
-                // 명시적인 3점 라인 추가 드로잉 (공 위치 바로 아래)
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
                 ctx.fillRect(anchorX - 3, floorY, 6, 40);
             } else {
-                // 폴백 나무 질감 배경
                 ctx.fillStyle = '#dca46a';
-                ctx.fillRect(0, floorY, window.innerWidth, 40);
+                ctx.fillRect(0, floorY, width, 40);
             }
-            
-            // 코트 모서리에 세련된 흰색 라인 하이라이트 추가
             ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-            ctx.fillRect(0, floorY, window.innerWidth, 4);
-        }
-
-        function drawFloorHighlight(ctx, x, y, width, height) {
-            // 호환성을 위해 유지 (폴백 시 호출 가능)
-            const floorHighlight = ctx.createLinearGradient(0, y, 0, y + height);
-            floorHighlight.addColorStop(0, '#b07d47'); 
-            floorHighlight.addColorStop(1, '#6d4c41');
-            ctx.fillStyle = floorHighlight;
-            ctx.fillRect(x, y, width, height);
+            ctx.fillRect(0, floorY, width, 40);
         }
 
         function draw3DHoopAssets(ctx) {
-            // No more images, purely high-quality vector drawing for absolute clarity
-            const backboardX = hoopX + 75; // 백보드를 림 쪽으로 당김
-            const backboardY = hoopY - 130; // 길이가 상단으로 1.2배 늘어난 백보드의 상단 Y좌표
+            const backboardX = hoopX + 75;
+            const backboardY = hoopY - 130;
             const rimFrontX = hoopX - 85;
             const rimBackX = hoopX + 45;
             
             ctx.save();
-            
-            // 1. Steel Support Beams (behind backboard)
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 14;
             ctx.beginPath();
             ctx.moveTo(backboardX + 20, backboardY + 80);
-            ctx.lineTo(window.innerWidth + 50, backboardY + 140);
+            ctx.lineTo(width + 50, backboardY + 140);
             ctx.stroke();
 
-            // 2. Glass Backboard
             ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.strokeStyle = '#e2e8f0';
             ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.roundRect(backboardX, backboardY, 20, 160, 4); // 길이를 130에서 160으로 상향 연장
+            ctx.roundRect(backboardX, backboardY, 20, 160, 4);
             ctx.fill();
             ctx.stroke();
             
-            // Backboard Red inner highlight
             ctx.strokeStyle = '#ef4444';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.roundRect(backboardX - 4, hoopY - 40, 4, 50, 2);
             ctx.stroke();
 
-            // 2.5 Steel Connector between Rim and Backboard
             ctx.fillStyle = '#c2410c';
             ctx.fillRect(rimBackX, hoopY - 2, backboardX - rimBackX, 8);
 
-            // 3. Back Rim (behind net)
             ctx.fillStyle = '#ea580c';
             ctx.fillRect(rimBackX - 5, hoopY - 3, 10, 10);
             
-            // 4. White Mesh Net
             drawNet(ctx, hoopX - 20, hoopY + 4);
 
-            // 5. Front Rim
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#f97316';
             ctx.lineWidth = 8;
@@ -463,7 +412,6 @@
             ctx.lineTo(rimBackX, hoopY);
             ctx.stroke();
             
-            // Rim inner shadow/highlight for 3D feel
             ctx.strokeStyle = '#c2410c';
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -479,25 +427,23 @@
             ctx.lineWidth = 2;
             ctx.beginPath();
             
-            const width = 120; // rim width
+            const nWidth = 120;
             const segments = 6;
-            const step = width / segments;
-            const drop = 90; // net height
+            const step = nWidth / segments;
+            const drop = 90;
             
-            // Vertical ropes
             for(let i=0; i<=segments; i++) {
-                const x = (cx - width/2) + i * step;
-                const endX = (cx - width/2 + 20) + i * ((width-40)/segments);
+                const x = (cx - nWidth/2) + i * step;
+                const endX = (cx - nWidth/2 + 20) + i * ((nWidth-40)/segments);
                 ctx.moveTo(x, cy);
                 ctx.lineTo(endX, cy + drop);
             }
             
-            // Horizontal criss-cross
             for(let j=1; j<=3; j++) {
                 const y = cy + (drop/4) * j;
                 const shrinkX = j * 6;
-                ctx.moveTo(cx - width/2 + shrinkX, y);
-                ctx.lineTo(cx + width/2 - shrinkX, y);
+                ctx.moveTo(cx - nWidth/2 + shrinkX, y);
+                ctx.lineTo(cx nWidth/2 - shrinkX, y);
             }
             ctx.stroke();
         }
@@ -507,14 +453,11 @@
             ctx.translate(b.position.x, b.position.y);
             ctx.rotate(b.angle);
 
-            // Premium Vector Basketball
             const r = 20;
-            
-            // Base orange sphere with radial gradient for 3D lighting
             const ballGrad = ctx.createRadialGradient(-6, -6, 0, 0, 0, r);
-            ballGrad.addColorStop(0, '#fdba74'); // highlight
-            ballGrad.addColorStop(0.4, '#f97316'); // base
-            ballGrad.addColorStop(1, '#c2410c'); // shadow
+            ballGrad.addColorStop(0, '#fdba74');
+            ballGrad.addColorStop(0.4, '#f97316');
+            ballGrad.addColorStop(1, '#c2410c');
             
             ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
             ctx.shadowBlur = 12;
@@ -526,14 +469,10 @@
             ctx.fillStyle = ballGrad;
             ctx.fill();
 
-            // Turn off shadow for seams
             ctx.shadowColor = 'transparent';
-
-            // Black seams
             ctx.strokeStyle = '#431407';
             ctx.lineWidth = 1.5;
             
-            // Cross lines
             ctx.beginPath(); 
             ctx.moveTo(-r, 0); ctx.lineTo(r, 0); 
             ctx.stroke();
@@ -542,7 +481,6 @@
             ctx.moveTo(0, -r); ctx.lineTo(0, r); 
             ctx.stroke();
             
-            // Curved side lines
             ctx.beginPath(); 
             ctx.arc(14, 0, 14, Math.PI/2 + 0.3, 3*Math.PI/2 - 0.3); 
             ctx.stroke();
@@ -554,64 +492,11 @@
             ctx.restore();
         }
 
-        // --- 💡 질감 시뮬레이션 생성기들 (폴백용) ---
-
-        function createCourtTexture() {
-            const wsCanvas = document.createElement('canvas');
-            const wsCtx = wsCanvas.getContext('2d');
-            wsCanvas.width = 100;
-            wsCanvas.height = 100;
-
-            const courtBg = wsCtx.createLinearGradient(0, 0, 0, 100);
-            courtBg.addColorStop(0, '#dca46a');
-            courtBg.addColorStop(1, '#c1915f');
-            wsCtx.fillStyle = courtBg;
-            wsCtx.fillRect(0, 0, 100, 100);
-
-            wsCtx.strokeStyle = '#a1887f';
-            wsCtx.lineWidth = 0.5;
-            for (let i = 0; i < 30; i++) {
-                wsCtx.beginPath();
-                wsCtx.moveTo(Math.random() * 100, Math.random() * 100);
-                wsCtx.lineTo(Math.random() * 100, Math.random() * 100);
-                wsCtx.stroke();
-            }
-            return render.context.createPattern(wsCanvas, 'repeat');
-        }
-
-        function createCrowdTexture() {
-            const wsCanvas = document.createElement('canvas');
-            const wsCtx = wsCanvas.getContext('2d');
-            wsCanvas.width = 300;
-            wsCanvas.height = 100;
-
-            const stepGrad = wsCtx.createLinearGradient(0, 0, 0, 100);
-            stepGrad.addColorStop(0, '#263238');
-            stepGrad.addColorStop(0.5, '#1a232e');
-            stepGrad.addColorStop(1, '#11171e');
-            wsCtx.fillStyle = stepGrad;
-            wsCtx.fillRect(0, 0, 300, 100);
-
-            const colors = ['#f44336', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800', '#795548', '#607d8b'];
-            wsCtx.font = 'bold 16px sans-serif';
-            wsCtx.textAlign = 'center';
-            for (let i = 0; i < 40; i++) {
-                wsCtx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-                wsCtx.beginPath();
-                wsCtx.arc(Math.random() * 300, Math.random() * 70, 8, 0, 2 * Math.PI);
-                wsCtx.fill();
-            }
-            return render.context.createPattern(wsCanvas, 'repeat');
-        }
-
-        // --- 물리 엔진 이벤트 및 기존 로직 (유지) ---
-
         Events.on(engine, 'collisionStart', function(event) {
             event.pairs.forEach((pair) => {
                 if ((pair.bodyA === ball && pair.bodyB === redSensor) || (pair.bodyB === ball && pair.bodyA === redSensor)) {
                     if (!scoredThisShot && ball.velocity.y > 0) {
                         x_score++;
-                        document.getElementById('score').innerText = x_score + "개";
                         scoredThisShot = true;
                     }
                 }
@@ -631,25 +516,14 @@
 
         function resetTurn() {
             Composite.remove(engine.world, ball);
-            
-            if (gameEnded) {
-                endGame();
-                return;
-            }
+            if (gameEnded) { endGame(); return; }
 
-            scoredThisShot = false;
-            isShooting = false;
-            isAngleFixed = false;
-            bounceCount = 0;
-            stopTimer = 0;
-            
+            scoredThisShot = false; isShooting = false; isAngleFixed = false; bounceCount = 0; stopTimer = 0;
             document.getElementById('btn-fix-angle').style.display = 'block';
             document.getElementById('btn-throw').style.display = 'none';
             document.getElementById('btn-fix-angle').disabled = false;
-            
             power = 0;
             document.getElementById('power-fill').style.width = '0%';
-            
             createBall();
         }
 
@@ -681,11 +555,7 @@
             e.preventDefault();
             clearInterval(pressInterval);
             
-            isShooting = true;
-            ballActive = true;
-            bounceCount = 0; 
-            stopTimer = 0;
-            
+            isShooting = true; ballActive = true; bounceCount = 0; stopTimer = 0;
             btnThrow.innerText = "🏀 농구공 던지기";
             btnThrow.disabled = true;
 
@@ -714,17 +584,14 @@
 
         window.confirmX = function() {
             const paramX = parseInt(document.getElementById('param-x-input').value);
-            
             if (paramX !== x_score) {
-                document.getElementById('quiz2-feedback').innerText = `아쉽습니다! 여러분이 60초 동안 성공한 3점 슛의 개수(${x_score}개)를 x에 넣어주세요.`;
+                document.getElementById('quiz2-feedback').innerText = `아쉽습니다! 여러분이 성공한 3점 슛의 개수(${x_score}개)를 x에 넣어주세요.`;
                 document.getElementById('final-answer-box').style.display = 'none';
                 return;
             }
-            
             document.getElementById('quiz2-feedback').innerText = "";
             document.getElementById('selected-x').innerText = paramX;
             document.getElementById('substituted-x').innerText = paramX;
-            
             document.getElementById('final-answer-box').style.display = 'block';
             document.getElementById('btn-confirm-x').disabled = true;
             document.getElementById('param-x-input').disabled = true;
@@ -740,6 +607,7 @@
             }
         }
 
+        // 창 크기가 바뀔 때 대응하도록 렌더러와 엔진 가동 구조 수정
         Render.run(render);
         Runner.run(Runner.create(), engine);
     </script>
