@@ -9,22 +9,19 @@
         :root { --sidebar-width: 260px; --secondary-color: #2c3e50; --topbar-height: 54px; }
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Pretendard', sans-serif; background: #080d14; }
         
-        /* 전체 레이아웃 */
         #wrapper { display: flex; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
         
-        /* 사이드바 */
         #sidebar { 
             width: var(--sidebar-width); background: var(--secondary-color); color: white; 
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; overflow-y: auto; z-index: 100;
         }
         #sidebar.collapsed { margin-left: -260px; }
         
-        /* 💡 메인 영역 (탑바 + 게임창) - 사이드바에 맞춰 유연하게 크기 조절 */
         #main-wrapper { 
             flex: 1; min-width: 0; display: flex; flex-direction: column; transition: 0.3s ease; 
+            position: relative; overflow: hidden; /* 모바일 iframe 팽창 차단 */
         }
 
-        /* 💡 탑바 및 토글 버튼 (버튼을 오른쪽으로 완전히 분리) */
         #top-bar {
             height: var(--topbar-height); background: #1f2c39; display: flex; align-items: center; 
             padding: 0 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 10;
@@ -32,11 +29,9 @@
         #toggle-btn {
             background: #34495e; color: white; border: none; padding: 8px 14px; 
             cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 16px; transition: 0.2s;
-            display: flex; align-items: center; gap: 8px;
         }
         #toggle-btn:hover { background: #415b76; }
 
-        /* 폴더 및 메뉴 디자인 */
         .folder-title { 
             padding: 15px 20px; font-size: 16px; font-weight: 900; background: #34495e; 
             cursor: pointer; display: flex; justify-content: space-between; align-items: center;
@@ -53,12 +48,14 @@
         .menu-item:hover { background: #2c3e50; }
         .menu-item.active { background: #1a252f; color: #4da6ff; }
         
-        /* iframe 컨테이너 */
-        #iframe-container { flex-grow: 1; position: relative; width: 100%; height: calc(100% - var(--topbar-height)); }
-        iframe { width: 100%; height: 100%; border: none; display: none; }
+        #iframe-container { 
+            flex-grow: 1; position: relative; width: 100%; height: 100%; overflow: hidden; 
+        }
+        iframe { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; 
+        }
         iframe.active { display: block; }
 
-        /* 💡 스마트폰/패드 모바일 대응 로직 */
         @media (max-width: 768px) {
             #sidebar { position: absolute; height: 100%; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
         }
@@ -93,7 +90,7 @@
 
     <div id="main-wrapper">
         <header id="top-bar">
-            <button id="toggle-btn" onclick="toggleSidebar()">☰ 메뉴 열기</button>
+            <button id="toggle-btn" onclick="toggleSidebar()">☰ 메뉴 열기/닫기</button>
         </header>
         <main id="iframe-container">
             <iframe id="sieve-frame" class="active" src="sieve.html"></iframe>
@@ -110,18 +107,12 @@
 
 <script>
     const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggle-btn');
 
-    // 모바일 접속 시 기본으로 사이드바 닫기
     document.addEventListener("DOMContentLoaded", () => {
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-        }
+        if (window.innerWidth <= 768) { sidebar.classList.add('collapsed'); }
     });
 
-    function toggleSidebar() { 
-        sidebar.classList.toggle('collapsed'); 
-    }
+    function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
     
     function toggleFolder(id, el) {
         const content = document.getElementById(id);
@@ -135,10 +126,7 @@
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
 
-        // 스마트폰에서 메뉴 선택 시 사이드바 자동 닫기 기능
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-        }
+        if (window.innerWidth <= 768) { sidebar.classList.add('collapsed'); }
     }
 </script>
 </body>
