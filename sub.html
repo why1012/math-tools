@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문자와 식 마스터 - 3.2 식의 값</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 기본 스타일 셋업 */
+        * {
+            box-sizing: border-box;
+            font-family: 'Pretendard', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 슬라이드 크기 고정 (1280x720) */
+        .slide-container {
+            width: 1280px;
+            height: 720px;
+            background-color: #1e293b;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 화면 전환용 기본 클래스 */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 60px;
+            flex-direction: column;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* 1. 시작 화면 디자인 */
+        #screen-intro {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .main-title {
+            font-size: 54px;
+            font-weight: 900;
+            color: #38bdf8;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #94a3b8;
+            max-width: 700px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        .btn-start {
+            padding: 16px 40px;
+            font-size: 20px;
+            font-weight: 700;
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-start:hover {
+            background-color: #7dd3fc;
+            transform: translateY(-2px);
+        }
+
+        /* 2. 난이도 선택 화면 디자인 */
+        .slide-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: #f8fafc;
+            border-left: 6px solid #38bdf8;
+            padding-left: 15px;
+            margin-bottom: 50px;
+        }
+
+        .difficulty-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            flex-grow: 1;
+            align-items: center;
+        }
+
+        .diff-card {
+            background-color: #334155;
+            border: 2px solid #475569;
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .diff-card:hover {
+            border-color: #38bdf8;
+            background-color: #475569;
+            transform: translateY(-5px);
+        }
+
+        .diff-card h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .diff-card.low h3 { color: #4ade80; }
+        .diff-card.mid h3 { color: #fbbf24; }
+        .diff-card.high h3 { color: #f87171; }
+
+        .diff-card p {
+            font-size: 16px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* 3. 퀴즈 진행 화면 디자인 */
+        .quiz-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            flex-grow: 1;
+        }
+
+        .question-pane {
+            background-color: #0f172a;
+            border-radius: 16px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid #334155;
+        }
+
+        .progress-box {
+            font-size: 18px;
+            color: #38bdf8;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .condition-text {
+            font-size: 28px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        .expression-text {
+            font-size: 64px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .action-pane {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 객관식 버튼 레이아웃 (하 난이도) */
+        .choice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .choice-btn {
+            background-color: #334155;
+            border: 2px solid #475569;
+            color: #ffffff;
+            padding: 20px;
+            font-size: 26px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .choice-btn:hover {
+            border-color: #38bdf8;
+            background-color: #475569;
+        }
+
+        /* 주관식 입력창 레이아웃 (중, 상 난이도) */
+        .input-group {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group input {
+            background-color: #0f172a;
+            border: 2px solid #475569;
+            color: #ffffff;
+            padding: 15px;
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #38bdf8;
+        }
+
+        .btn-submit {
+            background-color: #38bdf8;
+            color: #0f172a;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* 풀이 과정 및 피드백 영역 */
+        .feedback-area {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .feedback-area.correct {
+            background-color: rgba(22, 101, 52, 0.2);
+            border: 1px solid #22c55e;
+        }
+
+        .feedback-area.wrong {
+            background-color: rgba(153, 27, 27, 0.2);
+            border: 1px solid #ef4444;
+        }
+
+        .feedback-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feedback-area.correct .feedback-title { color: #4ade80; }
+        .feedback-area.wrong .feedback-title { color: #f87171; }
+
+        .explanation-text {
+            font-size: 18px;
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .btn-next {
+            background-color: #ffffff;
+            color: #0f172a;
+            padding: 10px 24px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* 4. 결과 화면 디자인 */
+        #screen-result {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 120px;
+            font-weight: 900;
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        .result-comment {
+            font-size: 22px;
+            color: #94a3b8;
+            max-width: 600px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-container">
+        
+        <div class="screen active" id="screen-intro">
+            <h1 class="main-title">문자와 식 마스터</h1>
+            <p class="subtitle">단원 3.2 식의 값 랜덤 스테이지에 오신 것을 환영합니다.<br>각 조건에 맞게 미지수에 숫자를 대입하여 정확한 식의 값을 계산해 보세요.</p>
+            <button class="btn-start" onclick="changeScreen('screen-select')">시작하기</button>
+        </div>
+
+        <div class="screen" id="screen-select">
+            <h2 class="slide-title">난이도 선택 (Select Level)</h2>
+            <div class="difficulty-grid">
+                <div class="diff-card low" onclick="startLevel('low')">
+                    <h3>난이도 : 하</h3>
+                    <p>간단한 일차식 계산<br>4지 선다형 객관식 출제<br>(대부분 양수 대입, 10% 확률로 음수)</p>
+                </div>
+                <div class="diff-card mid" onclick="startLevel('mid')">
+                    <h3>난이도 : 중</h3>
+                    <p>거듭제곱이 포함된 식 계산<br>음수 대입 빈도 증가<br>(주관식 정답 직접 기입)</p>
+                </div>
+                <div class="diff-card high" onclick="startLevel('high')">
+                    <h3>난이도 : 상</h3>
+                    <p>두 개의 미지수(x, y) 등장<br>일부 항에 거듭제곱 포함 복합 연산<br>(주관식 정답 직접 기입)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="screen" id="screen-quiz">
+            <h2 class="slide-title" id="quiz-title">3.2 식의 값 챌린지</h2>
+            <div class="quiz-container">
+                <div class="question-pane">
+                    <div class="progress-box" id="q-progress">Question 1 / 10</div>
+                    <div class="condition-text" id="q-cond">x = 0 일 때,</div>
+                    <div class="expression-text" id="q-expr">3x + 5</div>
+                </div>
+
+                <div class="action-pane">
+                    <div class="choice-grid" id="area-choices"></div>
+
+                    <div class="input-group" id="area-input">
+                        <input type="number" id="user-typed-answer" placeholder="정답을 기입하세요" onkeydown="if(event.key==='Enter') submitManualAnswer()">
+                        <button class="btn-submit" onclick="submitManualAnswer()">정답 확인</button>
+                    </div>
+
+                    <div class="feedback-area" id="feedback-panel">
+                        <div class="feedback-title" id="feedback-title">정답입니다!</div>
+                        <div class="explanation-text" id="explanation-box">풀이 과정: </div>
+                        <button class="btn-next" onclick="goToNextQuestion()">다음 문제로</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="screen" id="screen-result">
+            <h1 class="main-title">분석 결과 리포트</h1>
+            <div class="score-display" id="final-score">0점</div>
+            <p class="result-comment" id="final-comment">최종 평가 결과가 여기에 표시됩니다.</p>
+            <button class="btn-start" onclick="resetGame()">다시 도전하기</button>
+        </div>
+
+    </div>
+
+    <script>
+        let state = {
+            level: 'low',
+            currentIndex: 0,
+            score: 0,
+            currentAnswer: 0,
+            currentExplanation: ""
+        };
+
+        const LETTERS = ['x', 'y', 'a', 'b', 'm', 'n'];
+
+        function changeScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function resetGame() {
+            state.currentIndex = 0;
+            state.score = 0;
+            changeScreen('screen-select');
+        }
+
+        function startLevel(selectedLevel) {
+            state.level = selectedLevel;
+            state.currentIndex = 0;
+            state.score = 0;
+            changeScreen('screen-quiz');
+            generateQuestion();
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateQuestion() {
+            document.getElementById('feedback-panel').style.display = 'none';
+            document.getElementById('user-typed-answer').value = '';
+            document.getElementById('user-typed-answer').disabled = false;
+
+            document.getElementById('q-progress').innerText = `Question ${state.currentIndex + 1} / 10`;
+
+            let char1 = LETTERS[getRandomInt(0, LETTERS.length - 1)];
+            let exprString = "";
+            let conditionString = "";
+            let answerValue = 0;
+            let explanationString = "";
+
+            if (state.level === 'low') {
+                let isNegative = Math.random() < 0.1;
+                let val = isNegative ? getRandomInt(-5, -1) : getRandomInt(0, 8);
+                let a = getRandomInt(2, 6);
+                let b = getRandomInt(1, 12);
+                let isPlus = Math.random() > 0.5;
+
+                exprString = isPlus ? `${a}${char1} + ${b}` : `${a}${char1} - ${b}`;
+                answerValue = isPlus ? (a * val + b) : (a * val - b);
+                
+                conditionString = `${char1} = ${val}`;
+                explanationString = `식 ${exprString} 의 변수 ${char1} 자리에 ${val}을 대입합니다.\n` + 
+                                    `계산: ${a} × (${val}) ${isPlus ? '+' : '-'} ${b} = ${a * val} ${isPlus ? '+' : '-'} ${b} = ${answerValue}`;
+
+                document.getElementById('area-choices').style.display = 'grid';
+                document.getElementById('area-input').style.display = 'none';
+                renderMultipleChoices(answerValue);
+
+            } else if (state.level === 'mid') {
+                let val = getRandomInt(-5, 5);
+                if (val === 0) val = 3; 
+                let a = getRandomInt(1, 3) * (Math.random() > 0.5 ? 1 : -1);
+                let b = getRandomInt(2, 8) * (Math.random() > 0.5 ? 1 : -1);
+
+                let aPart = (a === 1) ? `${char1}²` : (a === -1 ? `-${char1}²` : `${a}${char1}²`);
+                let bPart = (b > 0) ? `+ ${b}` : `- ${Math.abs(b)}`;
+
+                exprString = `${aPart} ${bPart}`;
+                answerValue = a * (val * val) + b;
+
+                conditionString = `${char1} = ${val}`;
+                explanationString = `거듭제곱이 포함된 식의 대입입니다. 곱셈과 거듭제곱을 우선 계산합니다.\n` +
+                                    `계산: ${a} × (${val})² ${b > 0 ? '+' : '-'} ${Math.abs(b)} = ${a} × ${val * val} ${b > 0 ? '+' : '-'} ${Math.abs(b)} = ${answerValue}`;
+
+                document.getElementById('area-choices').style.display = 'none';
+                document.getElementById('area-input').style.display = 'flex';
+
+            } else if (state.level === 'high') {
+                // 💡 [상] 미지수 2개 고정 로마자 사용 + 거듭제곱 항 결합
+                let char2 = (char1 === 'x') ? 'y' : 'x';
+                if(char1 === char2) char2 = 'y'; 
+
+                let val1 = getRandomInt(-3, 3); if(val1 === 0) val1 = 2;
+                let val2 = getRandomInt(-4, 4);
+                let a = getRandomInt(2, 4);
+                let b = getRandomInt(2, 5);
+                let isPlus = Math.random() > 0.5;
+
+                // ax² ± by 형태로 변형하여 상 난이도에 거듭제곱 반영
+                exprString = `${a}${char1}² ${isPlus ? '+' : '-'} ${b}${char2}`;
+                
+                let secondTerm = b * val2;
+                answerValue = isPlus ? (a * (val1 * val1) + secondTerm) : (a * (val1 * val1) - secondTerm);
+
+                conditionString = `${char1} = ${val1}, ${char2} = ${val2}`;
+                explanationString = `두 변수 중 ${char1}에는 거듭제곱이 적용되어 있습니다. 차근차근 대입합니다.\n` +
+                                    `계산: ${a} × (${val1})² ${isPlus ? '+' : '-'} ${b} × (${val2}) = ${a} × ${val1 * val1} ${isPlus ? '+' : '-'} (${secondTerm}) = ${answerValue}`;
+
+                document.getElementById('area-choices').style.display = 'none';
+                document.getElementById('area-input').style.display = 'flex';
+            }
+
+            state.currentAnswer = answerValue;
+            state.currentExplanation = explanationString;
+
+            document.getElementById('q-cond').innerText = conditionString + " 일 때,";
+            document.getElementById('q-expr').innerText = exprString;
+        }
+
+        function renderMultipleChoices(correct) {
+            let choiceContainer = document.getElementById('area-choices');
+            choiceContainer.innerHTML = "";
+
+            let options = [correct];
+            while (options.length < 4) {
+                let offset = getRandomInt(-8, 8);
+                if (offset === 0) offset = 3;
+                let fakeValue = correct + offset;
+                if (!options.includes(fakeValue)) {
+                    options.push(fakeValue);
+                }
+            }
+
+            options.sort((a, b) => a - b);
+
+            options.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerText = opt;
+                btn.onclick = () => evaluateAnswer(opt);
+                choiceContainer.appendChild(btn);
+            });
+        }
+
+        function submitManualAnswer() {
+            let userInput = document.getElementById('user-typed-answer').value;
+            if (userInput === '') return;
+            
+            document.getElementById('user-typed-answer').disabled = true;
+            evaluateAnswer(parseInt(userInput));
+        }
+
+        function evaluateAnswer(userAnswer) {
+            let isCorrect = (userAnswer === state.currentAnswer);
+            if (isCorrect) state.score++;
+
+            let panel = document.getElementById('feedback-panel');
+            let title = document.getElementById('feedback-title');
+            let explBox = document.getElementById('explanation-box');
+
+            panel.style.display = 'block';
+            if (isCorrect) {
+                panel.className = "feedback-area correct";
+                title.innerText = "🎉 정답입니다! 아주 훌륭해요.";
+            } else {
+                panel.className = "feedback-area wrong";
+                title.innerText = `💥 오답입니다. (제출한 값: ${userAnswer})`;
+            }
+
+            explBox.innerText = state.currentExplanation;
+            document.querySelectorAll('.choice-btn').forEach(btn => btn.disabled = true);
+        }
+
+        function goToNextQuestion() {
+            state.currentIndex++;
+            if (state.currentIndex < 10) {
+                generateQuestion();
+            } else {
+                showFinalReport();
+            }
+        }
+
+        function showFinalReport() {
+            changeScreen('screen-result');
+            let finalScore = state.score * 10;
+            document.getElementById('final-score').innerText = `${finalScore}점`;
+
+            let comment = "";
+            if (finalScore === 100) {
+                comment = "대단합니다! 문자와 식 파트의 완벽한 마스터입니다. 모든 복잡한 대입 과정을 오차 없이 연산해냈습니다.";
+            } else if (finalScore >= 70) {
+                comment = "우수한 성적입니다. 대입의 핵심 개념을 명확하게 잡고 있습니다. 실수를 조금만 줄이면 완벽해질 것입니다.";
+            } else {
+                comment = "기초 연산 과정을 다시 한번 살펴볼 필요가 있습니다. 오답의 풀이 과정을 꼼꼼히 정독하고 다시 한번 도전해보세요!";
+            }
+            document.getElementById('final-comment').innerText = comment;
+        }
+    </script>
+</body>
+</html>
