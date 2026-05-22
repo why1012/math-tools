@@ -1,4 +1,4 @@
-# 🛤️ 중등 수학 디지털 탐구 도구함 (정수와 유리수)
+# 🛤️ 중등 수학 디지털 탐구 도구함
 
 와우중학교 수학 수업에서 학생들의 직관적인 개념 이해를 돕기 위해 제작된 시뮬레이터 통합 페이지입니다.
 
@@ -13,6 +13,8 @@
     * 기차의 속도(양수/음수)와 시간(전/후)의 곱을 통해 정수의 곱셈 원리를 이해합니다.
     * 수직선 위에서 기차의 위치 변화를 실시간으로 추적합니다.
 
+(지속적으로 추가 예정)
+
 ## 🚀 바로 사용하기
 
 아래 링크를 클릭하면 설치 없이 브라우저에서 바로 실행할 수 있습니다.
@@ -21,7 +23,7 @@
 ## 🛠️ 사용 기술 및 도구
 
 * **Frontend**: HTML5, CSS3, JavaScript (Vanilla JS)
-* **Tools**: VS Code, Gemini 3 Flash (AI Collaboration)
+* **Tools**: Antigravity, Gemini 3 Flash (AI Collaboration)
 * **Deployment**: GitHub Pages
 
 ## 👨‍🏫 제작 및 관리
