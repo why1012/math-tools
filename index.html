@@ -68,6 +68,9 @@
         .menu-item:hover { background: #2c3e50; }
         .menu-item.active { background: #1a252f; color: #4da6ff; }
         
+        /* 폴더 밖 개별 도구 스타일 조정 */
+        .single-menu { padding-left: 20px; background: #34495e; border-top: 2px solid rgba(0,0,0,0.1); }
+        
         /* iframe 컨테이너 영역 */
         #iframe-container { flex-grow: 1; width: 100%; height: 100%; position: relative; background: #080d14; min-width: 0; }
         iframe { width: 100%; height: 100%; border: none; display: none; position: absolute; top:0; left:0; }
@@ -109,10 +112,7 @@
                 <div class="menu-item" onclick="switchTool('block-frame', this)">🧱 대수블록 실험실</div>
             </div>
 
-            <div class="folder-title collapsed" onclick="toggleFolder('folder4', this)">📁 4단원. 좌표평면과 그래프</div>
-            <div id="folder4" class="folder-content hidden">
-                <div class="menu-item" onclick="switchTool('icecream-frame', this)">🍦 아이스크림</div>
-            </div>
+            <div class="menu-item single-menu" onclick="switchTool('icecream-frame', this)">🍦 아이스크림</div>
         </div>
     </nav>
 
@@ -126,7 +126,7 @@
         <iframe id="new-folder-frame" src="3.2/3.2.html"></iframe>
         <iframe id="sub-frame" src="sub.html"></iframe>
         <iframe id="block-frame" src="3.3.html"></iframe>
-        <iframe id="icecream-frame" src="ice cream/index.html"></iframe>
+        <iframe id="icecream-frame" src="ice cream/ice_cream.html"></iframe>
     </main>
 </div>
 
