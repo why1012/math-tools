@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아이스크림 가게 WAW 31</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&family=Outfit:wght@400;700;800;950&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pri:#d38a8a;--pri-dk:#b86b6b;--pri-lt:#f5c2c2;
+  --bg:#fcf0ed;--wood:#704b3c;--chalk:#2b352e;
+  --coin-gold:#e8a820;
+  --ft:'Gowun Dodum',sans-serif;--ft-t:'Jua',sans-serif;--ft-n:'Outfit',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ft);background:linear-gradient(135deg,#ebdada,#f4eae6,#e2d9db);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:clamp(8px,2vw,20px);overflow-x:hidden}
+
+/* ── 게임 컨테이너 ── */
+.gc{background:rgba(255,255,255,.95);border-radius:24px;box-shadow:0 16px 40px rgba(0,0,0,.1);width:100%;max-width:1100px;min-width:360px;border:6px solid #fff;display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+/* ── 헤더 ── */
+header{background:linear-gradient(135deg,var(--pri),#e7a3a3);padding:12px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;position:relative}
+header h1{font-family:var(--ft-t);font-size:clamp(1.4rem,3.5vw,2.2rem);text-shadow:1px 1px 3px rgba(0,0,0,.15);display:flex;align-items:center;gap:8px}
+.diff-row{display:flex;gap:4px;background:rgba(255,255,255,.25);padding:3px;border-radius:20px;border:2px solid rgba(255,255,255,.5)}
+.diff-btn{background:none;border:none;padding:5px 14px;font-family:var(--ft-t);font-size:clamp(.8rem,1.8vw,1rem);color:#fff;cursor:pointer;border-radius:16px;transition:.2s}
+.diff-btn.active{background:#fff;color:var(--pri-dk);box-shadow:0 2px 6px rgba(0,0,0,.1)}
+
+/* 볼륨 토글 */
+.vol-btn{position:absolute;right:14px;top:12px;background:rgba(255,255,255,.3);border:2px solid #fff;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.vol-btn:hover{background:rgba(255,255,255,.5)}
+
+/* ── 진행률 바 (타이머) ── */
+.timer-bar-wrap{width:100%;height:8px;background:#e8d5d0;position:relative;overflow:hidden}
+.timer-bar{height:100%;background:linear-gradient(90deg,#4ade80,#22c55e);width:100%;transition:width .3s linear;border-radius:0 4px 4px 0}
+.timer-bar.warn{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+.timer-bar.danger{background:linear-gradient(90deg,#f87171,#ef4444)}
+
+/* ── 게임 보드 ── */
+.board{display:grid;grid-template-columns:clamp(200px,25vw,270px) 1fr;min-height:clamp(420px,55vh,560px)}
+
+/* 메뉴판 */
+.menu-side{background:#ebd8cf;padding:clamp(10px,1.5vw,18px);border-right:3px dashed var(--pri-lt);display:flex;flex-direction:column;align-items:center}
+.menu-board{background:var(--chalk);border:10px solid var(--wood);border-radius:12px;width:100%;padding:12px;color:#f1f1f1;box-shadow:inset 0 0 16px rgba(0,0,0,.7),0 6px 12px rgba(0,0,0,.12);transform-origin:top center}
+@keyframes swing{0%{transform:rotate(0)}20%{transform:rotate(6deg)}40%{transform:rotate(-5deg)}60%{transform:rotate(3deg)}80%{transform:rotate(-1deg)}100%{transform:rotate(0)}}
+.menu-board.swing{animation:swing .8s ease-in-out}
+.menu-board h2{font-family:var(--ft-t);color:#ffd166;text-align:center;margin-bottom:10px;border-bottom:2px dashed rgba(255,255,255,.2);padding-bottom:4px;font-size:clamp(1rem,2.5vw,1.4rem)}
+.mi{display:flex;align-items:center;gap:8px;margin-bottom:14px;background:rgba(255,255,255,.05);padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.08)}
+.mi img{width:clamp(36px,5vw,48px);height:clamp(36px,5vw,48px);object-fit:contain;border-radius:6px;background:#fff;padding:2px;border:2px solid #dfc3b5}
+.mi-name{font-weight:bold;color:#fff;font-size:clamp(.75rem,1.6vw,.9rem)}
+.mi-price{color:#a3e635;font-family:var(--ft-n);font-size:clamp(.85rem,2vw,1.1rem);font-weight:800;margin-top:1px}
+
+/* 코인 현황 (메뉴판 아래) */
+.coin-status{margin-top:auto;padding:10px;background:rgba(255,255,255,.1);border-radius:10px;text-align:center;width:100%;border:1px solid rgba(255,255,255,.15)}
+.coin-status .label{color:#ddd;font-size:.8rem}
+.coin-status .val{font-family:var(--ft-n);font-weight:900;font-size:1.6rem;color:var(--coin-gold);display:flex;align-items:center;justify-content:center;gap:6px}
+.coin-status .val img{width:28px;height:28px}
+img[src*="coin.png"], .tray-bg, .tray-items img, .deliver-item, .coin-particle {mix-blend-mode:multiply}
+
+/* ── 워크스페이스 ── */
+.ws{display:flex;flex-direction:column;position:relative;background:url('assets/background.png') no-repeat center center;background-size:cover;overflow:hidden}
+.ws::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);pointer-events:none;z-index:0}
+
+/* 손님 영역 */
+.cust-area{flex:1;position:relative;display:flex;justify-content:center;align-items:flex-end;z-index:1;padding-bottom:10px;min-height:260px}
+
+/* 원형 아바타 프레임 */
+.avatar-frame{width:clamp(120px,18vw,170px);height:clamp(120px,18vw,170px);border-radius:50%;background:#f0ddd5;border:5px solid #e0c4b8;box-shadow:0 8px 20px rgba(0,0,0,.12);overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:2;
+  transform:translateX(120%);opacity:0;transition:transform .7s cubic-bezier(.34,1.56,.64,1),opacity .4s}
+.avatar-frame.enter{transform:translateX(0);opacity:1}
+.avatar-frame.exit{transform:translateX(-120%);opacity:0;transition:transform .5s ease-in,opacity .3s}
+.avatar-frame img{width:100%;height:100%;object-fit:cover}
+@keyframes bounce-av{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.avatar-frame.bounce{animation:bounce-av .4s ease}
+
+/* 말풍선 */
+.bubble{position:absolute;top:clamp(10px,3vw,30px);background:#fff;border:3px solid var(--pri);border-radius:18px;padding:12px 20px;max-width:clamp(220px,40vw,350px);box-shadow:0 8px 20px rgba(0,0,0,.08);font-size:clamp(.9rem,1.8vw,1.1rem);font-weight:bold;color:#333;z-index:3;
+  opacity:0;transform:scale(.8) translateY(8px);transition:.4s cubic-bezier(.175,.885,.32,1.275);pointer-events:none}
+.bubble::after{content:'';position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#fff}
+.bubble::before{content:'';position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);border:10px solid transparent;border-top-color:var(--pri);z-index:-1}
+.bubble.show{opacity:1;transform:scale(1) translateY(0)}
+.bubble.left-side { left:auto; right:50%; margin-right:45px; transform-origin:bottom right; }
+.bubble.left-side::after { left:auto; right:20px; transform:none; }
+.bubble.left-side::before { left:auto; right:18px; transform:none; }
+.bubble.right-side { right:auto; left:50%; margin-left:45px; transform-origin:bottom left; }
+.bubble.right-side::after { right:auto; left:20px; transform:none; }
+.bubble.right-side::before { right:auto; left:18px; transform:none; }
+
+/* 기린 사장님 */
+.boss-zone{position:absolute;right:-200px;bottom:0;width:clamp(130px,16vw,180px);z-index:5;transition:right .6s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;align-items:center}
+.boss-zone.show{right:10px}
+.boss-zone img{width:100%;border-radius:50%;background:#f0ddd5;border:4px solid #e0c4b8;box-shadow:0 6px 14px rgba(0,0,0,.12)}
+.boss-bubble{position:absolute;bottom:40px;right:110%;width:max-content;max-width:clamp(200px,30vw,300px);background:#fff;border:3px solid var(--coin-gold);border-radius:14px;padding:12px 16px;font-size:clamp(.85rem,1.5vw,1rem);color:#333;box-shadow:0 4px 12px rgba(0,0,0,.15);text-align:left;line-height:1.5;z-index:10;opacity:0;transform:scale(.8);transition:.4s}
+.boss-zone.show .boss-bubble{opacity:1;transform:scale(1)}
+.boss-bubble::before{content:'';position:absolute;bottom:20px;right:-18px;border:9px solid transparent;border-left-color:var(--coin-gold)}
+.boss-bubble::after{content:'';position:absolute;bottom:23px;right:-12px;border:6px solid transparent;border-left-color:#fff}
+.boss-ok-btn{margin-top:6px;background:var(--coin-gold);color:#fff;border:none;padding:6px 16px;border-radius:20px;font-family:var(--ft-t);font-size:.95rem;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+
+/* ── 카운터 (하단) ── */
+.counter{background:linear-gradient(to bottom,#f2ece9,#e0d5cf);border-top:6px solid #c2b2a9;display:grid;grid-template-columns:1fr 1.1fr;padding:clamp(8px,1.5vw,14px) clamp(12px,2vw,24px);gap:clamp(8px,1.5vw,16px);z-index:2;align-items:stretch;min-height:190px}
+
+/* POS & 영수증 */
+.pos{background:#2b2b2b;border-radius:10px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,.25),inset 0 1px 4px rgba(255,255,255,.08);border:2px solid #3c3c3c;display:flex;flex-direction:column;position:relative}
+.r-slot{background:#111;height:6px;border-radius:3px;margin-bottom:4px}
+.receipt{background:#fff;color:#222;padding:10px 12px;font-size:clamp(.75rem,1.4vw,.88rem);line-height:1.4;position:relative;flex:1;display:flex;flex-direction:column;
+  transform-origin:top center;transform:scaleY(0);opacity:0;transition:.5s cubic-bezier(.19,1,.22,1)}
+.receipt::after{content:"";position:absolute;left:0;bottom:-7px;width:100%;height:7px;background:linear-gradient(-135deg,#fff 3px,transparent 0),linear-gradient(135deg,#fff 3px,transparent 0);background-size:6px 7px}
+.receipt.show{transform:scaleY(1);opacity:1}
+.r-title{text-align:center;font-family:var(--ft-t);font-size:1rem;border-bottom:1.5px dashed #999;padding-bottom:4px;margin-bottom:6px}
+.r-row{display:flex;justify-content:space-between;margin-bottom:3px;font-size:.82rem}
+.r-total{border-top:1px dashed #999;margin-top:8px;padding-top:4px;font-weight:bold;font-size:.85rem}
+
+/* 쟁반 (영수증 바깥, 카운터 위 별도 공간) */
+.tray-area{position:absolute;top:-60px;right:10px;width:clamp(90px,12vw,130px);opacity:0;transform:scale(.5);transition:.4s cubic-bezier(.175,.885,.32,1.275);pointer-events:none;z-index:6}
+.tray-area.show{opacity:1;transform:scale(1)}
+.tray-area img.tray-bg{width:100%}
+.tray-items{position:absolute;inset:15px;display:flex;justify-content:center;align-items:center;gap:3px;flex-wrap:wrap}
+.tray-items img{width:22px;height:22px;object-fit:contain}
+
+/* 입력 패널 */
+.inp{background:rgba(255,255,255,.95);border-radius:12px;padding:clamp(8px,1.5vw,14px);box-shadow:0 4px 12px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:8px;justify-content:center;border:2px solid var(--pri-lt)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ch-btn{background:#fff;border:2.5px solid var(--pri-lt);padding:10px;border-radius:10px;font-family:var(--ft-n),var(--ft);font-weight:800;font-size:clamp(.85rem,1.6vw,1rem);cursor:pointer;transition:.2s;color:#444;text-align:center}
+.ch-btn:hover{border-color:var(--pri);background:#fffafa;transform:translateY(-2px)}
+.ch-btn:disabled{opacity:.5;cursor:default;transform:none}
+.ans-form{display:flex;flex-direction:column;gap:8px}
+.in-wrap{display:flex;background:#fff;border:2.5px solid var(--pri-lt);border-radius:10px;padding:5px 10px;transition:border-color .2s}
+.in-wrap:focus-within{border-color:var(--pri)}
+.ans-in{border:none;outline:none;width:100%;font-size:clamp(1rem,2vw,1.2rem);font-family:var(--ft-n),var(--ft);font-weight:800;color:#333}
+.sub-btn{background:linear-gradient(to bottom,var(--pri),var(--pri-dk));border:none;color:#fff;padding:10px;border-radius:10px;font-family:var(--ft-t);font-size:clamp(1rem,2vw,1.15rem);cursor:pointer;box-shadow:0 3px 6px rgba(211,138,138,.3);transition:.2s}
+.sub-btn:hover{transform:translateY(-2px);box-shadow:0 5px 10px rgba(211,138,138,.4)}
+.sub-btn:disabled{opacity:.5;cursor:default;transform:none}
+.type-panel{display:flex;gap:8px;justify-content:center;background:#f7ebeb;padding:4px 6px;border-radius:8px;font-size:clamp(.78rem,1.4vw,.9rem)}
+.type-label{display:flex;align-items:center;gap:4px;font-weight:bold;cursor:pointer;color:#444;padding:3px 6px;border-radius:5px;transition:.2s}
+.type-label:hover{background:rgba(255,255,255,.5)}
+.type-label input{accent-color:var(--pri-dk);cursor:pointer}
+
+/* ── 상태바 ── */
+.status{background:#fff;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;border-top:3px solid var(--pri-lt);font-family:var(--ft-t);font-size:clamp(.9rem,1.8vw,1.1rem);color:#666}
+.status span{color:var(--pri-dk);font-weight:bold}
+
+/* ── 코인 파티클 ── */
+.coin-particle{position:absolute;width:30px;height:30px;z-index:200;pointer-events:none;animation:coinFloat 1.2s ease-out forwards}
+@keyframes coinFloat{0%{opacity:1;transform:translateY(0) scale(1) rotate(0)}60%{opacity:1;transform:translateY(-60px) scale(1.2) rotate(180deg)}100%{opacity:0;transform:translateY(-100px) scale(.6) rotate(360deg)}}
+
+/* ── 상품 전달 애니메이션 ── */
+.deliver-item{position:absolute;z-index:150;pointer-events:none;animation:deliverFly 1s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes deliverFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.5)}}
+
+/* ── 토스트 ── */
+.toast{position:absolute;top:60px;left:50%;transform:translateX(-50%) translateY(-15px);padding:10px 20px;border-radius:24px;color:#fff;font-family:var(--ft-t);font-size:clamp(.9rem,1.8vw,1.1rem);box-shadow:0 8px 16px rgba(0,0,0,.12);z-index:180;opacity:0;transition:.3s cubic-bezier(.175,.885,.32,1.275);pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#4ade80;border:2px solid #fff}
+.toast.err{background:#f87171;border:2px solid #fff}
+.toast.retry{background:#fbbf24;border:2px solid #fff;color:#333}
+
+/* ── 가격변동 ── */
+.price-alert{position:absolute;inset:0;background:rgba(211,138,138,.2);z-index:50;display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:.3s}
+.price-alert.show{opacity:1}
+.price-alert-box{background:var(--pri-dk);color:#fff;font-family:var(--ft-t);font-size:clamp(1.2rem,3vw,1.8rem);padding:16px 32px;border-radius:40px;box-shadow:0 8px 20px rgba(0,0,0,.2);border:3px solid #fff;transform:scale(.5);transition:transform .4s cubic-bezier(.175,.885,.32,1.275)}
+.price-alert.show .price-alert-box{transform:scale(1)}
+
+/* ── 결산 모달 ── */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:300;display:flex;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:.4s}
+.overlay.show{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px;padding:clamp(20px,3vw,36px);text-align:center;max-width:520px;width:92%;box-shadow:0 12px 30px rgba(0,0,0,.25);border:5px solid var(--pri);transform:scale(.8);transition:transform .5s cubic-bezier(.175,.885,.32,1.275);max-height:80vh;overflow-y:auto}
+.overlay.show .modal{transform:scale(1)}
+.modal h2{font-family:var(--ft-t);font-size:clamp(1.5rem,4vw,2rem);color:var(--pri-dk);margin-bottom:10px}
+.modal .grade{font-family:var(--ft-t);font-size:clamp(1.6rem, 3.5vw, 2.2rem);font-weight:800;margin:12px 0}
+.grade-S{color:#f59e0b}.grade-A{color:#22c55e}.grade-B{color:#3b82f6}.grade-C{color:#8b5cf6}.grade-D{color:#6b7280}
+.modal .total-coins{font-family:var(--ft-n);font-weight:900;font-size:1.8rem;color:var(--coin-gold);display:flex;align-items:center;justify-content:center;gap:8px;margin:8px 0}
+.modal .total-coins img{width:32px}
+.round-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.82rem}
+.round-table th{background:var(--pri-lt);padding:6px;font-family:var(--ft-t)}
+.round-table td{padding:5px;border-bottom:1px solid #eee}
+.round-table tr.correct{background:#f0fdf4}
+.round-table tr.wrong{background:#fef2f2}
+.modal-btn{background:linear-gradient(to bottom,var(--pri),var(--pri-dk));border:none;color:#fff;padding:10px 28px;border-radius:24px;font-family:var(--ft-t);font-size:1.2rem;cursor:pointer;box-shadow:0 3px 8px rgba(211,138,138,.3);transition:.2s;margin-top:10px}
+.modal-btn:hover{transform:translateY(-2px)}
+
+/* ── 반응형 ── */
+@media(max-width:700px){
+  .board{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .menu-side{flex-direction:row;flex-wrap:wrap;gap:8px;border-right:none;border-bottom:3px dashed var(--pri-lt);padding:10px}
+  .menu-board{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .menu-board h2{margin-bottom:0;border-bottom:none;padding-bottom:0;white-space:nowrap}
+  .mi{margin-bottom:0;flex:1;min-width:120px}
+  .coin-status{margin-top:0;min-width:100px}
+  .counter{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="gc">
+  <header>
+    <h1>🍦 WAW 31 아이스크림 가게</h1>
+    <div class="diff-row">
+      <button class="diff-btn active" onclick="setDiff('easy')">하 (객관식)</button>
+      <button class="diff-btn" onclick="setDiff('normal')">중 (분배법칙)</button>
+      <button class="diff-btn" onclick="setDiff('hard')">상 (덧/뺄셈)</button>
+    </div>
+    <button class="vol-btn" id="volBtn" onclick="toggleBGM()" title="음악 켜기/끄기">🔇</button>
+  </header>
+
+  <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar"></div></div>
+
+  <div class="board">
+    <div class="menu-side">
+      <div class="menu-board" id="menuBoard">
+        <h2>오늘의 메뉴</h2>
+        <div class="mi"><img src="assets/item_strawberry.png" alt="딸기"><div><div class="mi-name">딸기 아이스크림</div><div class="mi-price" id="pS">2x 원</div></div></div>
+        <div class="mi"><img src="assets/item_chocolate.png" alt="초코"><div><div class="mi-name">초코 아이스크림</div><div class="mi-price" id="pC">3y 원</div></div></div>
+        <div class="mi"><img src="assets/item_macaron.png" alt="마카롱"><div><div class="mi-name">마카롱</div><div class="mi-price" id="pM">3000 원</div></div></div>
+      </div>
+      <div class="coin-status">
+        <div class="label">오늘의 매출</div>
+        <div class="val"><img src="assets/coin.png" alt="코인"><span id="coinDisp">0</span></div>
+      </div>
+    </div>
+
+    <div class="ws">
+      <div class="cust-area">
+        <div class="bubble" id="bubble"></div>
+        <div class="bubble" id="bubble2" style="display:none"></div>
+        <div class="avatar-frame" id="avatar"><img id="custImg" src="assets/customer_rabbit.png" alt="손님"></div>
+        <!-- 기린 사장님 -->
+        <div class="boss-zone" id="bossZone">
+          <div class="boss-bubble" id="bossBubble"></div>
+          <img src="assets/boss_giraffe.png" alt="기린 사장님">
+          <button class="boss-ok-btn" id="bossOk" onclick="dismissBoss()">알겠어요!</button>
+        </div>
+      </div>
+
+      <div class="counter" style="position:relative">
+        <div class="pos">
+          <div class="r-slot"></div>
+          <div class="receipt" id="receipt">
+            <div class="r-title">ORDER RECEIPT</div>
+            <div id="rItems"></div>
+            <div class="r-total">합계 금액 식:</div>
+          </div>
+        </div>
+        <div class="inp" id="inp"></div>
+        <!-- 쟁반 -->
+        <div class="tray-area" id="trayArea">
+          <img class="tray-bg" src="assets/tray.png" alt="쟁반">
+          <div class="tray-items" id="trayItems"></div>
+        </div>
+      </div>
+
+      <div class="price-alert" id="priceAlert"><div class="price-alert-box">🔄 아이스크림 가격 변동!</div></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <div class="status">
+    <div>손님: <span id="roundDisp">1 / 9</span></div>
+    <div>매출: <img src="assets/coin.png" style="width:20px;height:20px;vertical-align:middle"> <span id="coinDisp2">0</span></div>
+  </div>
+
+  <!-- 결산 모달 -->
+  <div class="overlay" id="endOverlay">
+    <div class="modal">
+      <h2>오늘의 영업 완료! 🎉</h2>
+      <div class="grade" id="gradeDisp">S</div>
+      <div class="total-coins"><img src="assets/coin.png" alt="코인"><span id="totalCoinDisp">0</span> / <span id="maxCoinDisp">0</span></div>
+      <table class="round-table">
+        <thead><tr><th>#</th><th>주문</th><th>결과</th><th>시간</th><th>코인</th></tr></thead>
+        <tbody id="roundTableBody"></tbody>
+      </table>
+      <button class="modal-btn" onclick="resetGame()">다시 영업하기 🍦</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   Sound System (Web Audio API)
+   ══════════════════════════════════════ */
+const SFX={
+  ctx:null,
+  init(){if(!this.ctx)this.ctx=new(window.AudioContext||window.webkitAudioContext)()},
+  correct(){
+    this.init();const t=this.ctx.currentTime;
+    [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.type='sine';o.frequency.setValueAtTime(f,t+i*.1);
+      g.gain.setValueAtTime(.12,t+i*.1);g.gain.exponentialRampToValueAtTime(.005,t+i*.1+.25);
+      o.connect(g);g.connect(this.ctx.destination);o.start(t+i*.1);o.stop(t+i*.1+.3);
+    });
+  },
+  wrong(){
+    this.init();const t=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type='sawtooth';o.frequency.setValueAtTime(180,t);o.frequency.linearRampToValueAtTime(100,t+.25);
+    g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.005,t+.25);
+    o.connect(g);g.connect(this.ctx.destination);o.start(t);o.stop(t+.3);
+  },
+  receipt(){
+    this.init();const t=this.ctx.currentTime;
+    for(let i=0;i<5;i++){
+      const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+      o.type='triangle';o.frequency.setValueAtTime(700+Math.random()*300,t+i*.07);
+      g.gain.setValueAtTime(.06,t+i*.07);g.gain.exponentialRampToValueAtTime(.005,t+i*.07+.04);
+      o.connect(g);g.connect(this.ctx.destination);o.start(t+i*.07);o.stop(t+i*.07+.05);
+    }
+  },
+  coin(){
+    this.init();const t=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type='sine';o.frequency.setValueAtTime(1200,t);o.frequency.exponentialRampToValueAtTime(2400,t+.1);
+    g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.005,t+.2);
+    o.connect(g);g.connect(this.ctx.destination);o.start(t);o.stop(t+.25);
+  }
+};
+
+/* ── BGM ── */
+let bgmPlaying=false, bgmInterval=null;
+function toggleBGM(){
+  SFX.init();
+  if(bgmPlaying){stopBGM();return}
+  bgmPlaying=true;
+  document.getElementById('volBtn').textContent='🔊';
+  playBGMLoop();
+}
+function stopBGM(){
+  bgmPlaying=false;
+  document.getElementById('volBtn').textContent='🔇';
+  if(bgmInterval)clearInterval(bgmInterval);
+}
+function playBGMLoop(){
+  const notes=[392,440,494,523,494,440,392,330,294,330,392,440,494,523,587,523];
+  let idx=0;
+  function playNote(){
+    if(!bgmPlaying)return;
+    const t=SFX.ctx.currentTime;
+    const o=SFX.ctx.createOscillator(),g=SFX.ctx.createGain();
+    o.type='sine';o.frequency.setValueAtTime(notes[idx%notes.length],t);
+    g.gain.setValueAtTime(.025,t);g.gain.exponentialRampToValueAtTime(.003,t+.35);
+    o.connect(g);g.connect(SFX.ctx.destination);o.start(t);o.stop(t+.4);
+    idx++;
+  }
+  playNote();
+  bgmInterval=setInterval(()=>{if(bgmPlaying)playNote();else clearInterval(bgmInterval);},400);
+}
+
+/* ══════════════════════════════════════
+   Game State
+   ══════════════════════════════════════ */
+const S={
+  diff:'easy',nS:2,mC:3,macP:3000,round:1,coins:0,
+  attempt:0, // 0=첫시도, 1=재도전중
+  timerID:null,timeLeft:30,
+  locked:false, // 입력 잠금
+  cust:{name:'',img:'',sC:0,cC:0,mC:0,speech:''},
+  history:[], // [{order,correct,time,coins}]
+  maxCoins:{ easy:100, normal:150, hard:200 }
+};
+
+const CUSTOMERS=[
+  {name:'초롱이 토끼',img:'assets/customer_rabbit.png'},
+  {name:'뭉치 곰',img:'assets/customer_bear.png'},
+  {name:'베리 고양이',img:'assets/customer_cat.png'}
+];
+const CUSTOMERS_PAIR=[
+  {name:'토끼와 곰', img:'assets/customer_pair_1.png'},
+  {name:'고양이와 토끼', img:'assets/customer_pair_2.png'},
+  {name:'곰과 고양이', img:'assets/customer_pair_3.png'}
+];
+
+/* ── 수식 파서 ── */
+function parse(str){
+  let c=str.replace(/\s+/g,'').toLowerCase().replace(/\*/g,'');
+  let terms=c.split(/(?=[+-])/);
+  let xC=0,yC=0,con=0;
+  for(let t of terms){
+    if(!t)continue;
+    if(t.includes('x')){let s=t.replace('x','');xC+=(s===''||s==='+')?1:s==='-'?-1:parseFloat(s);if(isNaN(xC))throw 0;}
+    else if(t.includes('y')){let s=t.replace('y','');yC+=(s===''||s==='+')?1:s==='-'?-1:parseFloat(s);if(isNaN(yC))throw 0;}
+    else{con+=parseFloat(t);if(isNaN(con))throw 0;}
+  }
+  return{xC,yC,con};
+}
+function checkAns(str,cx,cy,cc){
+  try{const p=parse(str);return p.xC===cx&&p.yC===cy&&p.con===cc;}catch{return false;}
+}
+
+/* ── 정답 문자열 생성 ── */
+function correctStr(){
+  const cx=S.cust.sC*S.nS, cy=S.cust.cC*S.mC, cc=S.cust.mC2*S.macP;
+  let t=[];if(cx>0)t.push(cx+'x');if(cy>0)t.push(cy+'y');if(cc>0)t.push(''+cc);
+  return t.join(' + ');
+}
+
+/* ── 손님 생성 ── */
+function genCust(){
+  let sC=0,cC=0,mC=0;
+  function genBase(){
+    let sc,cc,mc;
+    do{sc=Math.floor(Math.random()*4);cc=Math.floor(Math.random()*4);mc=Math.floor(Math.random()*4);}
+    while(sc+cc+mc===0);
+    return {sc,cc,mc};
+  }
+  let cType = S.customerPool[S.round - 1];
+
+  if(cType==='easy'){
+    const info=CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)];
+    const mono=Math.random()<.25;
+    if(mono){
+      const ch=Math.floor(Math.random()*3),cnt=Math.floor(Math.random()*4)+1;
+      if(ch===0)sC=cnt;else if(ch===1)cC=cnt;else mC=cnt;
+    }else{
+      const r=genBase();sC=r.sc;cC=r.cc;mC=r.mc;
+    }
+    let parts=[];
+    if(sC>0)parts.push(`딸기 아이스크림 ${sC}개`);
+    if(cC>0)parts.push(`초코 아이스크림 ${cC}개`);
+    if(mC>0)parts.push(`마카롱 ${mC}개`);
+    S.cust={type:'easy', name:info.name,img:info.img,sC,cC,mC2:mC,speech:`안녕! 나는 ${info.name}야. ${parts.join(', ')} 주세요!`,speech2:null,fData:{}};
+  } else if(cType==='normal') {
+    const info=CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)];
+    const isMult=Math.random()<.6;
+    let base=genBase(), mult=2, msg="";
+    if(isMult){
+      mult = Math.random()<.5? 2:3;
+      sC = base.sc*mult; cC = base.cc*mult; mC = base.mc*mult;
+      let parts=[];
+      if(base.sc>0)parts.push(`딸기 아이스크림 ${base.sc}개`);
+      if(base.cc>0)parts.push(`초코 아이스크림 ${base.cc}개`);
+      if(base.mc>0)parts.push(`마카롱 ${base.mc}개`);
+      msg = `저번에 ${parts.join(', ')} 먹었는데 부족했어요. 그 ${mult}배로 주세요!`;
+    } else {
+      mult = Math.random()<.5? 2:3;
+      let tsc, tcc, tmc;
+      do{tsc=Math.floor(Math.random()*3)*mult;tcc=Math.floor(Math.random()*3)*mult;tmc=Math.floor(Math.random()*3)*mult;}while(tsc+tcc+tmc===0);
+      sC=tsc/mult; cC=tcc/mult; mC=tmc/mult;
+      base = {sc:tsc,cc:tcc,mc:tmc};
+      let parts=[];
+      if(tsc>0)parts.push(`딸기 아이스크림 ${tsc}개`); if(tcc>0)parts.push(`초코 아이스크림 ${tcc}개`); if(tmc>0)parts.push(`마카롱 ${tmc}개`);
+      if(mult===2) msg = `저번에 ${parts.join(', ')} 샀는데 너무 많았어요. 두 번에 나누어 먹게 절반만 주세요!`;
+      else msg = `저번에 ${parts.join(', ')} 샀는데, 세 번에 나누어 먹으려 해요. 한 번 먹을 양만 주세요!`;
+    }
+    S.cust={type:'normal', name:info.name,img:info.img,sC,cC,mC2:mC,speech:msg,speech2:null,fData:{isMult,mult,base}};
+  } else {
+    const info=CUSTOMERS_PAIR[Math.floor(Math.random()*CUSTOMERS_PAIR.length)];
+    const isAdd=Math.random()<.5;
+    let b1=genBase(), b2=genBase(), msg1="", msg2="";
+    if(isAdd){
+      sC=b1.sc+b2.sc; cC=b1.cc+b2.cc; mC=b1.mc+b2.mc;
+      let p1=[], p2=[];
+      if(b1.sc>0)p1.push(`딸기 아이스크림 ${b1.sc}개`); if(b1.cc>0)p1.push(`초코 아이스크림 ${b1.cc}개`); if(b1.mc>0)p1.push(`마카롱 ${b1.mc}개`);
+      if(b2.sc>0)p2.push(`딸기 아이스크림 ${b2.sc}개`); if(b2.cc>0)p2.push(`초코 아이스크림 ${b2.cc}개`); if(b2.mc>0)p2.push(`마카롱 ${b2.mc}개`);
+      msg1 = `저는 ${p1.join(', ')} 주세요.`;
+      msg2 = `저는 ${p2.join(', ')} 먹을래요.`;
+    } else {
+      b2.sc=Math.floor(Math.random()*(b1.sc+1)); b2.cc=Math.floor(Math.random()*(b1.cc+1)); b2.mc=Math.floor(Math.random()*(b1.mc+1));
+      if(b2.sc+b2.cc+b2.mc===0){if(b1.sc>0)b2.sc=1;else if(b1.cc>0)b2.cc=1;else b2.mc=1;}
+      sC=b1.sc-b2.sc; cC=b1.cc-b2.cc; mC=b1.mc-b2.mc;
+      let p1=[], p2=[];
+      if(b1.sc>0)p1.push(`딸기 아이스크림 ${b1.sc}개`); if(b1.cc>0)p1.push(`초코 아이스크림 ${b1.cc}개`); if(b1.mc>0)p1.push(`마카롱 ${b1.mc}개`);
+      if(b2.sc>0)p2.push(`딸기 아이스크림 ${b2.sc}개`); if(b2.cc>0)p2.push(`초코 아이스크림 ${b2.cc}개`); if(b2.mc>0)p2.push(`마카롱 ${b2.mc}개`);
+      msg1 = `같이 먹게 ${p1.join(', ')} 줘.`;
+      msg2 = `아 너무 많다! ${p2.join(', ')} 빼주세요.`;
+    }
+    S.cust={type:'hard', name:info.name,img:info.img,sC,cC,mC2:mC,speech:msg1,speech2:msg2,fData:{isAdd,b1,b2}};
+  }
+}
+
+/* ── 영수증 ── */
+function showReceipt(){
+  const r=document.getElementById('receipt'),ri=document.getElementById('rItems');
+  ri.innerHTML='';
+  const c=S.cust;
+  if(S.diff==='easy'){
+    if(c.sC>0)ri.innerHTML+=`<div class="r-row"><span>딸기 (${S.nS}x원)</span><span>× ${c.sC}</span></div>`;
+    if(c.cC>0)ri.innerHTML+=`<div class="r-row"><span>초코 (${S.mC}y원)</span><span>× ${c.cC}</span></div>`;
+    if(c.mC2>0)ri.innerHTML+=`<div class="r-row"><span>마카롱 (${S.macP}원)</span><span>× ${c.mC2}</span></div>`;
+  }else{
+    ri.innerHTML+=`<div class="r-row" style="justify-content:center;font-weight:bold;font-size:2rem;color:var(--pri)">? ? ?</div>`;
+  }
+  r.classList.remove('show');
+  setTimeout(()=>{SFX.receipt();r.classList.add('show');},500);
+}
+
+/* ── 입력 패널 ── */
+function renderInput(){
+  const p=document.getElementById('inp');p.innerHTML='';
+  const cx=S.cust.sC*S.nS, cy=S.cust.cC*S.mC, cc=S.cust.mC2*S.macP;
+  let terms=[];if(cx>0)terms.push(cx+'x');if(cy>0)terms.push(cy+'y');if(cc>0)terms.push(''+cc);
+  const ans=terms.length>0?terms.join(' + '):'0';
+
+  const opts=new Set([ans]);
+  let loopGuard=0;
+  while(opts.size<4 && loopGuard++<50){
+    let fx=cx,fy=cy,fc=cc;
+    const r=Math.floor(Math.random()*3);
+    if(r===0) fx=Math.max(0, fx+(Math.floor(Math.random()*3)+1)*(Math.random()<.5?1:-1)*S.nS);
+    else if(r===1) fy=Math.max(0, fy+(Math.floor(Math.random()*3)+1)*(Math.random()<.5?1:-1)*S.mC);
+    else fc=Math.max(0, fc+(Math.floor(Math.random()*3)+1)*(Math.random()<.5?1:-1)*S.macP);
+    if(fx===0&&fy===0&&fc===0&&ans!=='0')continue;
+    let ft=[];if(fx>0)ft.push(fx+'x');if(fy>0)ft.push(fy+'y');if(fc>0)ft.push(''+fc);
+    opts.add(ft.length>0?ft.join(' + '):'0');
+  }
+  let dummy=1;
+  while(opts.size<4){
+    opts.add(`${dummy}x + ${dummy+1}y + ${S.macP}`);
+    dummy++;
+  }
+  const chs=[...opts].sort(()=>Math.random()-.5);
+  let g=document.createElement('div');g.className='choices';
+  chs.forEach(c=>{const b=document.createElement('button');b.className='ch-btn';b.textContent=c;b.onclick=()=>submit(c);g.appendChild(b);});
+  p.appendChild(g);
+}
+
+/* ── 타이머 ── */
+function startTimer(){
+  if(S.cust.type==='easy') S.maxTime=30;
+  else if(S.cust.type==='normal') S.maxTime=45;
+  else S.maxTime=50;
+  S.timeLeft=S.maxTime;updateTimerBar();
+  S.timerID=setInterval(()=>{
+    S.timeLeft=Math.max(0,S.timeLeft-.1);updateTimerBar();
+    if(S.timeLeft<=0){clearInterval(S.timerID);if(!S.locked)handleTimeout();}
+  },100);
+}
+function stopTimer(){if(S.timerID){clearInterval(S.timerID);S.timerID=null;}}
+function updateTimerBar(){
+  let grace = 5;
+  if(S.cust.type==='normal') grace = 7;
+  else if(S.cust.type==='hard') grace = 9;
+  const mt = S.maxTime;
+  const elapsed = mt - S.timeLeft;
+  let pct = 1;
+  if(elapsed > grace) pct = S.timeLeft / (mt - grace);
+  const bar=document.getElementById('timerBar');
+  bar.style.width=(pct*100)+'%';
+  bar.className='timer-bar'+(pct<.33?' danger':pct<.66?' warn':'');
+}
+function handleTimeout(){
+  S.locked=true;disableInputs();
+  if(S.attempt===0){
+    S.attempt=1;toast('시간 초과! 한 번 더 기회를 줄게요!','retry');
+    setTimeout(()=>{S.locked=false;enableInputs();startTimer();},1800);
+  }else{
+    wrongFinal();
+  }
+}
+
+/* ── 제출 로직 ── */
+function submit(val){
+  if(S.locked)return;S.locked=true;stopTimer();disableInputs();
+  const cx=S.cust.sC*S.nS,cy=S.cust.cC*S.mC,cc=S.cust.mC2*S.macP;
+  if(checkAns(val,cx,cy,cc)){handleCorrect();}
+  else if(S.attempt===0){S.attempt=1;S.locked=false;enableInputs();toast('다시 한번 생각해봐!','retry');startTimer();}
+  else{wrongFinal();}
+}
+
+/* ── 정답 처리 ── */
+function handleCorrect(){
+  SFX.correct();
+  let grace = 5, maxC = 100;
+  if(S.cust.type==='normal') { grace=7; maxC=150; }
+  else if(S.cust.type==='hard') { grace=9; maxC=200; }
+  const mt = S.maxTime;
+  const timeElapsed = mt - S.timeLeft;
+  let pct = 1;
+  if(timeElapsed > grace) pct = S.timeLeft / (mt - grace);
+  let earned = Math.round(maxC * pct);
+  if(S.attempt===1) earned = Math.round(earned * 0.5); // 2차에서 맞추면 50%
+  S.coins+=earned;
+  updateCoinDisplay();
+  spawnCoins(earned);
+  deliverItems();
+  toast(`정답! +${earned} 코인 💰`,'ok');
+  const elapsed=Math.round((mt-S.timeLeft)*10)/10;
+  S.history.push({order:orderSummary(),correct:true,time:elapsed+'초',coins:earned});
+  const av=document.getElementById('avatar');av.classList.add('bounce');
+  setTimeout(()=>av.classList.remove('bounce'),400);
+  setTimeout(()=>nextRound(),2200);
+}
+
+/* ── 오답 최종 (기린 사장님 해설) ── */
+function wrongFinal(){
+  SFX.wrong();
+  S.history.push({order:orderSummary(),correct:false,time:'-',coins:0});
+  const cx=S.cust.sC*S.nS,cy=S.cust.cC*S.mC,cc=S.cust.mC2*S.macP;
+  let terms=[];if(cx>0)terms.push(`${cx}x`);if(cy>0)terms.push(`${cy}y`);if(cc>0)terms.push(''+cc);
+  const ans=terms.length>0?terms.join(' + '):'0';
+  let explain=`정답은 ${ans}이야!\n`;
+  const f=S.cust.fData;
+  if(S.cust.type==='easy'){
+    if(S.cust.sC>0)explain+=`딸기 아이스크림 ${S.cust.sC}개 × ${S.nS}x원 = ${cx}x원\n`;
+    if(S.cust.cC>0)explain+=`초코 아이스크림 ${S.cust.cC}개 × ${S.mC}y원 = ${cy}y원\n`;
+    if(S.cust.mC2>0)explain+=`마카롱 ${S.cust.mC2}개 × ${S.macP}원 = ${cc}원`;
+  }else if(S.cust.type==='normal'){
+    if(f.isMult){
+      let p=[];if(f.base.sc>0)p.push(`${f.base.sc*S.nS}x`);if(f.base.cc>0)p.push(`${f.base.cc*S.mC}y`);if(f.base.mc>0)p.push(`${f.base.mc*S.macP}`);
+      explain+=`원래는 ${p.join(' + ')} 였지?\n${f.mult}배니까 ${f.mult}(${p.join(' + ')}) = ${ans} 가 돼!`;
+    }else{
+      let p=[];if(f.base.sc>0)p.push(`${f.base.sc*S.nS}x`);if(f.base.cc>0)p.push(`${f.base.cc*S.mC}y`);if(f.base.mc>0)p.push(`${f.base.mc*S.macP}`);
+      let div=f.mult===2?'절반(÷2)':'1/3(÷3)';
+      explain+=`원래는 ${p.join(' + ')} 였어.\n그 중 ${div}이니까 (${p.join(' + ')}) ÷ ${f.mult} = ${ans} 가 돼!`;
+    }
+  }else{
+    let p1=[], p2=[];
+    if(f.b1.sc>0)p1.push(`${f.b1.sc*S.nS}x`); if(f.b1.cc>0)p1.push(`${f.b1.cc*S.mC}y`); if(f.b1.mc>0)p1.push(`${f.b1.mc*S.macP}`);
+    if(f.b2.sc>0)p2.push(`${f.b2.sc*S.nS}x`); if(f.b2.cc>0)p2.push(`${f.b2.cc*S.mC}y`); if(f.b2.mc>0)p2.push(`${f.b2.mc*S.macP}`);
+    let s1=p1.length>0?p1.join(' + '):'0'; let s2=p2.length>0?p2.join(' + '):'0';
+    if(f.isAdd) explain+=`첫 번째 친구는 (${s1})\n두 번째 친구는 (${s2})\n더하면 (${s1}) + (${s2}) = ${ans} 가 돼!`;
+    else explain+=`원래 시킨 양은 (${s1})\n뺀 양은 (${s2})\n빼면 (${s1}) - (${s2}) = ${ans} 가 돼!`;
+  }
+  showBoss(explain);
+}
+
+/* ── 기린 사장님 ── */
+function showBoss(text){
+  const zone=document.getElementById('bossZone');
+  document.getElementById('bossBubble').innerText=text;
+  zone.classList.add('show');
+}
+function dismissBoss(){
+  document.getElementById('bossZone').classList.remove('show');
+  setTimeout(()=>nextRound(),400);
+}
+
+/* ── 코인 파티클 ── */
+function spawnCoins(n){
+  const area=document.querySelector('.ws');
+  const count=Math.min(Math.ceil(n/15),12);
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const c=document.createElement('img');c.src='assets/coin.png';c.className='coin-particle';
+      c.style.left=(40+Math.random()*40)+'%';c.style.bottom=(20+Math.random()*30)+'%';
+      area.appendChild(c);SFX.coin();
+      setTimeout(()=>c.remove(),1200);
+    },i*100);
+  }
+}
+
+/* ── 상품 전달 애니메이션 ── */
+function deliverItems(){
+  const area=document.querySelector('.ws');
+  const items=[];
+  if(S.cust.sC>0)items.push('assets/item_strawberry.png');
+  if(S.cust.cC>0)items.push('assets/item_chocolate.png');
+  if(S.cust.mC2>0)items.push('assets/item_macaron.png');
+  items.forEach((src,i)=>{
+    setTimeout(()=>{
+      const el=document.createElement('img');el.src=src;el.className='deliver-item';
+      el.style.width='40px';el.style.height='40px';el.style.left='50%';el.style.bottom='20%';
+      el.style.setProperty('--dx','-15vw');el.style.setProperty('--dy','-10vh');
+      area.appendChild(el);
+      setTimeout(()=>el.remove(),1000);
+    },i*200);
+  });
+}
+
+/* ── 입력 비활성화/활성화 ── */
+function disableInputs(){
+  document.querySelectorAll('.ch-btn,.sub-btn').forEach(b=>b.disabled=true);
+  const inp=document.getElementById('valIn');if(inp)inp.disabled=true;
+}
+function enableInputs(){
+  document.querySelectorAll('.ch-btn,.sub-btn').forEach(b=>b.disabled=false);
+  const inp=document.getElementById('valIn');if(inp)inp.disabled=false;
+}
+
+/* ── 코인 표시 갱신 ── */
+function updateCoinDisplay(){
+  document.getElementById('coinDisp').textContent=S.coins;
+  document.getElementById('coinDisp2').textContent=S.coins;
+}
+
+/* ── 토스트 ── */
+function toast(msg,type){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast show '+(type==='ok'?'ok':type==='retry'?'retry':'err');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+/* ── 주문 요약 ── */
+function orderSummary(){
+  let p=[];
+  if(S.cust.sC>0)p.push(`딸기×${S.cust.sC}`);
+  if(S.cust.cC>0)p.push(`초코×${S.cust.cC}`);
+  if(S.cust.mC2>0)p.push(`마카롱×${S.cust.mC2}`);
+  return p.join(', ');
+}
+
+/* ══════════════════════════════════════
+   Game Flow
+   ══════════════════════════════════════ */
+function nextRound(){
+  S.round++;
+  if(S.round>9){finishGame();return;}
+  document.getElementById('roundDisp').textContent=`${S.round} / 9`;
+  if((S.round-1)%3===0)priceChange();
+  else transitionCustomer();
+}
+
+function priceChange(){
+  const al=document.getElementById('priceAlert');al.classList.add('show');
+  const mb=document.getElementById('menuBoard');mb.classList.add('swing');
+  S.nS=Math.floor(Math.random()*5)+1;S.mC=Math.floor(Math.random()*5)+1;
+  S.macP=(Math.floor(Math.random()*6)+1)*500;
+  setTimeout(()=>{document.getElementById('pS').textContent=`${S.nS}x 원`;document.getElementById('pC').textContent=`${S.mC}y 원`;document.getElementById('pM').textContent=`${S.macP} 원`;},400);
+  setTimeout(()=>{al.classList.remove('show');mb.classList.remove('swing');transitionCustomer();},1600);
+}
+
+function transitionCustomer(){
+  const av=document.getElementById('avatar'),bbl=document.getElementById('bubble'),bbl2=document.getElementById('bubble2');
+  av.classList.remove('enter');av.classList.add('exit');
+  bbl.classList.remove('show');bbl2.classList.remove('show');
+  document.getElementById('receipt').classList.remove('show');
+  setTimeout(()=>{
+    av.classList.remove('exit');
+    genCust();S.attempt=0;S.locked=false;
+    const img=document.getElementById('custImg');
+    img.onload=function(){
+      av.classList.add('enter');
+      bbl.textContent=S.cust.speech;
+      if(S.cust.speech2){
+        bbl.className='bubble left-side'; bbl2.className='bubble right-side'; bbl2.textContent=S.cust.speech2; bbl2.style.display='block';
+        setTimeout(()=>{bbl.classList.add('show');bbl2.classList.add('show');},300);
+      }else{
+        bbl.className='bubble'; bbl2.style.display='none';
+        setTimeout(()=>bbl.classList.add('show'),300);
+      }
+    };
+    img.src=S.cust.img;
+    if(img.complete){
+      av.classList.add('enter');
+      bbl.textContent=S.cust.speech;
+      if(S.cust.speech2){
+        bbl.className='bubble left-side'; bbl2.className='bubble right-side'; bbl2.textContent=S.cust.speech2; bbl2.style.display='block';
+        setTimeout(()=>{bbl.classList.add('show');bbl2.classList.add('show');},300);
+      }else{
+        bbl.className='bubble'; bbl2.style.display='none';
+        setTimeout(()=>bbl.classList.add('show'),300);
+      }
+    }
+    showReceipt();
+    renderInput();
+    startTimer();
+  },600);
+}
+
+/* ── 난이도 전환 ── */
+function setDiff(d){
+  if(S.locked) return; // 이미 진행 중인 액션(결과 처리 등)이 있다면 무시
+  S.diff=d;
+  document.querySelectorAll('.diff-btn').forEach((b,i)=>{b.classList.toggle('active',i===(d==='easy'?0:d==='normal'?1:2));});
+  resetGame(); // 게임을 처음부터 완전히 리셋하고 새 손님 등장
+}
+
+/* ── 게임 종료 결산 ── */
+function finishGame(){
+  stopTimer();stopBGM();
+  let totalMax = 900;
+  if(S.diff==='normal') totalMax = 1200;
+  else if(S.diff==='hard') totalMax = 1600;
+  
+  const pct = totalMax > 0 ? S.coins / totalMax : 0;
+  let msg = '전설의 아이스크림 마스터! 👑'; let gc = 'grade-S';
+  if(pct >= 1.0){msg='전설의 아이스크림 마스터! 👑';gc='grade-S';}
+  else if(pct >= 0.9){msg='최고의 알바생! 🎉';gc='grade-A';}
+  else if(pct >= 0.7){msg='정말 잘했어요! 👍';gc='grade-B';}
+  else if(pct >= 0.5){msg='좋은 솜씨예요! 😊';gc='grade-C';}
+  else{msg='조금 더 연습해봐요! 💪';gc='grade-D';}
+
+  document.getElementById('gradeDisp').textContent=msg;
+  document.getElementById('gradeDisp').className='grade '+gc;
+  document.getElementById('totalCoinDisp').textContent=S.coins;
+  document.getElementById('maxCoinDisp').textContent=totalMax;
+
+  const tb=document.getElementById('roundTableBody');tb.innerHTML='';
+  S.history.forEach((h,i)=>{
+    tb.innerHTML+=`<tr class="${h.correct?'correct':'wrong'}"><td>${i+1}</td><td>${h.order}</td><td>${h.correct?'✅':'❌'}</td><td>${h.time}</td><td>${h.coins}</td></tr>`;
+  });
+
+  document.getElementById('endOverlay').classList.add('show');
+}
+
+/* ── 리셋 ── */
+function resetGame(){
+  S.round=1;S.coins=0;S.attempt=0;S.locked=false;S.nS=2;S.mC=3;S.macP=3000;S.history=[];
+  stopTimer();
+  document.getElementById('endOverlay').classList.remove('show');
+  document.getElementById('bossZone').classList.remove('show');
+  document.getElementById('roundDisp').textContent='1 / 9';
+  document.getElementById('pS').textContent=`${S.nS}x 원`;
+  document.getElementById('pC').textContent=`${S.mC}y 원`;
+  document.getElementById('pM').textContent=`${S.macP} 원`;
+  updateCoinDisplay();
+
+  let pool = [];
+  if (S.diff === 'easy') {
+    pool = Array(9).fill('easy');
+  } else if (S.diff === 'normal') {
+    pool = [...Array(3).fill('easy'), ...Array(6).fill('normal')];
+  } else {
+    pool = ['easy', ...Array(2).fill('normal'), ...Array(6).fill('hard')];
+  }
+  S.customerPool = pool.sort(() => Math.random() - 0.5);
+
+  genCust();
+  const av=document.getElementById('avatar'),bbl=document.getElementById('bubble'),bbl2=document.getElementById('bubble2');
+  av.classList.remove('exit','enter');
+  const img=document.getElementById('custImg');
+  img.onload=function(){av.classList.add('enter');};
+  img.src=S.cust.img;
+  if(img.complete)av.classList.add('enter');
+  bbl.textContent=S.cust.speech;
+  if(S.cust.speech2){
+    bbl.className='bubble left-side'; bbl2.className='bubble right-side'; bbl2.textContent=S.cust.speech2; bbl2.style.display='block';
+    setTimeout(()=>{bbl.classList.add('show');bbl2.classList.add('show');},400);
+  }else{
+    bbl.className='bubble'; bbl2.style.display='none';
+    setTimeout(()=>bbl.classList.add('show'),400);
+  }
+  showReceipt();
+  renderInput();
+  startTimer();
+}
+
+/* ── 초기화 ── */
+window.onload=()=>resetGame();
+</script>
+</body>
+</html>
