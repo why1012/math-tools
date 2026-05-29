@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>수학 탐구 도구함 - 홈</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 30px 20px;
+            background: #f8fafc; /* 밝고 부드러운 배경색 */
+            color: #334155; /* 가독성 높은 짙은 회색 글씨 */
+            font-family: 'Pretendard', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .container {
+            max-width: 640px;
+            width: 100%;
+            background: #ffffff; /* 하얀색 컨테이너 배경 */
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* 부드러운 그림자 */
+            border: 1px solid #e2e8f0; /* 연한 테두리 */
+            text-align: center;
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: #1e3a8a; /* 차분하고 짙은 파란색 포인트 */
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: #64748b;
+            margin: 0 0 35px 0;
+        }
+
+        .card {
+            text-align: left;
+            margin-bottom: 25px;
+            background: #f1f5f9; /* 연한 회파란색 카드 배경 */
+            padding: 22px 24px;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            box-sizing: border-box;
+        }
+
+        .card.guide {
+            border-left-color: #10b981;
+            background: #ecfdf5; /* 연한 민트/초록색 카드 배경 */
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: #0f172a; /* 짙은 검회색 타이틀 */
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title .icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        p {
+            font-size: 14.5px;
+            line-height: 1.6;
+            color: #475569;
+            margin: 0;
+            word-break: keep-all;
+        }
+
+        .highlight {
+            color: #2563eb; /* 뚜렷한 파란색 강조 */
+            font-weight: 700;
+        }
+
+        .btn-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0 2px;
+            vertical-align: middle;
+        }
+
+        /* 💡 수정된 제작자 정보 스타일 (밝은 배경용) */
+        .footer-info {
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.25); /* 밝은 배경에 묻히는 은은한 검은색(회색) */
+            line-height: 1.6;
+            text-align: left;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .footer-info {
+                font-size: 11px;
+                bottom: 10px;
+                left: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>와우중학교 수학 탐구실</h1>
+    <div class="subtitle">1학년 수학 통합 시뮬레이터</div>
+
+    <div class="card">
+        <div class="card-title">
+            <span class="icon">🚀</span>프로그램 소개
+        </div>
+        <p>
+            교과서 속 추상적인 수와 식의 개념을 눈으로 보고, 만지며 실험할 수 있는 <span class="highlight">디지털 수학 탐구 공간</span>입니다. 다양한 시뮬레이션과 게임을 통해 수학적 원리를 직관적이고 재미있게 이해할 수 있습니다.
+        </p>
+    </div>
+
+    <div class="card guide">
+        <div class="card-title">
+            <span class="icon">💡</span>이용 방법 안내
+        </div>
+        <p>
+            왼쪽 상단에 있는 <span class="btn-badge">☰</span> 버튼을 누르면 <span class="highlight">수학 탐구 도구함 메뉴</span>가 열립니다.<br>
+            오늘 배울 단원을 선택한 후, 원하는 탐구 도구나 게임을 클릭하여 실험을 시작해 보세요!
+        </p>
+    </div>
+</div>
+
+<!-- 💡 왼쪽 하단 안내 문구 -->
+<div class="footer-info">
+    제작자: 양희완 (와우중학교 수학 교사)<br>
+    본 프로그램은 교육 목적으로 다른 선생님들도 자유롭게 활용하실 수 있습니다.
+</div>
+
+</body>
+</html>
