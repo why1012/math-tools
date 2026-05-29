@@ -8,11 +8,7 @@
     <style>
         :root { --sidebar-width: 260px; --secondary-color: #2c3e50; }
 
-        /* 💡 모바일 뷰포트 높이 수정:
-           100vh는 모바일 Safari/Chrome에서 주소창+툴바를 포함한 "큰 뷰포트"라 하단이 잘림.
-           1순위: --app-height (JS가 window.innerHeight로 계산한 실제 높이)
-           2순위: 100dvh (동적 뷰포트 높이, 모던 브라우저 지원)
-           3순위: 100vh (폴백) */
+        /* 💡 모바일 뷰포트 높이 수정 */
         body, html { 
             margin: 0; padding: 0; width: 100%; 
             height: 100vh;    /* 폴백 */
@@ -28,7 +24,7 @@
             height: var(--app-height, 100dvh);
         }
         
-        /* 💡 사이드바 디자인 (스크롤 및 위치 최적화) */
+        /* 💡 사이드바 디자인 */
         #sidebar { 
             width: var(--sidebar-width); height: 100%; background: var(--secondary-color); color: white; 
             position: relative; z-index: 100; display: flex; flex-direction: column;
@@ -37,22 +33,24 @@
             flex-shrink: 0;
         }
         
-        /* 💡 책갈피 버튼 (오른쪽으로 돌출) */
+        /* 💡 책갈피 버튼 (오른쪽으로 돌출) - 색상 수정됨 */
         #toggle-btn {
             position: absolute; top: 15px; right: -45px; width: 45px; height: 55px; 
-            background: #1565c0; color: white; border: none; cursor: pointer; 
-            border-radius: 0 12px 12px 0; box-shadow: 4px 2px 10px rgba(0,0,0,0.3);
+            background: #3b82f6; /* 홈 화면 안내와 동일한 밝은 파란색 */
+            color: white; border: none; cursor: pointer; 
+            border-radius: 0 12px 12px 0; box-shadow: 4px 2px 10px rgba(0,0,0,0.1);
             display: flex; align-items: center; justify-content: center; font-size: 22px; z-index: 101;
             transition: background 0.2s;
         }
-        #toggle-btn:hover { background: #0277bd; }
-        #sidebar.collapsed #toggle-btn { background: #d84315; }
+        #toggle-btn:hover { background: #2563eb; }
+        /* 접혔을 때도 주황색이 아닌 파란색 유지 */
+        #sidebar.collapsed #toggle-btn { background: #3b82f6; }
 
         .sidebar-content { overflow-y: auto; flex-grow: 1; overflow-x: hidden; }
         .sidebar-content::-webkit-scrollbar { width: 6px; }
         .sidebar-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
 
-        /* 데스크탑 기본 동작 (밀어내기) */
+        /* 데스크탑 기본 동작 */
         #sidebar.collapsed { margin-left: calc(var(--sidebar-width) * -1); }
 
         /* 폴더 스타일 */
@@ -76,7 +74,7 @@
         iframe { width: 100%; height: 100%; border: none; display: none; position: absolute; top:0; left:0; }
         iframe.active { display: block; }
 
-        /* 📱 모바일 최적화 (덮어쓰기 오버레이 방식) */
+        /* 📱 모바일 최적화 */
         @media (max-width: 768px) {
             #sidebar { position: absolute; top: 0; left: 0; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin-left: 0 !important; }
             #sidebar.collapsed { transform: translateX(-100%); margin-left: 0 !important; }
@@ -91,9 +89,12 @@
         <div class="sidebar-content">
             <h2 style="text-align:center; margin: 25px 0 20px 0; font-size: 20px;">수학 탐구 도구함</h2>
             
+            <!-- 💡 홈(시작 화면)으로 돌아가는 버튼 추가 -->
+            <div class="menu-item single-menu active" onclick="switchTool('home-frame', this)">🏠 홈 (시작 화면)</div>
+
             <div class="folder-title collapsed" onclick="toggleFolder('folder1', this)">📁 1단원. 수와 연산</div>
             <div id="folder1" class="folder-content hidden">
-                <div class="menu-item active" onclick="switchTool('sieve-frame', this)">✔️ 에라토스테네스의 체</div>
+                <div class="menu-item" onclick="switchTool('sieve-frame', this)">✔️ 에라토스테네스의 체</div>
             </div>
 
             <div class="folder-title collapsed" onclick="toggleFolder('folder2', this)">📁 2단원. 정수와 유리수</div>
@@ -117,7 +118,9 @@
     </nav>
 
     <main id="iframe-container">
+        <!-- 💡 홈 화면을 기본 활성화(active) 상태로 추가 -->
         <iframe id="home-frame" class="active" src="home.html"></iframe>
+        
         <iframe id="sieve-frame" src="sieve.html"></iframe>
         <iframe id="semdol-frame" src="semdol.html"></iframe>
         <iframe id="rail-frame" src="railbike.html"></iframe>
@@ -134,14 +137,11 @@
 <script>
     const sidebar = document.getElementById('sidebar');
 
-    // 💡 모바일 뷰포트 높이 버그 수정:
-    // window.innerHeight는 실제 보이는 영역만큼의 높이를 정확히 반환함
     function setAppHeight() {
         document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
     }
     window.addEventListener('resize', setAppHeight);
     window.addEventListener('orientationchange', function() {
-        // 방향 전환 시 브라우저가 레이아웃을 재계산할 시간을 줌
         setTimeout(setAppHeight, 150);
     });
     setAppHeight();
@@ -162,7 +162,6 @@
         document.getElementById(id).classList.add('active');
         el.classList.add('active');
 
-        // 모바일 환경(너비 768px 이하)일 경우 도구 선택 시 사이드바를 자동으로 접음
         if (window.innerWidth <= 768) {
             sidebar.classList.add('collapsed');
         }
