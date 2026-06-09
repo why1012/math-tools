@@ -8,12 +8,11 @@
     <style>
         :root { --sidebar-width: 260px; --secondary-color: #2c3e50; }
 
-        /* 💡 모바일 뷰포트 높이 수정 */
         body, html { 
             margin: 0; padding: 0; width: 100%; 
-            height: 100vh;    /* 폴백 */
-            height: 100dvh;   /* 모던 브라우저 */
-            height: var(--app-height, 100dvh); /* JS 계산값 최우선 */
+            height: 100vh;    
+            height: 100dvh;   
+            height: var(--app-height, 100dvh); 
             overflow: hidden; font-family: 'Pretendard', sans-serif; background: #080d14; 
         }
         
@@ -24,7 +23,6 @@
             height: var(--app-height, 100dvh);
         }
         
-        /* 💡 사이드바 디자인 */
         #sidebar { 
             width: var(--sidebar-width); height: 100%; background: var(--secondary-color); color: white; 
             position: relative; z-index: 100; display: flex; flex-direction: column;
@@ -33,27 +31,23 @@
             flex-shrink: 0;
         }
         
-        /* 💡 책갈피 버튼 (오른쪽으로 돌출) - 색상 수정됨 */
         #toggle-btn {
             position: absolute; top: 15px; right: -45px; width: 45px; height: 55px; 
-            background: #3b82f6; /* 홈 화면 안내와 동일한 밝은 파란색 */
+            background: #3b82f6; 
             color: white; border: none; cursor: pointer; 
             border-radius: 0 12px 12px 0; box-shadow: 4px 2px 10px rgba(0,0,0,0.1);
             display: flex; align-items: center; justify-content: center; font-size: 22px; z-index: 101;
             transition: background 0.2s;
         }
         #toggle-btn:hover { background: #2563eb; }
-        /* 접혔을 때도 주황색이 아닌 파란색 유지 */
         #sidebar.collapsed #toggle-btn { background: #3b82f6; }
 
         .sidebar-content { overflow-y: auto; flex-grow: 1; overflow-x: hidden; }
         .sidebar-content::-webkit-scrollbar { width: 6px; }
         .sidebar-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
 
-        /* 데스크탑 기본 동작 */
         #sidebar.collapsed { margin-left: calc(var(--sidebar-width) * -1); }
 
-        /* 폴더 스타일 */
         .folder-title { padding: 15px 20px; font-size: 16px; font-weight: 900; background: #34495e; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); user-select: none; }
         .folder-title:hover { background: #415b76; }
         .folder-title::after { content: '▼'; font-size: 11px; color: #bdc3c7; transition: 0.3s; }
@@ -66,15 +60,12 @@
         .menu-item:hover { background: #2c3e50; }
         .menu-item.active { background: #1a252f; color: #4da6ff; }
         
-        /* 폴더 밖 개별 도구 스타일 조정 */
         .single-menu { padding-left: 20px; background: #34495e; border-top: 2px solid rgba(0,0,0,0.1); }
         
-        /* iframe 컨테이너 영역 */
         #iframe-container { flex-grow: 1; width: 100%; height: 100%; position: relative; background: #080d14; min-width: 0; }
         iframe { width: 100%; height: 100%; border: none; display: none; position: absolute; top:0; left:0; }
         iframe.active { display: block; }
 
-        /* 📱 모바일 최적화 */
         @media (max-width: 768px) {
             #sidebar { position: absolute; top: 0; left: 0; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin-left: 0 !important; }
             #sidebar.collapsed { transform: translateX(-100%); margin-left: 0 !important; }
@@ -107,72 +98,4 @@
             <div class="folder-title collapsed" onclick="toggleFolder('folder3', this)">📁 3단원. 문자와 식</div>
             <div id="folder3" class="folder-content hidden">
                 <div class="menu-item" onclick="switchTool('xyz-frame', this)">✨ 문자와 식 마스터</div>
-                <div class="menu-item" onclick="switchTool('new-folder-frame', this)">🏀 3점슛 챌린지</div>
-                <div class="menu-item" onclick="switchTool('sub-frame', this)">✨ 식의 값 마스터</div>
-                <div class="menu-item" onclick="switchTool('block-frame', this)">🧱 대수블록 실험실</div>
-                <div class="menu-item" onclick="switchTool('icecream-frame', this)">🍦 아이스크림</div>
-                <div class="menu-item" onclick="switchTool('bakery-frame', this)">🥐 베이커리</div>
-            </div>
-
-            <div class="folder-title collapsed" onclick="toggleFolder('folder4', this)">📁 4단원. 좌표평면과 그래프</div>
-            <div id="folder4" class="folder-content hidden">
-                <div class="menu-item" onclick="switchTool('maze-frame', this)">🧩 미로 찾기</div>
-            </div>
-
-        </div>
-    </nav>
-
-    <main id="iframe-container">
-        <iframe id="home-frame" class="active" src="home.html"></iframe>
-        
-        <iframe id="sieve-frame" src="sieve.html"></iframe>
-        <iframe id="semdol-frame" src="semdol.html"></iframe>
-        <iframe id="rail-frame" src="railbike.html"></iframe>
-        <iframe id="times-frame" src="timesrule.html"></iframe>
-        <iframe id="tumble-frame" src="tumble.html"></iframe>
-        <iframe id="xyz-frame" src="3.1.html"></iframe>
-        <iframe id="new-folder-frame" src="3.2/3.2.html"></iframe>
-        <iframe id="sub-frame" src="sub.html"></iframe>
-        <iframe id="block-frame" src="3.3.html"></iframe>
-        
-        <iframe id="icecream-frame" src="ice cream/ice_cream.html"></iframe>
-        <iframe id="bakery-frame" src="bakery/bakery.html"></iframe>
-        <iframe id="maze-frame" src="maze/maze.html"></iframe>
-    </main>
-</div>
-
-<script>
-    const sidebar = document.getElementById('sidebar');
-
-    function setAppHeight() {
-        document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-    }
-    window.addEventListener('resize', setAppHeight);
-    window.addEventListener('orientationchange', function() {
-        setTimeout(setAppHeight, 150);
-    });
-    setAppHeight();
-
-    function toggleSidebar() { 
-        sidebar.classList.toggle('collapsed'); 
-    }
-    
-    function toggleFolder(id, el) {
-        const content = document.getElementById(id);
-        content.classList.toggle('hidden');
-        el.classList.toggle('collapsed');
-    }
-
-    function switchTool(id, el) {
-        document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
-        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        el.classList.add('active');
-
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-        }
-    }
-</script>
-</body>
-</html>
+                <div class="menu
