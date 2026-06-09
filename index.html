@@ -89,7 +89,6 @@
         <div class="sidebar-content">
             <h2 style="text-align:center; margin: 25px 0 20px 0; font-size: 20px;">수학 탐구 도구함</h2>
             
-            <!-- 💡 홈(시작 화면)으로 돌아가는 버튼 추가 -->
             <div class="menu-item single-menu active" onclick="switchTool('home-frame', this)">🏠 홈 (시작 화면)</div>
 
             <div class="folder-title collapsed" onclick="toggleFolder('folder1', this)">📁 1단원. 수와 연산</div>
@@ -111,14 +110,19 @@
                 <div class="menu-item" onclick="switchTool('new-folder-frame', this)">🏀 3점슛 챌린지</div>
                 <div class="menu-item" onclick="switchTool('sub-frame', this)">✨ 식의 값 마스터</div>
                 <div class="menu-item" onclick="switchTool('block-frame', this)">🧱 대수블록 실험실</div>
+                <div class="menu-item" onclick="switchTool('icecream-frame', this)">🍦 아이스크림</div>
+                <div class="menu-item" onclick="switchTool('bakery-frame', this)">🥐 베이커리</div>
             </div>
 
-            <div class="menu-item single-menu" onclick="switchTool('icecream-frame', this)">🍦 아이스크림</div>
+            <div class="folder-title collapsed" onclick="toggleFolder('folder4', this)">📁 4단원. 좌표평면과 그래프</div>
+            <div id="folder4" class="folder-content hidden">
+                <div class="menu-item" onclick="switchTool('maze-frame', this)">🧩 미로 찾기</div>
+            </div>
+
         </div>
     </nav>
 
     <main id="iframe-container">
-        <!-- 💡 홈 화면을 기본 활성화(active) 상태로 추가 -->
         <iframe id="home-frame" class="active" src="home.html"></iframe>
         
         <iframe id="sieve-frame" src="sieve.html"></iframe>
@@ -130,7 +134,10 @@
         <iframe id="new-folder-frame" src="3.2/3.2.html"></iframe>
         <iframe id="sub-frame" src="sub.html"></iframe>
         <iframe id="block-frame" src="3.3.html"></iframe>
+        
         <iframe id="icecream-frame" src="ice cream/ice_cream.html"></iframe>
+        <iframe id="bakery-frame" src="bakery/bakery.html"></iframe>
+        <iframe id="maze-frame" src="maze/maze.html"></iframe>
     </main>
 </div>
 
