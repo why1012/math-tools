@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>정글 미로 탈출: 좌표평면 마스터</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    
+    <div id="ui-layer">
+      <div id="header">
+        <div id="stage-info">Stage <span id="stage-number">1</span>/7</div>
+        <div id="hp-container">
+          <span class="heart active">❤️</span>
+          <span class="heart active">❤️</span>
+          <span class="heart active">❤️</span>
+        </div>
+      </div>
+      
+      <div id="hint-box" class="hidden">
+        <p id="hint-text">다음 힌트 내용</p>
+      </div>
+
+      <div id="start-screen" class="screen">
+        <h1>정글 미로 탈출</h1>
+        <img src="intro.png" alt="인트로 스토리 만화" class="story-img">
+        <p class="story">무서운 사냥꾼을 피해 도망치다 대나무 미로에 갇힌 아기 팬더 🐼<br>여러분의 수학 지식을 이용해 힌트를 풀고 가족의 품으로 이끌어주세요!</p>
+        <button id="start-btn">탐험 시작!</button>
+      </div>
+
+      <div id="game-over-screen" class="screen hidden">
+        <h1>게임 오버!</h1>
+        <p>미로에 갇혔습니다. 다시 한 번 팬더를 도와서 미로에서 탈출시켜봅시다!</p>
+        <button id="restart-btn">다시 도전</button>
+      </div>
+
+      <div id="clear-screen" class="screen hidden">
+        <h1>탈출 성공!</h1>
+        <img src="success.png" alt="가족과 재회한 팬더" class="story-img">
+        <p>당신은 진정한 좌표평면 마스터입니다!</p>
+        <button id="replay-btn">다시 플레이</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

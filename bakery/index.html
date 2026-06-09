@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>등식의 성질 베이커리</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+</head>
+<body class="mission-mode">
+    <div class="app-layout">
+        
+        <header class="app-header">
+            <h1>🥐 등식의 성질 베이커리 🥖</h1>
+            <div class="mission-board">
+                <h2>📝 제빵사의 미션 <span id="stage-counter" class="stage-counter">[ 1 / 7 ]</span></h2>
+                <p id="mission-text">미지의 빵 반죽 <span class="unknown-x">x</span>의 무게를 구하세요!</p>
+            </div>
+        </header>
+
+        <!-- Main Content (Landscape Split) -->
+        <main class="main-content">
+            
+            <!-- Left: Scale Area -->
+            <div class="scale-area">
+                <div class="scale">
+                    <div class="scale-base-shadow"></div>
+                    <div class="scale-base">
+                        <div class="scale-base-top"></div>
+                        <div class="scale-base-front">
+                            <div class="scale-base-details"></div>
+                        </div>
+                    </div>
+                    <div class="scale-stand">
+                        <div class="scale-stand-highlight"></div>
+                    </div>
+                    <div class="scale-stand-ring">
+                        <div class="scale-stand-ring-inner"></div>
+                    </div>
+                    
+                    <div class="scale-beam-wrapper" id="scale-beam-wrapper">
+                        <div class="scale-beam">
+                            <div class="scale-beam-highlight"></div>
+                        </div>
+                        <div class="center-pin">
+                            <div class="center-pin-inner"></div>
+                            <div class="center-pin-screw"></div>
+                        </div>
+                        
+                        <div class="pan left-pan">
+                            <div class="pan-chains">
+                                <div class="chain chain-left"></div>
+                                <div class="chain chain-right"></div>
+                            </div>
+                            <div class="pan-plate" id="left-plate">
+                                <!-- Dropped items go here -->
+                            </div>
+                            <div class="pan-plate-bottom"></div>
+                        </div>
+                        
+                        <div class="pan right-pan">
+                            <div class="pan-chains">
+                                <div class="chain chain-left"></div>
+                                <div class="chain chain-right"></div>
+                            </div>
+                            <div class="pan-plate" id="right-plate">
+                                <!-- Dropped items go here -->
+                            </div>
+                            <div class="pan-plate-bottom"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Calculator Panel -->
+            <div class="side-controls">
+                <div class="calculator-panel">
+                    <div class="calc-screen" id="calc-screen">0</div>
+                    
+                    <div class="calc-body">
+                        <div class="calc-numpad">
+                            <button class="calc-btn num-btn">7</button>
+                            <button class="calc-btn num-btn">8</button>
+                            <button class="calc-btn num-btn">9</button>
+                            <button class="calc-btn num-btn">4</button>
+                            <button class="calc-btn num-btn">5</button>
+                            <button class="calc-btn num-btn">6</button>
+                            <button class="calc-btn num-btn">1</button>
+                            <button class="calc-btn num-btn">2</button>
+                            <button class="calc-btn num-btn">3</button>
+                            <button class="calc-btn clear-btn" id="btn-clear">C</button>
+                            <button class="calc-btn num-btn">0</button>
+                            <button class="calc-btn back-btn" id="btn-back">⌫</button>
+                        </div>
+                        <div class="calc-operators">
+                            <div class="op-title">⚖️ 양변에서</div>
+                            <button class="calc-btn op-btn add-btn" data-op="add">+ 더하기</button>
+                            <button class="calc-btn op-btn sub-btn" data-op="subtract">- 빼기</button>
+                            <button class="calc-btn op-btn mul-btn" data-op="multiply">× 곱하기</button>
+                            <button class="calc-btn op-btn div-btn" data-op="divide">÷ 나누기</button>
+                        </div>
+                    </div>
+                    <button class="calc-btn submit-ans-btn" id="btn-check">🚀 정답 제출 (x = 화면의 숫자)</button>
+                </div>
+            </div>
+            
+            <!-- Tutorial Popup Overlay -->
+            <div id="tutorial-overlay" class="hidden">
+                <div class="tutorial-popup">
+                    <p id="tutorial-text"></p>
+                </div>
+            </div>
+            
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
