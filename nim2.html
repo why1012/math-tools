@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초콜릿 먹기 게임 (Chomp)</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fcf3ea;
+            color: #3e2723;
+            margin-top: 30px;
+        }
+        h1 { margin-bottom: 10px; }
+        .instructions {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 500px;
+        }
+        .controls {
+            background-color: #e8d5c4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-weight: bold;
+        }
+        .controls input {
+            width: 50px;
+            padding: 5px;
+            font-size: 1.1em;
+            text-align: center;
+            border: 1px solid #8d6e63;
+            border-radius: 4px;
+        }
+        .apply-btn {
+            padding: 6px 15px;
+            font-size: 1em;
+            background-color: #8d6e63;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .apply-btn:hover { background-color: #5d4037; }
+        .status {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #d35400;
+            margin-bottom: 20px;
+        }
+        .board {
+            display: grid;
+            gap: 5px;
+            background-color: #8d6e63;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .cell {
+            background-color: #5d4037;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            width: 50px;
+            height: 50px;
+        }
+        @media (max-width: 600px) {
+            .cell { width: 40px; height: 40px; font-size: 1.5em; }
+            .controls { flex-direction: column; gap: 10px; }
+        }
+        .cell:hover {
+            background-color: #795548;
+            transform: scale(0.95);
+        }
+        .cell.eaten {
+            background-color: transparent;
+            cursor: default;
+            pointer-events: none;
+            box-shadow: none;
+        }
+        .cell.poison {
+            background-color: #c62828;
+        }
+        .cell.poison:hover {
+            background-color: #e53935;
+        }
+        .reset-btn {
+            margin-top: 30px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #3e2723;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .reset-btn:hover { background-color: #5d4037; }
+    </style>
+</head>
+<body>
+
+    <h1>🍫 초콜릿 먹기 게임 (Chomp)</h1>
+    <div class="instructions">
+        <strong>[규칙]</strong> 두 사람이 번갈아 가며 초콜릿을 선택합니다.<br>
+        선택한 칸과 그 <strong>오른쪽 & 아래쪽</strong>에 있는 초콜릿이 모두 사라집니다.<br>
+        가장 왼쪽 위에 있는 <strong style="color:red;">독이 든 초콜릿(☠️)</strong>을 먹는 사람이 패배합니다!
+    </div>
+
+    <div class="controls">
+        <label>가로 칸 수: <input type="number" id="inputCols" value="5" min="2" max="10"></label>
+        <label>세로 칸 수: <input type="number" id="inputRows" value="4" min="2" max="10"></label>
+        <button class="apply-btn" onclick="applySettings()">판 만들기</button>
+    </div>
+
+    <div class="status" id="statusMsg">플레이어 1의 차례입니다!</div>
+
+    <div class="board" id="board"></div>
+
+    <button class="reset-btn" onclick="initGame()">현재 판 다시 시작하기</button>
+
+    <script>
+        let rows = 4;
+        let cols = 5;
+        let boardState = [];
+        let currentPlayer = 1;
+        let gameOver = false;
+
+        const boardElement = document.getElementById('board');
+        const statusElement = document.getElementById('statusMsg');
+
+        function applySettings() {
+            let newCols = parseInt(document.getElementById('inputCols').value);
+            let newRows = parseInt(document.getElementById('inputRows').value);
+            
+            // 제한값 설정 (최소 2, 최대 10)
+            cols = isNaN(newCols) ? 5 : Math.max(2, Math.min(10, newCols));
+            rows = isNaN(newRows) ? 4 : Math.max(2, Math.min(10, newRows));
+            
+            document.getElementById('inputCols').value = cols;
+            document.getElementById('inputRows').value = rows;
+            
+            initGame();
+        }
+
+        function initGame() {
+            boardState = Array(rows).fill(null).map(() => Array(cols).fill(true));
+            currentPlayer = 1;
+            gameOver = false;
+            
+            // CSS 그리드 설정 동적 업데이트
+            boardElement.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+            boardElement.style.gridTemplateRows = `repeat(${rows}, auto)`;
+            
+            updateStatusMsg();
+            renderBoard();
+        }
+
+        function updateStatusMsg() {
+            if (gameOver) {
+                statusElement.innerHTML = `🎉 플레이어 ${currentPlayer === 1 ? 2 : 1} 승리! (플레이어 ${currentPlayer}가 독을 먹었습니다)`;
+                statusElement.style.color = "#c62828";
+            } else {
+                statusElement.innerHTML = `플레이어 ${currentPlayer}의 차례입니다!`;
+                statusElement.style.color = "#d35400";
+            }
+        }
+
+        function chomp(r, c) {
+            if (gameOver || !boardState[r][c]) return;
+
+            if (r === 0 && c === 0) {
+                gameOver = true;
+                boardState[r][c] = false;
+                renderBoard();
+                updateStatusMsg();
+                return;
+            }
+
+            for (let i = r; i < rows; i++) {
+                for (let j = c; j < cols; j++) {
+                    boardState[i][j] = false;
+                }
+            }
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            renderBoard();
+            updateStatusMsg();
+        }
+
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    
+                    if (!boardState[r][c]) {
+                        cell.classList.add('eaten');
+                    } else if (r === 0 && c === 0) {
+                        cell.classList.add('poison');
+                        cell.innerHTML = '☠️';
+                    }
+
+                    cell.onclick = () => chomp(r, c);
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        // 초기 화면 설정
+        initGame();
+    </script>
+</body>
+</html>

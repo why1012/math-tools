@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일렬 볼링 게임 (Kayles)</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f0f4f8;
+            color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+        h1 { margin-bottom: 5px; color: #2980b9; }
+        .instructions {
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            max-width: 600px;
+            color: #34495e;
+            line-height: 1.5;
+        }
+        .controls {
+            margin-bottom: 20px;
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-weight: bold;
+        }
+        .controls input {
+            width: 60px;
+            padding: 5px;
+            text-align: center;
+            font-size: 1.1em;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+        }
+        
+        .status-box {
+            background-color: #34495e;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            transition: background-color 0.3s;
+            width: 100%;
+            max-width: 400px;
+        }
+        .player1-turn { background-color: #2980b9; }
+        .player2-turn { background-color: #c0392b; }
+        .victory { background-color: #f1c40f !important; color: #2c3e50; }
+
+        /* 볼링 레인 및 핀 스타일 */
+        .lane {
+            background-color: #dcdde1;
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+            min-height: 100px;
+            max-width: 900px;
+        }
+        .pin {
+            width: 50px;
+            height: 50px;
+            background-color: #ecf0f1;
+            border: 3px solid #bdc3c7;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            position: relative;
+        }
+        /* 핀 상태별 스타일 */
+        .pin.standing:hover { transform: translateY(-5px); border-color: #3498db; }
+        .pin.selected { 
+            background-color: #f1c40f; 
+            border-color: #e67e22; 
+            color: #d35400;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+        }
+        .pin.knocked {
+            background-color: transparent;
+            border-color: transparent;
+            color: transparent;
+            pointer-events: none;
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        .btn-group { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-strike { background-color: #27ae60; }
+        .btn-strike:hover { background-color: #2ecc71; transform: translateY(-2px); }
+        .btn-strike:disabled { background-color: #95a5a6; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .btn-reset { background-color: #7f8c8d; }
+        .btn-reset:hover { background-color: #95a5a6; }
+        
+        .error-msg { color: #e74c3c; font-weight: bold; height: 20px; margin-bottom: 10px; }
+
+        @media (max-width: 600px) {
+            .pin { width: 40px; height: 40px; }
+            .lane { gap: 10px; padding: 20px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎳 일렬 볼링 게임 (Kayles)</h1>
+    <div class="instructions">
+        <strong>[규칙]</strong> 한 번에 <strong>딱 1개의 핀</strong>, 또는 <strong>완전히 붙어있는 2개의 핀</strong>만 쓰러뜨릴 수 있습니다. (이미 쓰러진 빈 공간을 건너뛰어 2개를 선택할 수 없습니다.)<br>
+        마지막 핀을 쓰러뜨리는 플레이어가 승리합니다!
+    </div>
+
+    <div class="controls">
+        <label>초기 볼링핀 개수:</label>
+        <input type="number" id="pinCountInput" value="12" min="5" max="30">
+        <button class="btn btn-reset" onclick="initGame()" style="padding: 8px 15px; font-size: 1em;">판 만들기</button>
+    </div>
+
+    <div id="statusBox" class="status-box player1-turn">플레이어 1의 차례입니다</div>
+    <div id="errorMsg" class="error-msg"></div>
+
+    <div class="lane" id="lane">
+        <!-- JS로 핀 렌더링 -->
+    </div>
+
+    <div class="btn-group">
+        <button id="strikeBtn" class="btn btn-strike" onclick="strike()" disabled>볼링공 굴리기! (선택 완료)</button>
+        <button class="btn btn-reset" onclick="initGame()">다시 시작</button>
+    </div>
+
+    <script>
+        let pins = []; // true: 서있음, false: 쓰러짐
+        let selectedPins = []; // 현재 선택된 핀의 인덱스 배열
+        let currentPlayer = 1;
+        let gameOver = false;
+
+        const laneElement = document.getElementById('lane');
+        const statusBox = document.getElementById('statusBox');
+        const errorMsg = document.getElementById('errorMsg');
+        const strikeBtn = document.getElementById('strikeBtn');
+
+        // 게임 초기화
+        function initGame() {
+            let pinCount = parseInt(document.getElementById('pinCountInput').value);
+            if (isNaN(pinCount) || pinCount < 5) pinCount = 5;
+            if (pinCount > 30) pinCount = 30; // 화면 초과 방지
+            document.getElementById('pinCountInput').value = pinCount;
+
+            pins = Array(pinCount).fill(true);
+            selectedPins = [];
+            currentPlayer = 1;
+            gameOver = false;
+            
+            errorMsg.innerText = "";
+            updateStatusBox();
+            renderPins();
+            updateStrikeButton();
+        }
+
+        // 핀 클릭(선택/해제) 로직
+        function togglePin(index) {
+            if (gameOver || !pins[index]) return;
+
+            errorMsg.innerText = ""; // 에러 메시지 초기화
+            const selectedIndex = selectedPins.indexOf(index);
+
+            if (selectedIndex > -1) {
+                // 이미 선택된 핀을 다시 누르면 선택 해제
+                selectedPins.splice(selectedIndex, 1);
+            } else {
+                // 새로 선택하는 경우
+                if (selectedPins.length === 0) {
+                    selectedPins.push(index);
+                } else if (selectedPins.length === 1) {
+                    // 1개 선택된 상태에서 추가 선택 (붙어있는지 확인)
+                    if (Math.abs(selectedPins[0] - index) === 1) {
+                        selectedPins.push(index);
+                    } else {
+                        // 붙어있지 않다면 새로 누른 핀 1개만 선택된 것으로 교체
+                        selectedPins = [index];
+                        errorMsg.innerText = "붙어있는 2개까지만 동시에 칠 수 있습니다.";
+                    }
+                } else {
+                    // 이미 2개가 선택된 상태에서 다른 걸 누르면 새로 누른 핀 1개로 초기화
+                    selectedPins = [index];
+                }
+            }
+            
+            renderPins();
+            updateStrikeButton();
+        }
+
+        // 선택한 핀 쓰러뜨리기 (턴 넘기기)
+        function strike() {
+            if (selectedPins.length === 0 || gameOver) return;
+
+            // 선택된 핀 상태를 false(쓰러짐)로 변경
+            selectedPins.forEach(idx => {
+                pins[idx] = false;
+            });
+            selectedPins = [];
+
+            // 승리 조건 체크 (모든 핀이 false인지)
+            const remainingPins = pins.filter(p => p === true).length;
+            
+            if (remainingPins === 0) {
+                gameOver = true;
+                statusBox.innerText = `🎉 플레이어 ${currentPlayer} 승리! 🎉`;
+                statusBox.className = "status-box victory";
+                strikeBtn.disabled = true;
+            } else {
+                // 다음 플레이어로 턴 넘김
+                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                updateStatusBox();
+            }
+            
+            renderPins();
+            updateStrikeButton();
+        }
+
+        function updateStatusBox() {
+            statusBox.innerText = `플레이어 ${currentPlayer}의 차례입니다`;
+            statusBox.className = `status-box ${currentPlayer === 1 ? 'player1-turn' : 'player2-turn'}`;
+        }
+
+        function updateStrikeButton() {
+            if (selectedPins.length > 0 && !gameOver) {
+                strikeBtn.disabled = false;
+                strikeBtn.innerText = `볼링공 굴리기! (${selectedPins.length}개 쓰러뜨림)`;
+            } else {
+                strikeBtn.disabled = true;
+                strikeBtn.innerText = "쓰러뜨릴 핀을 선택하세요";
+            }
+        }
+
+        // 화면에 핀 그리기
+        function renderPins() {
+            laneElement.innerHTML = '';
+            
+            pins.forEach((isStanding, index) => {
+                const pinDiv = document.createElement('div');
+                pinDiv.classList.add('pin');
+                pinDiv.innerText = index + 1; // 핀 번호 표시
+                
+                if (isStanding) {
+                    pinDiv.classList.add('standing');
+                    if (selectedPins.includes(index)) {
+                        pinDiv.classList.add('selected');
+                    }
+                    pinDiv.onclick = () => togglePin(index);
+                } else {
+                    pinDiv.classList.add('knocked');
+                }
+                
+                laneElement.appendChild(pinDiv);
+            });
+        }
+
+        // 초기 시작
+        initGame();
+    </script>
+</body>
+</html>
