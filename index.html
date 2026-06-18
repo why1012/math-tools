@@ -111,6 +111,13 @@
                 <div class="menu-item" onclick="switchTool('maze-frame', this)">🧩 미로 찾기</div>
             </div>
 
+            <div class="folder-title collapsed" onclick="toggleFolder('folder_nim', this)">📁 주제탐구</div>
+            <div id="folder_nim" class="folder-content hidden">
+                <div class="menu-item" onclick="switchTool('nim1-frame', this)">🎳 일렬 볼링 게임</div>
+                <div class="menu-item" onclick="switchTool('nim2-frame', this)">🍫 초콜릿 먹기 게임</div>
+                <div class="menu-item" onclick="switchTool('nim3-frame', this)">🕸️ 심(Sim) 게임</div>
+            </div>
+
         </div>
     </nav>
 
@@ -130,6 +137,10 @@
         <iframe id="icecream-frame" data-src="./ice cream/ice_cream.html"></iframe>
         <iframe id="bakery-frame" data-src="./bakery/index.html"></iframe>
         <iframe id="maze-frame" data-src="./maze/index.html"></iframe>
+
+        <iframe id="nim1-frame" data-src="./nim1.html"></iframe>
+        <iframe id="nim2-frame" data-src="./nim2.html"></iframe>
+        <iframe id="nim3-frame" data-src="./nim3.html"></iframe>
     </main>
 </div>
 
