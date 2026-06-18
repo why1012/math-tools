@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2인용 님 게임 (Nim Game)</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { color: #2c3e50; margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; margin-bottom: 20px; }
+        
+        /* 설정 화면 */
+        #setup-screen {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        .setup-group { margin-bottom: 20px; }
+        .setup-group label { margin: 0 10px; font-weight: bold; cursor: pointer; }
+        .heap-inputs { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .heap-inputs input { width: 60px; padding: 5px; text-align: center; font-size: 1.1em; border: 2px solid #bdc3c7; border-radius: 6px; }
+        
+        /* 게임 화면 */
+        #game-screen {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .status-box {
+            background-color: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        .player1-turn { background-color: #2980b9; }
+        .player2-turn { background-color: #c0392b; }
+        .victory { background-color: #f39c12 !important; color: black; }
+        
+        .error-msg {
+            color: #e74c3c;
+            font-weight: bold;
+            height: 24px;
+            margin-bottom: 15px;
+        }
+
+        .heaps-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 30px;
+            margin-bottom: 40px;
+            min-height: 250px;
+        }
+        .heap {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column-reverse; /* 아래에서 위로 쌓이게 */
+            align-items: center;
+            gap: 5px;
+            min-width: 100px;
+            border: 3px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .heap.locked { opacity: 0.5; pointer-events: none; }
+        .heap.active { border-color: #f1c40f; }
+        
+        .stone {
+            font-size: 2.5em;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+        .stone:active { transform: scale(0.8); }
+        .stone:hover { filter: brightness(1.2); }
+        
+        /* 버튼 디자인 */
+        .btn {
+            padding: 12px 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            background-color: #27ae60;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .btn:active { transform: translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .btn:hover { background-color: #2ecc71; }
+        .btn-secondary { background-color: #7f8c8d; margin-top: 20px; font-size: 1em; }
+        .btn-secondary:hover { background-color: #95a5a6; }
+
+    </style>
+</head>
+<body>
+
+    <h1>🎲 님 게임 (Nim Game)</h1>
+    <div class="subtitle">마지막 바둑알을 가져가는 사람이 승리합니다!</div>
+
+    <div id="setup-screen">
+        <h2>게임 세팅</h2>
+        <div class="setup-group">
+            <p>무더기 개수를 선택하세요:</p>
+            <label><input type="radio" name="heapCount" value="2" onchange="toggleHeapInputs()"> 2개</label>
+            <label><input type="radio" name="heapCount" value="3" checked onchange="toggleHeapInputs()"> 3개</label>
+        </div>
+        
+        <div class="setup-group">
+            <p>각 무더기의 시작 개수를 입력하세요 (1~15):</p>
+            <div class="heap-inputs">
+                <input type="number" id="heap1-input" value="3" min="1" max="15">
+                <input type="number" id="heap2-input" value="4" min="1" max="15">
+                <input type="number" id="heap3-input" value="5" min="1" max="15">
+            </div>
+        </div>
+        
+        <button class="btn" onclick="startGame()">게임 시작하기</button>
+    </div>
+
+    <div id="game-screen">
+        <div id="statusBox" class="status-box player1-turn">플레이어 1의 차례입니다</div>
+        <div id="errorMsg" class="error-msg"></div>
+        
+        <div class="heaps-container" id="heapsContainer">
+            </div>
+
+        <button class="btn" id="nextTurnBtn" onclick="endTurn()">차례 넘기기 ➡️</button>
+        <br>
+        <button class="btn btn-secondary" onclick="resetToSetup()">다시 설정하기</button>
+    </div>
+
+    <script>
+        // 게임 상태 변수들
+        let heaps = [];
+        let currentPlayer = 1;
+        let activeHeapIndex = -1; // 이번 턴에 건드린 무더기 인덱스
+        let itemsTakenThisTurn = 0; // 이번 턴에 가져간 개수
+
+        const setupScreen = document.getElementById('setup-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const heapsContainer = document.getElementById('heapsContainer');
+        const statusBox = document.getElementById('statusBox');
+        const errorMsg = document.getElementById('errorMsg');
+        const nextTurnBtn = document.getElementById('nextTurnBtn');
+
+        // 라디오 버튼 변경 시 3번째 입력창 숨기기/보이기
+        function toggleHeapInputs() {
+            const count = document.querySelector('input[name="heapCount"]:checked').value;
+            const heap3Input = document.getElementById('heap3-input');
+            heap3Input.style.display = count === '2' ? 'none' : 'inline-block';
+        }
+
+        // 게임 시작
+        function startGame() {
+            const count = parseInt(document.querySelector('input[name="heapCount"]:checked').value);
+            const h1 = parseInt(document.getElementById('heap1-input').value) || 1;
+            const h2 = parseInt(document.getElementById('heap2-input').value) || 1;
+            
+            heaps = [h1, h2];
+            if (count === 3) {
+                const h3 = parseInt(document.getElementById('heap3-input').value) || 1;
+                heaps.push(h3);
+            }
+
+            currentPlayer = 1;
+            resetTurnState();
+            
+            setupScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            nextTurnBtn.style.display = 'inline-block';
+            
+            updateUI();
+        }
+
+        // 턴 상태 초기화
+        function resetTurnState() {
+            activeHeapIndex = -1;
+            itemsTakenThisTurn = 0;
+            errorMsg.innerText = "";
+        }
+
+        // 바둑알 클릭 시 (가져가기)
+        function takeStone(heapIndex) {
+            // 다른 무더기를 이미 건드렸는지 체크
+            if (activeHeapIndex !== -1 && activeHeapIndex !== heapIndex) {
+                errorMsg.innerText = "⚠️ 한 턴에는 오직 하나의 무더기에서만 가져갈 수 있습니다!";
+                return;
+            }
+
+            if (heaps[heapIndex] > 0) {
+                activeHeapIndex = heapIndex;
+                heaps[heapIndex]--;
+                itemsTakenThisTurn++;
+                errorMsg.innerText = ""; // 에러 메시지 초기화
+                renderHeaps();
+            }
+        }
+
+        // 차례 넘기기 버튼 클릭 시
+        function endTurn() {
+            if (itemsTakenThisTurn === 0) {
+                errorMsg.innerText = "⚠️ 턴을 넘기려면 최소 1개 이상의 바둑알을 가져가야 합니다!";
+                return;
+            }
+
+            // 승리 조건 체크 (모든 무더기가 0인지)
+            const totalRemaining = heaps.reduce((sum, val) => sum + val, 0);
+            if (totalRemaining === 0) {
+                showVictory();
+                return;
+            }
+
+            // 다음 플레이어로 턴 넘기기
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            resetTurnState();
+            updateUI();
+        }
+
+        // 상태창 및 무더기 렌더링 업데이트
+        function updateUI() {
+            statusBox.innerText = `플레이어 ${currentPlayer}의 차례입니다`;
+            statusBox.className = `status-box ${currentPlayer === 1 ? 'player1-turn' : 'player2-turn'}`;
+            renderHeaps();
+        }
+
+        // 승리 화면 처리
+        function showVictory() {
+            statusBox.innerText = `🎉 축하합니다! 플레이어 ${currentPlayer} 승리! 🎉`;
+            statusBox.className = "status-box victory";
+            errorMsg.innerText = "";
+            nextTurnBtn.style.display = 'none'; // 차례 넘기기 버튼 숨김
+            renderHeaps();
+        }
+
+        // 화면에 무더기와 바둑알 그리기
+        function renderHeaps() {
+            heapsContainer.innerHTML = '';
+            
+            heaps.forEach((count, index) => {
+                const heapDiv = document.createElement('div');
+                heapDiv.className = 'heap';
+                
+                // 시각적 효과: 턴 중에 다른 무더기 잠금 처리
+                if (activeHeapIndex !== -1 && activeHeapIndex !== index) {
+                    heapDiv.classList.add('locked');
+                }
+                if (activeHeapIndex === index) {
+                    heapDiv.classList.add('active');
+                }
+
+                // 바둑알 생성
+                for (let i = 0; i < count; i++) {
+                    const stone = document.createElement('div');
+                    stone.className = 'stone';
+                    stone.innerText = '🟡'; // 바둑알 이모지 (원하는 것으로 변경 가능)
+                    
+                    // 게임 종료 시 터치 방지
+                    const totalRemaining = heaps.reduce((sum, val) => sum + val, 0);
+                    if (totalRemaining > 0) {
+                        stone.onclick = () => takeStone(index);
+                    }
+                    
+                    heapDiv.appendChild(stone);
+                }
+
+                // 무더기 번호 라벨 추가
+                const label = document.createElement('div');
+                label.innerText = `${index + 1}번 (${count}개)`;
+                label.style.fontWeight = 'bold';
+                label.style.marginTop = '10px';
+                label.style.borderTop = '2px solid #eee';
+                label.style.paddingTop = '5px';
+                heapDiv.insertBefore(label, heapDiv.firstChild);
+
+                heapsContainer.appendChild(heapDiv);
+            });
+        }
+
+        // 처음 세팅 화면으로 돌아가기
+        function resetToSetup() {
+            gameScreen.style.display = 'none';
+            setupScreen.style.display = 'block';
+        }
+
+    </script>
+</body>
+</html>
