@@ -11,7 +11,7 @@
         body, html { 
             margin: 0; padding: 0; width: 100%; 
             height: 100vh;    
-            height: 100dvh;   
+            height: 100dvh;  
             height: var(--app-height, 100dvh); 
             overflow: hidden; font-family: 'Pretendard', sans-serif; background: #080d14; 
         }
@@ -116,6 +116,7 @@
                 <div class="menu-item" onclick="switchTool('nim1-frame', this)">🎳 일렬 볼링 게임</div>
                 <div class="menu-item" onclick="switchTool('nim2-frame', this)">🍫 초콜릿 먹기 게임</div>
                 <div class="menu-item" onclick="switchTool('nim3-frame', this)">🕸️ 심(Sim) 게임</div>
+                <div class="menu-item" onclick="switchTool('nim-frame', this)">🎲 님게임</div>
             </div>
 
         </div>
@@ -141,6 +142,7 @@
         <iframe id="nim1-frame" data-src="./nim1.html"></iframe>
         <iframe id="nim2-frame" data-src="./nim2.html"></iframe>
         <iframe id="nim3-frame" data-src="./nim3.html"></iframe>
+        <iframe id="nim-frame" data-src="./Nim.html"></iframe>
     </main>
 </div>
 
