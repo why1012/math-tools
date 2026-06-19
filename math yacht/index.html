@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>매스 얏 (Math Yacht)</title>
+  <meta name="description" content="2인용 수학 보드게임 — 주사위를 굴려 사칙연산 족보를 완성하라!">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <div class="logo">🎲 매스 얏</div>
+      <div class="header-info">
+        <span class="chip">R<span id="disp-round">1</span>/9</span>
+        <span class="chip turn-chip" id="disp-turn">🔴 P1 차례</span>
+        <span class="chip">굴리기 <span id="disp-rolls">2</span></span>
+      </div>
+    </header>
+
+    <!-- Robot -->
+    <div class="robot-bar">
+      <span class="robot-icon" id="robot-face">🤖</span>
+      <span class="robot-msg" id="robot-speech">주사위를 굴려서 게임을 시작하세요!</span>
+    </div>
+
+    <!-- Dice Area -->
+    <section class="dice-section">
+      <div class="dice-zones">
+        <div class="zone tray-zone">
+          <div class="zone-tag">🎲 트레이</div>
+          <div class="zone-dice" id="dice-tray"><span class="ph">주사위를 굴려주세요</span></div>
+        </div>
+        <div class="zone keep-zone">
+          <div class="zone-tag">🔒 보관</div>
+          <div class="zone-dice" id="keep-tray"><span class="ph">여기로 이동</span></div>
+        </div>
+      </div>
+      <button id="roll-btn" class="roll-btn">🎲 굴리기</button>
+    </section>
+
+    <!-- Player Boards -->
+    <section class="boards">
+      <!-- Player 1 -->
+      <div class="player-board active-board" id="board-0">
+        <div class="board-header p1-header">🔴 Player 1</div>
+        <table class="cat-table">
+          <thead>
+            <tr>
+              <th class="sec-head">➕ 기본 사칙연산 <small>(합 550↑ → +350)</small></th>
+              <th class="sec-head" style="width:40px;">조건</th>
+              <th class="sec-head cr-record-head">나의 수식 기록</th>
+              <th class="sec-head" style="width:30px;">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="cat-row" data-p="0" data-cat="plus"><td class="cn">두 자리 덧셈<div class="help-icon">ⓘ<span class="tooltip-text">두 자리 수 두 개를 더해 결과값을 구합니다.</span></div></td><td class="cr">결과값</td><td class="cr-record" id="r-0-plus"></td><td class="cs" id="s-0-plus">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="minus"><td class="cn">두 자리 뺄셈<div class="help-icon">ⓘ<span class="tooltip-text">큰 두 자리 수에서 작은 두 자리 수를 뺍니다.</span></div></td><td class="cr">결과값</td><td class="cr-record" id="r-0-minus"></td><td class="cs" id="s-0-minus">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="multi"><td class="cn">기본 곱셈<div class="help-icon">ⓘ<span class="tooltip-text">두 자리 수와 한 자리 수를 곱합니다. (점수: 결과 × 2)</span></div></td><td class="cr">결과×2</td><td class="cr-record" id="r-0-multi"></td><td class="cs" id="s-0-multi">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="divide"><td class="cn">기본 나눗셈<div class="help-icon">ⓘ<span class="tooltip-text">몫과 나머지를 정확히 구해야 합니다. (점수: 몫 × 3)<br><strong style="color:#ff6b6b">0으로 나누면 -100점!</strong></span></div></td><td class="cr">몫×3</td><td class="cr-record" id="r-0-divide"></td><td class="cs" id="s-0-divide">—</td></tr>
+          </tbody>
+          <thead><tr><th colspan="4" class="sec-head">📐 심화 연산</th></tr></thead>
+          <tbody>
+            <tr class="cat-row" data-p="0" data-cat="tripleMulti"><td class="cn">삼단 곱셈<div class="help-icon">ⓘ<span class="tooltip-text">주사위 3개를 곱합니다. (조건: 결과 450 이상)</span></div></td><td class="cr">결과≥450 (300점)</td><td class="cr-record" id="r-0-tripleMulti"></td><td class="cs" id="s-0-tripleMulti">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="heavyDuty"><td class="cn">더블 곱셈<div class="help-icon">ⓘ<span class="tooltip-text">두 자리 수 두 개를 곱합니다. (조건: 결과 7500 이상)</span></div></td><td class="cr">결과≥7500 (300점)</td><td class="cr-record" id="r-0-heavyDuty"></td><td class="cs" id="s-0-heavyDuty">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="cleanShot"><td class="cn">깔끔한 나눗셈<div class="help-icon">ⓘ<span class="tooltip-text">나머지가 0으로 딱 떨어져야 합니다. (조건: 몫 40 이상)<br><strong style="color:#ff6b6b">0으로 나누면 -100점!</strong></span></div></td><td class="cr">몫≥40 (250점)</td><td class="cr-record" id="r-0-cleanShot"></td><td class="cs" id="s-0-cleanShot">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="fraction"><td class="cn">분수 만들기<div class="help-icon">ⓘ<span class="tooltip-text">기약분수로 통분합니다. (조건: 기약분수 분자+분모 합 80 이상)<br><strong style="color:#ff6b6b">분모에 0이 들어가면 -100점!</strong></span></div></td><td class="cr">분자+분모≥80 (250점)</td><td class="cr-record" id="r-0-fraction"></td><td class="cs" id="s-0-fraction">—</td></tr>
+            <tr class="cat-row" data-p="0" data-cat="mathYacht"><td class="cn">🏆 매스 얏<div class="help-icon">ⓘ<span class="tooltip-text">5개의 주사위와 사칙연산 기호로 100에 가장 가깝게 만드세요!<br>100 = 750점<br>오차 1 = 300점<br>오차 2 = 250점<br>오차 3 = 200점<br>오차 4 = 150점<br>오차 5 = 100점</span></div></td><td class="cr">도전 대기 (최대 750점)</td><td class="cr-record" id="r-0-mathYacht"></td><td class="cs" id="s-0-mathYacht">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Player 2 -->
+      <div class="player-board" id="board-1">
+        <div class="board-header p2-header">🔵 Player 2</div>
+        <table class="cat-table">
+          <thead>
+            <tr>
+              <th class="sec-head">➕ 기본 사칙연산 <small>(합 550↑ → +350)</small></th>
+              <th class="sec-head" style="width:40px;">조건</th>
+              <th class="sec-head cr-record-head">나의 수식 기록</th>
+              <th class="sec-head" style="width:30px;">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="cat-row" data-p="1" data-cat="plus"><td class="cn">두 자리 덧셈<div class="help-icon">ⓘ<span class="tooltip-text">두 자리 수 두 개를 더해 결과값을 구합니다.</span></div></td><td class="cr">결과값</td><td class="cr-record" id="r-1-plus"></td><td class="cs" id="s-1-plus">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="minus"><td class="cn">두 자리 뺄셈<div class="help-icon">ⓘ<span class="tooltip-text">큰 두 자리 수에서 작은 두 자리 수를 뺍니다.</span></div></td><td class="cr">결과값</td><td class="cr-record" id="r-1-minus"></td><td class="cs" id="s-1-minus">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="multi"><td class="cn">기본 곱셈<div class="help-icon">ⓘ<span class="tooltip-text">두 자리 수와 한 자리 수를 곱합니다. (점수: 결과 × 2)</span></div></td><td class="cr">결과×2</td><td class="cr-record" id="r-1-multi"></td><td class="cs" id="s-1-multi">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="divide"><td class="cn">기본 나눗셈<div class="help-icon">ⓘ<span class="tooltip-text">몫과 나머지를 정확히 구해야 합니다. (점수: 몫 × 3)<br><strong style="color:#ff6b6b">0으로 나누면 -100점!</strong></span></div></td><td class="cr">몫×3</td><td class="cr-record" id="r-1-divide"></td><td class="cs" id="s-1-divide">—</td></tr>
+          </tbody>
+          <thead><tr><th colspan="4" class="sec-head">📐 심화 연산</th></tr></thead>
+          <tbody>
+            <tr class="cat-row" data-p="1" data-cat="tripleMulti"><td class="cn">삼단 곱셈<div class="help-icon">ⓘ<span class="tooltip-text">주사위 3개를 곱합니다. (조건: 결과 450 이상)</span></div></td><td class="cr">결과≥450 (300점)</td><td class="cr-record" id="r-1-tripleMulti"></td><td class="cs" id="s-1-tripleMulti">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="heavyDuty"><td class="cn">더블 곱셈<div class="help-icon">ⓘ<span class="tooltip-text">두 자리 수 두 개를 곱합니다. (조건: 결과 7500 이상)</span></div></td><td class="cr">결과≥7500 (300점)</td><td class="cr-record" id="r-1-heavyDuty"></td><td class="cs" id="s-1-heavyDuty">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="cleanShot"><td class="cn">깔끔한 나눗셈<div class="help-icon">ⓘ<span class="tooltip-text">나머지가 0으로 딱 떨어져야 합니다. (조건: 몫 40 이상)<br><strong style="color:#ff6b6b">0으로 나누면 -100점!</strong></span></div></td><td class="cr">몫≥40 (250점)</td><td class="cr-record" id="r-1-cleanShot"></td><td class="cs" id="s-1-cleanShot">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="fraction"><td class="cn">분수 만들기<div class="help-icon">ⓘ<span class="tooltip-text">기약분수로 통분합니다. (조건: 기약분수 분자+분모 합 80 이상)<br><strong style="color:#ff6b6b">분모에 0이 들어가면 -100점!</strong></span></div></td><td class="cr">분자+분모≥80 (250점)</td><td class="cr-record" id="r-1-fraction"></td><td class="cs" id="s-1-fraction">—</td></tr>
+            <tr class="cat-row" data-p="1" data-cat="mathYacht"><td class="cn">🏆 매스 얏<div class="help-icon">ⓘ<span class="tooltip-text">5개의 주사위와 사칙연산 기호로 100에 가장 가깝게 만드세요!<br>100 = 750점<br>오차 1 = 300점<br>오차 2 = 250점<br>오차 3 = 200점<br>오차 4 = 150점<br>오차 5 = 100점</span></div></td><td class="cr">도전 대기 (최대 750점)</td><td class="cr-record" id="r-1-mathYacht"></td><td class="cs" id="s-1-mathYacht">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Formula Area (appears when category is selected) -->
+    <section class="formula-area" id="formula-area">
+      <div class="formula-label" id="formula-label">족보를 선택하세요</div>
+      <div class="formula-body" id="formula-body"></div>
+    </section>
+
+    <!-- Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div id="modal" class="modal-box"></div>
+    </div>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
