@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비밀 금고 해킹 터미널 (17단계)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #050a0f;
+            --text-color: #00ff41;
+            --border-color: #008f11;
+            --alert-color: #ff003c;
+            --hint-color: #ffea00;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans KR', 'Share Tech Mono', monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .terminal-container {
+            width: 100%;
+            max-width: 850px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .terminal-header {
+            background: var(--border-color);
+            color: #000;
+            padding: 10px 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .progress-bar {
+            background: #111;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            color: var(--text-color);
+        }
+
+        .content-area {
+            padding: 30px 40px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2#stage-title {
+            margin-top: 0;
+            font-size: 1.8em;
+            border-bottom: 1px dashed var(--text-color);
+            padding-bottom: 10px;
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        p#stage-desc {
+            font-size: 1.2em;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            font-family: 'Share Tech Mono', 'Noto Sans KR', monospace;
+        }
+
+        .hint-box {
+            display: none;
+            background: rgba(255, 234, 0, 0.1);
+            border: 1px dashed var(--hint-color);
+            color: var(--hint-color);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            animation: fadeIn 0.5s;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: #111;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 15px;
+            font-size: 1.5em;
+            font-family: 'Share Tech Mono', 'Noto Sans KR', monospace;
+            letter-spacing: 2px;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        button {
+            background: var(--border-color);
+            color: #000;
+            border: none;
+            padding: 0 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        button:hover {
+            background: var(--text-color);
+            box-shadow: 0 0 15px var(--text-color);
+        }
+
+        .message {
+            margin-top: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-height: 25px;
+            text-align: center;
+        }
+
+        .error { color: var(--alert-color); animation: shake 0.4s; }
+        .success { color: var(--text-color); }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        #victory-screen {
+            display: none;
+            text-align: center;
+            padding: 50px 20px;
+            animation: fadeIn 2s;
+        }
+
+        #victory-screen h1 {
+            font-size: 3em;
+            color: #fff;
+            text-shadow: 0 0 20px var(--text-color);
+            margin-bottom: 20px;
+        }
+
+        .time-record {
+            font-size: 2em;
+            color: var(--hint-color);
+            margin: 30px 0;
+            font-family: 'Share Tech Mono', monospace;
+            border: 2px dashed var(--hint-color);
+            padding: 15px;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #challenge-victory-screen {
+            display: none;
+            text-align: center;
+            padding: 50px 20px;
+            animation: fadeIn 2s;
+        }
+
+        #challenge-victory-screen h1 {
+            font-size: 3em;
+            color: #ffea00;
+            text-shadow: 0 0 20px #ffea00;
+            margin-bottom: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="terminal-container" id="game-container">
+        <div class="terminal-header">
+            <span>> ROOT_ACCESS // 17_STAGE_PROTOCOL</span>
+            <span>PLAY TIME : <span id="timer">00:00</span></span>
+        </div>
+
+        <div class="progress-bar" id="progress-bar">
+            [□□□□□□□□□□□□□□□□□] 0/17
+        </div>
+
+        <div class="content-area" id="play-area">
+            <h2 id="stage-title">로딩 중...</h2>
+            <p id="stage-desc">데이터를 불러오는 중입니다.</p>
+            
+            <div id="hint-box" class="hint-box">
+                <strong>[SYSTEM HINT]</strong> <span id="hint-text"></span>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="answer-input" placeholder="정답 입력" autocomplete="off">
+                <button onclick="checkAnswer()">해제 (ENTER)</button>
+            </div>
+            <div id="status-message" class="message"></div>
+        </div>
+
+        <div id="victory-screen">
+            <h1>SYSTEM UNLOCKED</h1>
+            <p style="font-size: 1.5em; line-height: 1.6; color: var(--text-color);">
+                모든 방화벽이 영구 해제되었습니다.<br>
+                당신의 수학적 직관과 끈기가 승리했습니다!
+            </p>
+            <div class="time-record">
+                CLEAR TIME : <span id="final-time">00:00</span>
+            </div>
+            <p style="font-size: 1.2em; color: #aaa; margin-bottom: 30px;">> 선생님께 결과를 보고하세요.</p>
+            <button onclick="startChallenge()" style="background: var(--alert-color); color: #fff; padding: 15px 30px; font-size: 1.3em;">[경고] 초월 해킹 도전하기</button>
+        </div>
+
+        <div id="challenge-victory-screen">
+            <h1>TRANSCENDENCE UNLOCKED</h1>
+            <p style="font-size: 1.5em; line-height: 1.6; color: #ffea00;">
+                궁극의 RSA 암호 체계마저 붕괴시켰습니다.<br>
+                당신은 전설적인 해커로 역사에 남을 것입니다!
+            </p>
+            <p style="font-size: 1.2em; color: #aaa; margin-top: 30px;">> 선생님께 이 위대한 결과를 보고하세요.</p>
+        </div>
+    </div>
+
+    <script>
+        const stages = [
+            {
+                desc: "암호화된 수식 데이터입니다. 문자 고유의 규칙을 찾아 결괏값을 도출하십시오.\n\n[ D + O + G = 26 ]\n[ C + A + T = 24 ]\n\n[ P + E + N = ? ]",
+                answer: "35",
+                hint: "알파벳의 순서를 숫자로 바꾸어 더해 보세요."
+            },
+            {
+                desc: "변조된 데이터 스트림입니다. 변환 패턴을 유추하여 원래의 명령어를 복구하십시오.\n\n[ F D W ➔ C A T ]\n[ G R J ➔ D O G ]\n\n[ K H O O R ➔ ? ]",
+                answer: "HELLO",
+                hint: "알파벳의 순서를 앞뒤로 일정하게 밀어가며 단어를 찾아보세요."
+            },
+            {
+                desc: "왜곡된 보안 코드입니다. 문자의 매칭 규칙을 찾아 복구하십시오.\n\n[ D ➔ W ]\n\n[ H X R V M X V ➔ ? ]",
+                answer: "SCIENCE",
+                hint: "알파벳 전체 순서를 정반대로 뒤집어서 대칭으로 짝지어 보세요."
+            },
+            {
+                desc: "특수한 치환 규칙으로 잠긴 코드입니다. 문자 간의 연관성을 찾아 해제하십시오.\n\n[ T ➔ R ]\n[ H ➔ G ]\n\n[ P [ R M ➔ ? ]",
+                answer: "OPEN",
+                hint: "당신의 시선을 모니터 밖 하드웨어 자판의 배열로 돌려보세요."
+            },
+            {
+                desc: "흐름이 분산되어 수신된 데이터 조각입니다. 올바른 문자열로 재조합하십시오.\n\n약  개  뿐  에  서  짝  수  무  엇\n수  두  인  중  유  게  인  는  일\n가  단  수  들  일  하  숫  자  까\n➔ ?",
+                answer: "2",
+                hint: "첫 번째 칸부터 위에서 아래로 읽은 뒤, 바로 옆 칸은 아래에서 위로 읽는 방식으로 오르락내리락하며 읽어보세요. 완성된 질문의 수학적 정답을 숫자로 입력해야 합니다."
+            },
+            {
+                desc: "암호화된 하이퍼 텍스트입니다. 이를 해독하십시오.\n\n[ wkanfthl ]",
+                answer: "자물쇠",
+                hint: "자판의 배열은 그대로 두고 입력 언어의 모드만 전환해 보세요."
+            },
+            {
+                desc: "뒤틀린 형태의 마스터 키입니다. 문자를 재배열하여 원래의 의미를 복구하십시오.\n\n[ 노헙립미 ]",
+                answer: "비밀번호",
+                hint: "글자를 자음과 모음 단위로 분해한 뒤 다시 결합해 보세요."
+            },
+            {
+                desc: "방화벽 너머에서 수신된 원격 텍스트 로그입니다. 숨겨진 핵심 키워드를 추출하십시오.\n\n소리 없이 다가온 시스템의 붕괴.\n인류가 쌓아온 모든 암호 체계가\n수많은 해커들의 공격에 노출되었다.\n분석과 해독을 통해 방어막을 재구축하라.\n해답은 오직 수학의 섭리 안에 있다.",
+                answer: "소인수분해",
+                hint: "문장을 바라보는 시선의 축을 세로 방향으로 내려다보세요."
+            },
+            {
+                desc: "무의미한 노이즈가 섞인 데이터 팩입니다. 가장 근본적인 데이터만 바라보십시오.\n\n[ A S U B C D C E F G E H S I J K S ]",
+                answer: "SUCCESS",
+                hint: "소수번째의 글자들만 골라보세요."
+            },
+            {
+                desc: "과거 아날로그 통신 규격의 신호입니다. 숫자의 조합을 해석하여 텍스트로 변환하십시오.\n\n[ 7 777 444 6 33 ]",
+                answer: "PRIME",
+                hint: "숫자가 연속으로 입력된 횟수와 자판에 숨겨진 알파벳의 관계를 조율해 보세요."
+            },
+            {
+                desc: "논리 흐름을 역추적하십시오.\n\n[ 1 = 5 ]\n[ 2 = 25 ]\n[ 3 = 125 ]\n[ 4 = 625 ]\n\n[ 5 = ? ]",
+                answer: "1",
+                hint: "복잡한 연산 공식의 함정에서 벗어나 명제 자체의 형태를 대칭적으로 바라보세요."
+            },
+            {
+                desc: "데이터의 증식 패턴을 분석하십시오.\n\n[ 1, 1, 2, 3, 5, 8, 13, 21 ... ]\n\n이 규칙이 유지될 때, '17번째'에 위치할 숫자는 무엇입니까?",
+                answer: "1597",
+                hint: "이웃한 두 수의 관계를 결합하여 다음 숫자를 파악해 보세요."
+            },
+            {
+                desc: "시스템의 고유 연산 알고리즘입니다. 인풋과 아웃풋의 규칙을 찾아 타겟 값을 계산하십시오.\n\n[ 10 ➔ 4 ]\n[ 20 ➔ 6 ]\n[ 25 ➔ 3 ]\n\n[ 144 ➔ ? ]",
+                answer: "15",
+                hint: "왼쪽 숫자를 남김없이 나누어떨어지게 만드는 요소들의 총개수를 세어보세요."
+            },
+            {
+                desc: "순환 구조를 가진 노드의 삭제 시뮬레이션입니다. 최종 생존 노드의 번호를 추론하십시오.\n\n[ 2명 ➔ 1번 생존 ]\n[ 3명 ➔ 3번 생존 ]\n[ 4명 ➔ 1번 생존 ]\n\n총 21개의 데이터 노드가 원형으로 배열되어 있을 때, 규칙에 따라 하나씩 제외하고 남는 마지막 노드의 번호는?",
+                answer: "11",
+                hint: "전체 인원수와 가장 가까운 '2의 거듭제곱' 기준점과의 거리를 계산해 보세요."
+            },
+            {
+                desc: "컴퓨터 코어의 원초적 신호입니다. 제시된 코드를 복구하십시오.\n\n[ 1001 ➔ ? ]",
+                answer: "9",
+                hint: "0과 1만 사용하는 디지털 연산 자릿수의 크기 변화를 적용해 보세요."
+            },
+            {
+                desc: "[ 참조 테이블 ]\nA:.-  B:-...  C:-.-.  D:-..  E:.  F:..-.  G:--.  H:....  I:..  J:.---  K:-.-  L:.-..  M:--  N:-.  O:---  P:.--.  Q:--.-  R:.-.  S:...  T:-  U:..-  V:...-  W:.--  X:-..-  Y:-.--  Z:--..\n\n[ 교신 데이터 ]\n관리자 A : .. -..\n침입자 B : ... - ..- -.. . -. -\n관리자 A : .--. .- ... ... .-- --- .-. -..\n침입자 B : -- -.-- / .. -..\n\n가로챈 원격 교신 로그입니다. 제공된 부호 테이블을 활용해 대화 문맥을 파악한 후, 코어에 도달하기 위한 진짜 패스코드를 입력하십시오.",
+                answer: "STUDENT",
+                hint: "기호를 문자로 전부 번역한 뒤 문맥 속에서 마지막 답변이 가리키고 있는 진짜 원본 대상을 유추해야 합니다."
+            },
+            {
+                desc: "마침내 최후의 코어 관문입니다. 축적된 데이터의 변환 규칙을 바탕으로 방화벽을 영구 해제하십시오.\n\n[ 15 ➔ 35 ]\n[ 21 ➔ 37 ]\n[ 33 ➔ 311 ]\n[ 143 ➔ 1113 ]\n\n[ 7387 ➔ ? ]",
+                answer: "8389",
+                hint: "거대한 숫자를 더 이상 쪼개지지 않는 두 개의 소수로 분해해 보세요."
+            }
+        ];
+
+        const challengeStages = [
+            {
+                desc: "[초월 해킹 - 1단계]\n\n방화벽 심층부입니다. 두 소수를 작은 순서대로 이어 붙이십시오.\n\n[ 4187 ➔ ? ]",
+                answer: "5379",
+                hint: "두 자리 소수 2개의 곱입니다."
+            },
+            {
+                desc: "[초월 해킹 - 2단계]\n\n두 소수를 작은 순서대로 이어 붙이십시오.\n\n[ 8633 ➔ ? ]",
+                answer: "8997",
+                hint: "두 자리 소수 2개의 곱입니다. 두 소수 모두 90 근처에 있습니다."
+            },
+            {
+                desc: "[초월 해킹 - 3단계]\n\n두 소수를 작은 순서대로 이어 붙이십시오.\n\n[ 15403 ➔ ? ]",
+                answer: "73211",
+                hint: "두 자리 소수 1개와 세 자리 소수 1개의 곱입니다."
+            },
+            {
+                desc: "[초월 해킹 - 4단계]\n\n두 소수를 작은 순서대로 이어 붙이십시오.\n\n[ 42247 ➔ ? ]",
+                answer: "83509",
+                hint: "두 자리 소수 1개와 세 자리 소수 1개의 곱입니다."
+            },
+            {
+                desc: "[초월 해킹 - 최종 단계]\n\n궁극의 RSA 암호입니다. 두 소수를 작은 순서대로 이어 붙이십시오.\n\n[ 134041 ➔ ? ]",
+                answer: "311431",
+                hint: "세 자리 소수 2개의 곱입니다. 계산기를 동원해도 쉽지 않을 것입니다."
+            }
+        ];
+
+        let currentStage = 0;
+        let gameStartTime = 0;
+        let timerInterval;
+        let hintTimeout;
+        let isChallengeMode = false;
+
+        function initGame() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(() => {
+                let diff = Math.floor((Date.now() - gameStartTime) / 1000);
+                let m = String(Math.floor(diff / 60)).padStart(2, '0');
+                let s = String(diff % 60).padStart(2, '0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+            }, 1000);
+            loadStage();
+        }
+
+        function loadStage() {
+            const currentStages = isChallengeMode ? challengeStages : stages;
+
+            if (currentStage >= currentStages.length) {
+                showVictory();
+                return;
+            }
+
+            // UI 렌더링
+            document.getElementById('stage-title').innerText = isChallengeMode ? `CHALLENGE ${String(currentStage + 1).padStart(2, '0')}` : `STAGE ${String(currentStage + 1).padStart(2, '0')}`;
+            document.getElementById('stage-desc').innerText = currentStages[currentStage].desc;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('status-message').innerText = '';
+            document.getElementById('status-message').className = 'message';
+            
+            // 프로그레스 바
+            let progressStr = "[";
+            for(let i=0; i<currentStages.length; i++) {
+                progressStr += (i < currentStage) ? "■" : "□";
+            }
+            progressStr += `] ${currentStage}/${currentStages.length}`;
+            document.getElementById('progress-bar').innerText = progressStr;
+
+            document.getElementById('answer-input').focus();
+
+            // 힌트 리셋 (90초)
+            clearTimeout(hintTimeout);
+            document.getElementById('hint-box').style.display = 'none';
+            
+            hintTimeout = setTimeout(() => {
+                document.getElementById('hint-text').innerText = currentStages[currentStage].hint;
+                document.getElementById('hint-box').style.display = 'block';
+            }, 90000);
+        }
+
+        function checkAnswer() {
+            const currentStages = isChallengeMode ? challengeStages : stages;
+            const inputEl = document.getElementById('answer-input');
+            const msgEl = document.getElementById('status-message');
+            
+            const userAnswer = inputEl.value.replace(/\s+/g, '').toUpperCase();
+            const correctAnswer = currentStages[currentStage].answer.replace(/\s+/g, '').toUpperCase();
+
+            if (userAnswer === correctAnswer) {
+                msgEl.innerText = "ACCESS GRANTED : 보안 해제 완료.";
+                msgEl.className = "message success";
+                currentStage++;
+                clearTimeout(hintTimeout);
+                
+                setTimeout(loadStage, 1000);
+            } else {
+                msgEl.innerText = "ACCESS DENIED : 비밀번호가 일치하지 않습니다.";
+                msgEl.className = "message error";
+                inputEl.value = '';
+                inputEl.focus();
+                
+                msgEl.style.animation = 'none';
+                msgEl.offsetHeight; 
+                msgEl.style.animation = null;
+            }
+        }
+
+        document.getElementById('answer-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkAnswer();
+        });
+
+        function startChallenge() {
+            isChallengeMode = true;
+            currentStage = 0;
+            document.getElementById('victory-screen').style.display = 'none';
+            document.getElementById('play-area').style.display = 'flex';
+            document.getElementById('progress-bar').style.display = 'block';
+            
+            // 헤더 텍스트 변경
+            document.querySelector('.terminal-header span:first-child').innerText = "> ROOT_ACCESS // CHALLENGE_PROTOCOL";
+            
+            loadStage();
+        }
+
+        function showVictory() {
+            clearInterval(timerInterval);
+            clearTimeout(hintTimeout);
+            
+            let diff = Math.floor((Date.now() - gameStartTime) / 1000);
+            let m = Math.floor(diff / 60);
+            let s = diff % 60;
+            
+            document.getElementById('progress-bar').style.display = 'none';
+            document.getElementById('play-area').style.display = 'none';
+
+            if (isChallengeMode) {
+                document.getElementById('challenge-victory-screen').style.display = 'block';
+            } else {
+                document.getElementById('final-time').innerText = `${m}분 ${s}초`;
+                document.getElementById('victory-screen').style.display = 'block';
+            }
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
