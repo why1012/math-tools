@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>맞꼭지각의 크기는 왜 같을까? (탐구 활동)</title>
+    <!-- Pretendard 폰트 & Confetti 애니메이션 -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --primary-dark: #3730a3;
+            --accent-pink: #f43f5e;
+            --accent-pink-bg: #fff1f2;
+            --angle-a: #ea580c;
+            --angle-b: #0284c7;
+            --angle-c: #ea580c;
+            --angle-d: #0284c7;
+            --success: #10b981;
+            --success-bg: #ecfdf5;
+            --warning: #f59e0b;
+            --bg-page: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* 상단 헤더 */
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge-together {
+            background: #ffe4e6;
+            color: #e11d48;
+            font-weight: 800;
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: -0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: 1px solid #fecdd3;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+            transform: scale(1.05);
+        }
+
+        /* 메인 컨테이너 */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1.18fr 0.82fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 960px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 14px;
+                gap: 16px;
+            }
+        }
+
+        /* 왼쪽 학습 패널 */
+        .learning-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        /* 프로그레스 바 */
+        .progress-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4f46e5, #ec4899);
+            border-radius: 10px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 단계별 카드 */
+        .step-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .step-card.active {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), var(--shadow-md);
+        }
+
+        .step-card.completed {
+            border-color: #86efac;
+            background: #fafdfb;
+        }
+
+        .step-card.locked {
+            opacity: 0.45;
+            pointer-events: none;
+            filter: grayscale(0.2);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .step-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .step-card.completed .step-badge {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .step-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .step-intro-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #334155;
+            margin-bottom: 14px;
+        }
+
+        /* 교과서 스타일 수식 문장 */
+        .math-sentence {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 15px 18px;
+            margin: 10px 0;
+            font-size: 16px;
+            line-height: 2.2;
+            color: #1e293b;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 6px;
+        }
+
+        .angle-tag {
+            display: inline-flex;
+            align-items: center;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        .angle-tag.a { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+        .angle-tag.b { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .angle-tag.c { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+        .angle-tag.d { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+        /* 핑크색 빈칸 입력창 */
+        .blank-slot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+            height: 38px;
+            border: 2px solid var(--accent-pink);
+            border-radius: 8px;
+            background: #ffffff;
+            font-size: 17px;
+            font-weight: 700;
+            color: #be123c;
+            text-align: center;
+            padding: 2px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .blank-slot:focus, .blank-slot.focused {
+            border-color: #e11d48;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25);
+            background: #fff5f5;
+        }
+
+        .blank-slot.correct {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #047857;
+            cursor: default;
+        }
+
+        .blank-slot.wrong {
+            border-color: #ef4444;
+            background: #fef2f2;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        /* 힌트 및 피드백 박스 */
+        .feedback-box {
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            line-height: 1.5;
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.success {
+            display: flex;
+            background: var(--success-bg);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .feedback-box.hint {
+            display: flex;
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .feedback-box.info {
+            display: flex;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 선택형 보기 버튼 */
+        .choice-btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .choice-btn {
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            color: #334155;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+        }
+
+        .choice-btn:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        .choice-btn.selected {
+            background: #e0e7ff;
+            border-color: #6366f1;
+            color: #3730a3;
+        }
+
+        .choice-btn.correct {
+            background: #dcfce7;
+            border-color: #22c55e;
+            color: #15803d;
+            font-weight: 700;
+        }
+
+        .choice-btn.wrong {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 확인 버튼 */
+        .btn-check-step {
+            margin-top: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-check-step:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-check-step:active {
+            transform: translateY(0);
+        }
+
+        .btn-check-step:disabled {
+            background: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* 오른쪽 다이어그램 패널 */
+        .diagram-panel {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            padding: 20px;
+            position: sticky;
+            top: 75px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .diagram-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .diagram-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .svg-container {
+            width: 100%;
+            max-width: 440px;
+            aspect-ratio: 1 / 0.95;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: var(--radius-md);
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            user-select: none;
+            touch-action: none;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 각도 수치 표시판 */
+        .angle-values-board {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .angle-val-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .angle-val-box.active-a {
+            background: #fff7ed;
+            border-color: #fdba74;
+            box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
+        }
+
+        .angle-val-box.active-b {
+            background: #f0f9ff;
+            border-color: #7dd3fc;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+        }
+
+        .angle-val-box.highlight-pair {
+            animation: pulseGlow 1.5s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* 각도 조절 컨트롤 */
+        .controls-box {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* 최종 결론 카드 */
+        .summary-card {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .summary-card h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-content {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .summary-highlight {
+            color: #fef08a;
+            font-weight: 800;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        /* 교과서 요약 모달 */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            max-width: 560px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .clean-math-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin: 8px 0;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 상단 헤더 -->
+    <header>
+        <div class="header-title-wrap">
+            <span class="badge-together">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                함께해요
+            </span>
+            <h1 class="header-title">맞꼭지각의 크기가 같은 이유 알아보기</h1>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon" id="btn-sound-toggle" title="소리 켜기/끄기" onclick="toggleSound()">🔊</button>
+            <button class="btn-icon" title="다시 처음부터 하기" onclick="resetAll()">🔄</button>
+            <button class="btn-icon" title="교과서 정리 요약 보기" onclick="toggleSummaryModal(true)">📖</button>
+        </div>
+    </header>
+
+    <!-- 메인 레이아웃 -->
+    <div class="container">
+        
+        <!-- 왼쪽: 단계별 발문 & 이유 알아보기 인터랙션 -->
+        <main class="learning-panel">
+            
+            <!-- 학습 진도 상태 -->
+            <div class="progress-card">
+                <div class="progress-header">
+                    <span>탐구 진행률</span>
+                    <span id="progress-text">1단계 진행 중 (0%)</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- 문제 도입 안내문 -->
+            <div class="step-card active" id="card-intro">
+                <div class="step-header">
+                    <div class="step-badge">📌</div>
+                    <div class="step-title">탐구 목표</div>
+                </div>
+                <div class="step-intro-text">
+                    오른쪽 그림과 같이 두 직선이 한 점에서 만날 때 생기는 4개의 교각 <span class="angle-tag a">∠a</span>, <span class="angle-tag b">∠b</span>, <span class="angle-tag c">∠c</span>, <span class="angle-tag d">∠d</span> 에서 마주 보는 각의 크기가 왜 항상 같은지 단계별로 이유를 밝혀 봅시다.
+                </div>
+            </div>
+
+            <!-- 1단계: ∠a = ∠c 크기 비교 -->
+            <section class="step-card active" id="step-1-card">
+                <div class="step-header">
+                    <div class="step-badge" id="step-1-badge">1</div>
+                    <div class="step-title">1단계: <span class="angle-tag a">∠a</span> 와 <span class="angle-tag c">∠c</span> 의 크기 비교하기</div>
+                </div>
+                <div class="step-intro-text">
+                    직선이 이루는 각(평각)의 크기를 이용하여 빈칸을 채워보세요.
+                </div>
+
+                <!-- 1-1 문장 -->
+                <div class="math-sentence" id="sentence-1-1">
+                    <span><span class="angle-tag a">∠a</span> + <span class="angle-tag b">∠b</span> = 180°,</span>
+                    <span><span class="angle-tag b">∠b</span> + <span class="angle-tag c">∠c</span> =</span>
+                    <input type="text" class="blank-slot" id="input-1-1" placeholder=" ? " maxlength="3" autocomplete="off" inputmode="numeric">
+                    <span>° 이므로</span>
+                </div>
+
+                <!-- 1-2 문장 (1-1 통과 시 표시) -->
+                <div class="math-sentence" id="sentence-1-2" style="display: none;">
+                    <span><span class="angle-tag a">∠a</span> + <span class="angle-tag b">∠b</span> = <span class="angle-tag b">∠b</span> + <span class="angle-tag c">∠c</span></span>
+                    <span style="color: var(--text-muted); font-size: 14px;">(두 식의 합이 모두 180°로 같음)</span>
+                </div>
+
+                <!-- 1-3 문장 (최종 결론) -->
+                <div class="math-sentence" id="sentence-1-3" style="display: none;">
+                    <span>즉, 양변에서 공통인 <span class="angle-tag b">∠b</span> 를 빼면:</span>
+                    <span><span class="angle-tag a">∠a</span> = ∠</span>
+                    <input type="text" class="blank-slot" id="input-1-2" placeholder=" ? " maxlength="2" autocomplete="off">
+                    <span>이다.</span>
+                </div>
+
+                <!-- 피드백 & 힌트 메시지 -->
+                <div class="feedback-box" id="feedback-1"></div>
+
+                <div style="margin-top:12px;">
+                    <button class="btn-check-step" id="btn-step-1" onclick="checkStep1()">확인하기 ↵</button>
+                </div>
+            </section>
+
+            <!-- 2단계: ∠b = ∠d 크기 비교 -->
+            <section class="step-card locked" id="step-2-card">
+                <div class="step-header">
+                    <div class="step-badge" id="step-2-badge">2</div>
+                    <div class="step-title">2단계: <span class="angle-tag b">∠b</span> 와 <span class="angle-tag d">∠d</span> 의 크기 비교하기</div>
+                </div>
+                <div class="step-intro-text">
+                    같은 방법으로 마주 보는 두 각 <span class="angle-tag b">∠b</span>와 <span class="angle-tag d">∠d</span>의 크기가 같은 이유를 알아봅시다.
+                </div>
+
+                <!-- 2-1 문장 -->
+                <div class="math-sentence" id="sentence-2-1">
+                    <span><span class="angle-tag b">∠b</span> + <span class="angle-tag c">∠c</span> = 180°,</span>
+                    <span><span class="angle-tag c">∠c</span> + <span class="angle-tag d">∠d</span> =</span>
+                    <input type="text" class="blank-slot" id="input-2-1" placeholder=" ? " maxlength="3" autocomplete="off" inputmode="numeric" disabled>
+                    <span>° 이므로</span>
+                </div>
+
+                <!-- 2-2 문장 -->
+                <div class="math-sentence" id="sentence-2-2" style="display: none;">
+                    <span><span class="angle-tag b">∠b</span> + <span class="angle-tag c">∠c</span> = <span class="angle-tag c">∠c</span> + <span class="angle-tag d">∠d</span> ,</span>
+                    <span>즉 <span class="angle-tag b">∠b</span> = ∠</span>
+                    <input type="text" class="blank-slot" id="input-2-2" placeholder=" ? " maxlength="2" autocomplete="off">
+                    <span>이다.</span>
+                </div>
+
+                <!-- 2단계 피드백 -->
+                <div class="feedback-box" id="feedback-2"></div>
+
+                <div style="margin-top:12px;">
+                    <button class="btn-check-step" id="btn-step-2" onclick="checkStep2()" disabled>확인하기 ↵</button>
+                </div>
+            </section>
+
+            <!-- 3단계: 1, 2에서 알 수 있는 점 정리하기 (객관식 선택) -->
+            <section class="step-card locked" id="step-3-card">
+                <div class="step-header">
+                    <div class="step-badge" id="step-3-badge">3</div>
+                    <div class="step-title">3단계: 1, 2에서 알 수 있는 점 정리하기</div>
+                </div>
+                <div class="step-intro-text">
+                    1번과 2번에서 알아본 내용을 바탕으로 수학적 성질을 완성해 보세요.
+                </div>
+
+                <!-- 질문 3-1: 용어 선택 (동위각, 엇각 제외하고 기본 각 명칭 구성) -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius-md); padding:16px; margin-bottom:14px;">
+                    <div style="font-weight:700; font-size:15px; margin-bottom:10px; color:#0f172a;">
+                        Q1. 두 직선이 한 점에서 만날 때 생기는 서로 마주 보는 각을 무엇이라고 할까요?
+                    </div>
+                    <div class="choice-btn-group" id="group-term">
+                        <button class="choice-btn" onclick="selectTerm(this, '맞꼭지각')">맞꼭지각</button>
+                        <button class="choice-btn" onclick="selectTerm(this, '평각')">평각</button>
+                        <button class="choice-btn" onclick="selectTerm(this, '직각')">직각</button>
+                        <button class="choice-btn" onclick="selectTerm(this, '예각')">예각</button>
+                    </div>
+                </div>
+
+                <!-- 질문 3-2: 성질 선택 -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:var(--radius-md); padding:16px;">
+                    <div style="font-weight:700; font-size:15px; margin-bottom:10px; color:#0f172a;">
+                        Q2. 1단계(∠a = ∠c)와 2단계(∠b = ∠d)의 결과에 따라, 맞꼭지각의 크기는 서로 어떠한가요?
+                    </div>
+                    <div class="choice-btn-group" id="group-prop">
+                        <button class="choice-btn" onclick="selectProperty(this, 'equal')">서로 같다</button>
+                        <button class="choice-btn" onclick="selectProperty(this, 'different')">서로 다르다</button>
+                    </div>
+                </div>
+
+                <div class="feedback-box" id="feedback-3"></div>
+
+                <div style="margin-top:14px;">
+                    <button class="btn-check-step" id="btn-step-3" onclick="checkStep3()" disabled>최종 정리 완료하기 ✨</button>
+                </div>
+            </section>
+
+            <!-- 최종 결론 축하 배너 -->
+            <section class="summary-card" id="final-summary-card">
+                <h3>🎉 맞꼭지각의 성질을 완벽하게 발견했어요!</h3>
+                <div class="summary-content">
+                    두 직선이 한 점에서 만날 때 서로 마주 보는 각을 <span class="summary-highlight">맞꼭지각</span>이라고 하며,<br>
+                    <strong>"맞꼭지각의 크기는 항상 서로 같다"</strong>는 것을 평각(180°)의 성질과 등식의 성질을 통해 스스로 완벽하게 밝혀냈습니다!<br><br>
+                    💡 오른쪽 다이어그램의 조절 슬라이더나 파란 점을 마우스로 자유롭게 움직여 각도가 변해도 항상 맞꼭지각의 크기가 같은지 직접 확인해 보세요!
+                </div>
+            </section>
+
+        </main>
+
+        <!-- 오른쪽: 인터랙티브 지오메트리 다이어그램 -->
+        <aside class="diagram-panel">
+            <div class="diagram-header">
+                <div class="diagram-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    두 직선의 교각 다이어그램
+                </div>
+                <span style="font-size:12px; color:var(--text-muted); background:#f1f5f9; padding:3px 8px; border-radius:6px;">실시간 연동</span>
+            </div>
+
+            <!-- 인터랙티브 SVG 캔버스 -->
+            <div class="svg-container" id="svg-wrap">
+                <svg id="geom-svg" viewBox="-200 -200 400 400">
+                    <circle cx="0" cy="0" r="180" fill="none" stroke="#f1f5f9" stroke-width="1.5" stroke-dasharray="4,4"/>
+                    
+                    <!-- 부채꼴 각도 영역 -->
+                    <path id="sector-a" fill="rgba(234, 88, 12, 0.15)" stroke="#ea580c" stroke-width="1.5" />
+                    <path id="sector-b" fill="rgba(2, 132, 199, 0.15)" stroke="#0284c7" stroke-width="1.5" />
+                    <path id="sector-c" fill="rgba(234, 88, 12, 0.15)" stroke="#ea580c" stroke-width="1.5" />
+                    <path id="sector-d" fill="rgba(2, 132, 199, 0.15)" stroke="#0284c7" stroke-width="1.5" />
+
+                    <!-- 두 개의 교차 직선 -->
+                    <line id="line1" x1="-180" y1="0" x2="180" y2="0" stroke="#334155" stroke-width="3.5" stroke-linecap="round" />
+                    <line id="line2" x1="-150" y1="100" x2="150" y2="-100" stroke="#334155" stroke-width="3.5" stroke-linecap="round" />
+
+                    <!-- 교점 O -->
+                    <circle cx="0" cy="0" r="5" fill="#0f172a" />
+
+                    <!-- 각 라벨 텍스트 (a, b, c, d) -->
+                    <g font-style="italic" font-weight="bold" font-size="22" text-anchor="middle" dominant-baseline="central">
+                        <text id="label-a" fill="#c2410c">a</text>
+                        <text id="label-b" fill="#0369a1">b</text>
+                        <text id="label-c" fill="#c2410c">c</text>
+                        <text id="label-d" fill="#0369a1">d</text>
+                    </g>
+
+                    <!-- 드래그 핸들 점 (선 2의 끝점) -->
+                    <g id="drag-handle" style="cursor: grab;">
+                        <circle id="handle-circle" cx="150" cy="-100" r="12" fill="#4f46e5" stroke="#ffffff" stroke-width="3" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/>
+                        <circle cx="150" cy="-100" r="4" fill="#ffffff" />
+                    </g>
+                </svg>
+            </div>
+
+            <!-- 실시간 각도 수치 표시판 -->
+            <div class="angle-values-board">
+                <div class="angle-val-box" id="box-val-a">
+                    <span style="color:#c2410c;">∠a (왼쪽)</span>
+                    <strong id="val-a-text">60°</strong>
+                </div>
+                <div class="angle-val-box" id="box-val-c">
+                    <span style="color:#c2410c;">∠c (오른쪽)</span>
+                    <strong id="val-c-text">60°</strong>
+                </div>
+                <div class="angle-val-box" id="box-val-b">
+                    <span style="color:#0369a1;">∠b (아래)</span>
+                    <strong id="val-b-text">120°</strong>
+                </div>
+                <div class="angle-val-box" id="box-val-d">
+                    <span style="color:#0369a1;">∠d (위)</span>
+                    <strong id="val-d-text">120°</strong>
+                </div>
+            </div>
+
+            <!-- 각도 조절 슬라이더 컨트롤 -->
+            <div class="controls-box">
+                <div class="slider-label">
+                    <span>직선 회전 조절 (교각 크기 변경)</span>
+                    <span id="slider-val-indicator" style="font-weight:700; color:var(--primary);">60°</span>
+                </div>
+                <input type="range" id="angle-slider" min="20" max="160" value="60" oninput="onSliderChange(this.value)">
+                <div style="font-size:12px; color:var(--text-muted); text-align:center;">
+                    👆 파란 점을 드래그하거나 슬라이더를 움직여 각도를 바꿔보세요!
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- 교과서 요약 정리 모달 (기호 깨짐 없이 완벽한 깔끔 서식) -->
+    <div class="modal-backdrop" id="summary-modal" onclick="if(event.target===this) toggleSummaryModal(false)">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="toggleSummaryModal(false)">✕</button>
+            <h2 style="font-size: 20px; font-weight: 800; color:#0f172a; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                📖 교과서 한눈에 정리하기
+            </h2>
+            <div style="font-size:15px; line-height:1.8; color:#334155;">
+                <div style="background:#f8fafc; border-left:4px solid var(--primary); padding:12px 14px; border-radius:4px; margin-bottom:16px;">
+                    <strong style="color:#0f172a;">[맞꼭지각의 정의]</strong><br>
+                    두 직선이 한 점에서 만날 때 생기는 4개의 교각 중, 서로 마주 보는 두 각을 <strong>맞꼭지각</strong>이라고 합니다.
+                </div>
+                
+                <h4 style="margin:14px 0 8px 0; color:#0f172a; font-size:16px;">■ 맞꼭지각의 크기가 같은 이유 (설명 과정)</h4>
+                
+                <div class="clean-math-box">
+                    <strong>1. ∠a 와 ∠c 의 크기 비교</strong><br>
+                    • 직선 위의 두 각의 합은 평각(180°)이므로:<br>
+                    &nbsp;&nbsp;∠a + ∠b = 180°, &nbsp;∠b + ∠c = 180°<br>
+                    • 두 식의 합이 같으므로: ∠a + ∠b = ∠b + ∠c<br>
+                    • 양변에서 공통인 ∠b 를 빼면: <strong style="color:#c2410c;">∠a = ∠c</strong>
+                </div>
+
+                <div class="clean-math-box">
+                    <strong>2. ∠b 와 ∠d 의 크기 비교</strong><br>
+                    • 마찬가지로 평각(180°)의 성질에 의해:<br>
+                    &nbsp;&nbsp;∠b + ∠c = 180°, &nbsp;∠c + ∠d = 180°<br>
+                    • 두 식의 합이 같으므로: ∠b + ∠c = ∠c + ∠d<br>
+                    • 양변에서 공통인 ∠c 를 빼면: <strong style="color:#0369a1;">∠b = ∠d</strong>
+                </div>
+
+                <div style="margin-top:14px; background:#ecfdf5; border:1.5px solid #a7f3d0; color:#065f46; padding:12px; border-radius:8px; font-weight:800; text-align:center; font-size:16px;">
+                    ✨ 결론: 맞꼭지각의 크기는 서로 같다!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 로직 -->
+    <script>
+        // --- 1. 오디오 합성 피드백 (Web Audio API) ---
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const ctx = audioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
+
+                if (type === 'correct') {
+                    const osc1 = ctx.createOscillator();
+                    const osc2 = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc1.type = 'sine';
+                    osc2.type = 'sine';
+                    osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc1.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc1.start(ctx.currentTime);
+                    osc1.stop(ctx.currentTime + 0.15);
+                    osc2.start(ctx.currentTime + 0.12);
+                    osc2.stop(ctx.currentTime + 0.45);
+                } else if (type === 'wrong') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                } else if (type === 'celebrate') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
+                        gain.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.35);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + i * 0.1);
+                        osc.stop(ctx.currentTime + i * 0.1 + 0.4);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio feedback:", e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('btn-sound-toggle').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // --- 2. 인터랙티브 SVG 지오메트리 렌더링 ---
+        let currentAngle = 60;
+        let activeFocusedInput = null;
+
+        function setGeometryAngle(deg) {
+            currentAngle = Math.max(20, Math.min(160, deg));
+            
+            const angleA = Math.round(currentAngle);
+            const angleB = 180 - angleA;
+            const angleC = angleA;
+            const angleD = angleB;
+
+            // DOM 수치 업데이트
+            document.getElementById('val-a-text').innerText = angleA + '°';
+            document.getElementById('val-b-text').innerText = angleB + '°';
+            document.getElementById('val-c-text').innerText = angleC + '°';
+            document.getElementById('val-d-text').innerText = angleD + '°';
+            document.getElementById('slider-val-indicator').innerText = angleA + '°';
+            document.getElementById('angle-slider').value = angleA;
+
+            // SVG 좌표 계산
+            const r = 180;
+            const rad1 = -30 * (Math.PI / 180);
+            const rad2 = rad1 + (currentAngle * Math.PI / 180);
+
+            // line1 (고정 기준선)
+            const lx1 = -r * Math.cos(rad1);
+            const ly1 = -r * Math.sin(rad1);
+            const lx2 = r * Math.cos(rad1);
+            const ly2 = r * Math.sin(rad1);
+
+            document.getElementById('line1').setAttribute('x1', lx1);
+            document.getElementById('line1').setAttribute('y1', ly1);
+            document.getElementById('line1').setAttribute('x2', lx2);
+            document.getElementById('line1').setAttribute('y2', ly2);
+
+            // line2 (회전선)
+            const kx1 = -r * Math.cos(rad2);
+            const ky1 = -r * Math.sin(rad2);
+            const kx2 = r * Math.cos(rad2);
+            const ky2 = r * Math.sin(rad2);
+
+            document.getElementById('line2').setAttribute('x1', kx1);
+            document.getElementById('line2').setAttribute('y1', ky1);
+            document.getElementById('line2').setAttribute('x2', kx2);
+            document.getElementById('line2').setAttribute('y2', ky2);
+
+            // 드래그 핸들
+            document.getElementById('handle-circle').setAttribute('cx', kx2);
+            document.getElementById('handle-circle').setAttribute('cy', ky2);
+            const handleInner = document.querySelector('#drag-handle circle:nth-child(2)');
+            if (handleInner) {
+                handleInner.setAttribute('cx', kx2);
+                handleInner.setAttribute('cy', ky2);
+            }
+
+            // 부채꼴 호 그리기
+            const arcR = 48;
+            drawSector('sector-c', 0, 0, arcR, rad1, rad2);
+            drawSector('sector-d', 0, 0, arcR, rad2, rad1 + Math.PI);
+            drawSector('sector-a', 0, 0, arcR, rad1 + Math.PI, rad2 + Math.PI);
+            drawSector('sector-b', 0, 0, arcR, rad2 + Math.PI, rad1 + 2 * Math.PI);
+
+            // 각 라벨 텍스트 위치
+            const lblR = 75;
+            setLabelPos('label-c', 0, 0, lblR, (rad1 + rad2) / 2);
+            setLabelPos('label-d', 0, 0, lblR, (rad2 + (rad1 + Math.PI)) / 2);
+            setLabelPos('label-a', 0, 0, lblR, ((rad1 + Math.PI) + (rad2 + Math.PI)) / 2);
+            setLabelPos('label-b', 0, 0, lblR, ((rad2 + Math.PI) + (rad1 + 2 * Math.PI)) / 2);
+        }
+
+        function drawSector(elementId, cx, cy, r, startAngle, endAngle) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const x1 = cx + r * Math.cos(startAngle);
+            const y1 = cy + r * Math.sin(startAngle);
+            const x2 = cx + r * Math.cos(endAngle);
+            const y2 = cy + r * Math.sin(endAngle);
+            
+            let diff = endAngle - startAngle;
+            while (diff < 0) diff += 2 * Math.PI;
+            const largeArc = diff > Math.PI ? 1 : 0;
+
+            const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+            el.setAttribute('d', d);
+        }
+
+        function setLabelPos(labelId, cx, cy, r, midAngle) {
+            const el = document.getElementById(labelId);
+            if (!el) return;
+            const x = cx + r * Math.cos(midAngle);
+            const y = cy + r * Math.sin(midAngle);
+            el.setAttribute('x', x);
+            el.setAttribute('y', y);
+        }
+
+        function onSliderChange(val) {
+            setGeometryAngle(parseFloat(val));
+        }
+
+        // 마우스/터치 드래그
+        const svgWrap = document.getElementById('svg-wrap');
+        let isDragging = false;
+
+        function getAngleFromEvent(e) {
+            const rect = svgWrap.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const dx = clientX - cx;
+            const dy = clientY - cy;
+
+            let rad = Math.atan2(dy, dx);
+            const baseRad = -30 * (Math.PI / 180);
+            let diffRad = rad - baseRad;
+            while (diffRad < 0) diffRad += 2 * Math.PI;
+            let deg = diffRad * (180 / Math.PI);
+            if (deg > 180) deg -= 180;
+            return deg;
+        }
+
+        const handle = document.getElementById('drag-handle');
+        handle.addEventListener('mousedown', () => { isDragging = true; });
+        handle.addEventListener('touchstart', (e) => { isDragging = true; e.preventDefault(); }, { passive: false });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deg = getAngleFromEvent(e);
+            if (deg >= 20 && deg <= 160) {
+                setGeometryAngle(deg);
+            }
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deg = getAngleFromEvent(e);
+            if (deg >= 20 && deg <= 160) {
+                setGeometryAngle(deg);
+            }
+        }, { passive: false });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        // --- 3. 단계별 발문 평가 로직 ---
+        let currentStep = 1;
+        let step1SubProgress = 1;
+        let step2SubProgress = 1;
+        let selectedTermValue = null;
+        let selectedPropertyValue = null;
+
+        const allInputs = document.querySelectorAll('.blank-slot');
+        allInputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                activeFocusedInput = input;
+                allInputs.forEach(i => i.classList.remove('focused'));
+                input.classList.add('focused');
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    if (currentStep === 1) checkStep1();
+                    else if (currentStep === 2) checkStep2();
+                }
+            });
+        });
+
+        function highlightAngles(angles) {
+            ['a', 'b', 'c', 'd'].forEach(ang => {
+                const box = document.getElementById(`box-val-${ang}`);
+                const sector = document.getElementById(`sector-${ang}`);
+                if (angles.includes(ang)) {
+                    box.classList.add(`active-${ang}`);
+                    sector.setAttribute('fill-opacity', '0.45');
+                    sector.setAttribute('stroke-width', '3');
+                } else {
+                    box.classList.remove('active-a', 'active-b', 'active-c', 'active-d');
+                    sector.setAttribute('fill-opacity', '0.15');
+                    sector.setAttribute('stroke-width', '1.5');
+                }
+            });
+        }
+
+        // [1단계 체크]
+        function checkStep1() {
+            const input1 = document.getElementById('input-1-1');
+            const input2 = document.getElementById('input-1-2');
+            const feedback = document.getElementById('feedback-1');
+
+            if (step1SubProgress === 1) {
+                const val1 = input1.value.trim();
+                if (val1 === '180') {
+                    playSound('correct');
+                    input1.classList.remove('wrong');
+                    input1.classList.add('correct');
+                    input1.disabled = true;
+
+                    document.getElementById('sentence-1-2').style.display = 'flex';
+                    document.getElementById('sentence-1-3').style.display = 'flex';
+                    input2.focus();
+                    activeFocusedInput = input2;
+                    step1SubProgress = 2;
+
+                    feedback.className = 'feedback-box info';
+                    feedback.innerHTML = '💡 <strong>정답입니다!</strong> ∠a + ∠b 와 ∠b + ∠c 가 모두 180°로 같으므로 <code>∠a + ∠b = ∠b + ∠c</code> 입니다.<br>이제 양변에서 공통인 ∠b 를 빼면 ∠a 는 어떤 각과 같아질까요?';
+                    updateProgress(20, '1단계 진행 중: ∠a = ∠c 이유 알아보기');
+                    highlightAngles(['a', 'b', 'c']);
+                } else {
+                    playSound('wrong');
+                    input1.classList.add('wrong');
+                    feedback.className = 'feedback-box hint';
+                    feedback.innerHTML = '⚠️ <strong>힌트:</strong> 직선 위의 두 각(∠b와 ∠c)이 합쳐져 이루는 일직선(평각)의 크기를 생각해 보세요.';
+                }
+            } else if (step1SubProgress === 2) {
+                const val2 = input2.value.trim().toLowerCase();
+                if (val2 === 'c' || val2 === '∠c') {
+                    playSound('correct');
+                    input2.classList.remove('wrong');
+                    input2.classList.add('correct');
+                    input2.disabled = true;
+
+                    feedback.className = 'feedback-box success';
+                    feedback.innerHTML = '🎉 <strong>훌륭합니다!</strong> ∠a + ∠b = ∠b + ∠c 에서 공통인 ∠b를 빼면 <strong>∠a = ∠c</strong> 가 됨을 논리적으로 찾아냈어요!';
+                    
+                    document.getElementById('step-1-card').classList.remove('active');
+                    document.getElementById('step-1-card').classList.add('completed');
+                    document.getElementById('btn-step-1').disabled = true;
+                    document.getElementById('btn-step-1').innerText = '1단계 완료 ✔';
+
+                    unlockStep2();
+                } else {
+                    playSound('wrong');
+                    input2.classList.add('wrong');
+                    feedback.className = 'feedback-box hint';
+                    feedback.innerHTML = '⚠️ <strong>힌트:</strong> 등식 ∠a + ∠b = ∠b + ∠c 의 양변에서 똑같이 들어있는 ∠b를 빼면 우변에는 어떤 각이 남을까요?';
+                }
+            }
+        }
+
+        function unlockStep2() {
+            currentStep = 2;
+            updateProgress(45, '2단계: ∠b = ∠d 이유 알아보기');
+            const step2Card = document.getElementById('step-2-card');
+            step2Card.classList.remove('locked');
+            step2Card.classList.add('active');
+            
+            const input2_1 = document.getElementById('input-2-1');
+            input2_1.disabled = false;
+            input2_1.focus();
+            activeFocusedInput = input2_1;
+            document.getElementById('btn-step-2').disabled = false;
+
+            highlightAngles(['b', 'c', 'd']);
+        }
+
+        // [2단계 체크]
+        function checkStep2() {
+            const input1 = document.getElementById('input-2-1');
+            const input2 = document.getElementById('input-2-2');
+            const feedback = document.getElementById('feedback-2');
+
+            if (step2SubProgress === 1) {
+                const val1 = input1.value.trim();
+                if (val1 === '180') {
+                    playSound('correct');
+                    input1.classList.remove('wrong');
+                    input1.classList.add('correct');
+                    input1.disabled = true;
+
+                    document.getElementById('sentence-2-2').style.display = 'flex';
+                    input2.focus();
+                    activeFocusedInput = input2;
+                    step2SubProgress = 2;
+
+                    feedback.className = 'feedback-box info';
+                    feedback.innerHTML = '💡 <strong>정답입니다!</strong> ∠b + ∠c = ∠c + ∠d 에서 양변의 공통인 ∠c를 빼면 무엇이 될까요?';
+                    updateProgress(65, '2단계 진행 중: ∠b = ∠d 이유 알아보기');
+                    highlightAngles(['b', 'c', 'd']);
+                } else {
+                    playSound('wrong');
+                    input1.classList.add('wrong');
+                    feedback.className = 'feedback-box hint';
+                    feedback.innerHTML = '⚠️ <strong>힌트:</strong> 두 각 ∠c 와 ∠d 가 합쳐져 이루는 직선(평각)의 크기를 생각해 보세요.';
+                }
+            } else if (step2SubProgress === 2) {
+                const val2 = input2.value.trim().toLowerCase();
+                if (val2 === 'd' || val2 === '∠d') {
+                    playSound('correct');
+                    input2.classList.remove('wrong');
+                    input2.classList.add('correct');
+                    input2.disabled = true;
+
+                    feedback.className = 'feedback-box success';
+                    feedback.innerHTML = '🎉 <strong>정답입니다!</strong> <strong>∠b = ∠d</strong> 가 성립함을 멋지게 확인했어요!';
+                    
+                    document.getElementById('step-2-card').classList.remove('active');
+                    document.getElementById('step-2-card').classList.add('completed');
+                    document.getElementById('btn-step-2').disabled = true;
+                    document.getElementById('btn-step-2').innerText = '2단계 완료 ✔';
+
+                    unlockStep3();
+                } else {
+                    playSound('wrong');
+                    input2.classList.add('wrong');
+                    feedback.className = 'feedback-box hint';
+                    feedback.innerHTML = '⚠️ <strong>힌트:</strong> 등식 ∠b + ∠c = ∠c + ∠d 에서 양변의 공통인 ∠c를 빼면 어떤 각이 남을까요?';
+                }
+            }
+        }
+
+        function unlockStep3() {
+            currentStep = 3;
+            updateProgress(80, '3단계: 1, 2에서 알 수 있는 점 정리하기');
+            const step3Card = document.getElementById('step-3-card');
+            step3Card.classList.remove('locked');
+            step3Card.classList.add('active');
+            highlightAngles(['a', 'c', 'b', 'd']);
+        }
+
+        // [3단계 선택형 보기 로직 - 학생이 직접 선택]
+        function selectTerm(btn, val) {
+            const buttons = document.querySelectorAll('#group-term .choice-btn');
+            buttons.forEach(b => b.classList.remove('selected', 'correct', 'wrong'));
+            
+            selectedTermValue = val;
+            if (val === '맞꼭지각') {
+                btn.classList.add('correct');
+                playSound('correct');
+            } else {
+                btn.classList.add('wrong');
+                playSound('wrong');
+            }
+            updateStep3Status();
+        }
+
+        function selectProperty(btn, val) {
+            const buttons = document.querySelectorAll('#group-prop .choice-btn');
+            buttons.forEach(b => b.classList.remove('selected', 'correct', 'wrong'));
+
+            selectedPropertyValue = val;
+            if (val === 'equal') {
+                btn.classList.add('correct');
+                playSound('correct');
+            } else {
+                btn.classList.add('wrong');
+                playSound('wrong');
+            }
+            updateStep3Status();
+        }
+
+        function updateStep3Status() {
+            const btnCheck = document.getElementById('btn-step-3');
+            if (selectedTermValue && selectedPropertyValue) {
+                btnCheck.disabled = false;
+            }
+        }
+
+        function checkStep3() {
+            const feedback = document.getElementById('feedback-3');
+            
+            if (selectedTermValue !== '맞꼭지각') {
+                playSound('wrong');
+                feedback.className = 'feedback-box hint';
+                feedback.innerHTML = '⚠️ Q1을 다시 확인해 보세요. 두 직선이 한 점에서 만날 때 꼭짓점을 맞대고 서로 마주 보는 각을 무엇이라고 할까요?';
+                return;
+            }
+
+            if (selectedPropertyValue !== 'equal') {
+                playSound('wrong');
+                feedback.className = 'feedback-box hint';
+                feedback.innerHTML = '⚠️ Q2를 다시 확인해 보세요. 1단계에서 ∠a = ∠c, 2단계에서 ∠b = ∠d 임을 확인했으므로, 마주 보는 두 각의 크기는 어떠할까요?';
+                return;
+            }
+
+            // 전체 탐구 완료
+            playSound('celebrate');
+            triggerConfetti();
+
+            feedback.className = 'feedback-box success';
+            feedback.innerHTML = '✨ <strong>축하합니다!</strong> 맞꼭지각의 성질을 완벽하게 이해하고 이유를 훌륭하게 설명해 냈습니다!';
+
+            document.getElementById('step-3-card').classList.remove('active');
+            document.getElementById('step-3-card').classList.add('completed');
+            document.getElementById('btn-step-3').disabled = true;
+            document.getElementById('btn-step-3').innerText = '탐구 완료 🎊';
+
+            document.getElementById('final-summary-card').style.display = 'block';
+            updateProgress(100, '탐구 100% 완료! 자유 탐구 모드 활성화');
+
+            // 양쪽 맞꼭지각 쌍 하이라이트 애니메이션
+            document.getElementById('box-val-a').classList.add('highlight-pair');
+            document.getElementById('box-val-c').classList.add('highlight-pair');
+            document.getElementById('box-val-b').classList.add('highlight-pair');
+            document.getElementById('box-val-d').classList.add('highlight-pair');
+        }
+
+        function updateProgress(percent, text) {
+            document.getElementById('progress-bar').style.width = percent + '%';
+            document.getElementById('progress-text').innerText = text + ` (${percent}%)`;
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 50,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 }
+                    });
+                    confetti({
+                        particleCount: 50,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 }
+                    });
+                }, 250);
+            }
+        }
+
+        function toggleSummaryModal(show) {
+            const modal = document.getElementById('summary-modal');
+            if (show) modal.classList.add('show');
+            else modal.classList.remove('show');
+        }
+
+        function resetAll() {
+            if (confirm("모든 과정을 처음부터 다시 시작하시겠습니까?")) {
+                location.reload();
+            }
+        }
+
+        // 초기 실행
+        window.addEventListener('DOMContentLoaded', () => {
+            setGeometryAngle(60);
+            highlightAngles(['a', 'b']);
+            updateProgress(0, '1단계 진행 중');
+            document.getElementById('input-1-1').focus();
+        });
+    </script>
+</body>
+</html>
