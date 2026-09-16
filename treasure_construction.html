@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🏴‍☠️ 보물찾기 작도 게임</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --primary-light: #f5f3ff;
+            --gold: #d97706;
+            --gold-light: #fef3c7;
+            --gold-border: #b45309;
+            --success: #059669;
+            --danger: #dc2626;
+            --bg-page: #1c140d;
+            --parchment-bg: #f7efe1;
+            --parchment-card: #fdfbf7;
+            --parchment-border: #cfb792;
+            --ink-dark: #2c1810;
+            --ink-muted: #6b5548;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: #18110a radial-gradient(circle at center, #2e1e12 0%, #110b06 100%);
+            color: var(--ink-dark);
+            min-height: 100vh; min-height: 100dvh;
+            overflow: hidden; touch-action: none;
+        }
+
+        /* === MAIN CONTAINER === */
+        #game-container {
+            position: absolute; left: 50%; top: 50%;
+            width: 1200px; height: 700px;
+            transform: translate(-50%, -50%) scale(1);
+            transform-origin: center center;
+            display: grid;
+            grid-template-rows: 56px 1fr;
+            grid-template-columns: 1fr 310px;
+            gap: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid #855a36;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(217,119,6,0.3);
+        }
+
+        /* === HEADER === */
+        header {
+            grid-column: 1 / -1;
+            background: linear-gradient(180deg, #382417 0%, #24160d 100%);
+            border-bottom: 2px solid #855a36;
+            padding: 0 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .header-title { font-size: 17px; font-weight: 900; color: #fef3c7; display: flex; align-items: center; gap: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; }
+        .stage-badge {
+            background: linear-gradient(135deg, #f59e0b, #b45309);
+            color: #fffbeb; font-size: 11px; font-weight: 900;
+            padding: 4px 12px; border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border: 1px solid rgba(254,243,199,0.4);
+            letter-spacing: 1px;
+        }
+        .progress-wrap { display: flex; align-items: center; gap: 10px; }
+        .progress-dots { display: flex; gap: 5px; }
+        .progress-dot {
+            width: 17px; height: 17px; border-radius: 50%;
+            border: 2px solid #785338; background: #24160d;
+            transition: all 0.3s; font-size: 9px; font-weight: 800; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .progress-dot.done { background: #059669; border-color: #34d399; }
+        .progress-dot.current { border-color: #fbbf24; background: #d97706; animation: pulse-dot 1.5s infinite; }
+        @keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.6)} 50%{box-shadow:0 0 0 6px rgba(245,158,11,0)} }
+
+        /* === CANVAS AREA === */
+        .canvas-wrap {
+            position: relative; background: #f7efe1;
+            overflow: hidden;
+        }
+        #mainCanvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+        /* === SIDE PANEL (Antique Scroll Style) === */
+        .side-panel {
+            background: #fdfbf7;
+            border-left: 2px solid #cfb792;
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: inset 6px 0 16px rgba(100,70,40,0.08);
+        }
+        .side-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 8px;
+            background: linear-gradient(180deg, rgba(133,90,54,0.15), transparent);
+            pointer-events: none;
+        }
+
+        /* Mission Section */
+        .mission-section {
+            padding: 20px 18px;
+            border-bottom: 2px dashed #e2d2b8;
+            background: linear-gradient(180deg, #fffbf2 0%, #fdf8eb 100%);
+        }
+        .mission-emoji { font-size: 34px; margin-bottom: 8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+        .mission-title { font-size: 16px; font-weight: 900; color: #7c2d12; margin-bottom: 4px; letter-spacing: -0.2px; }
+        .mission-subtitle { display: none; }
+        .mission-desc {
+            font-size: 13px; line-height: 1.75; color: #432818;
+            white-space: pre-line; word-break: keep-all; font-weight: 500;
+        }
+
+        /* Tool status text */
+        .tool-status {
+            padding: 10px 18px; font-size: 12px; color: #78350f;
+            font-weight: 700; border-bottom: 1px solid #e8dbca;
+            min-height: 40px; display: flex; align-items: center;
+            background: #fef7ea; border-left: 4px solid #d97706;
+        }
+
+        /* Tools Section */
+        .tools-section { padding: 14px 18px; border-bottom: 2px dashed #e2d2b8; }
+        .tools-label { font-size: 11px; font-weight: 800; color: #8c6d46; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .tool-btn {
+            background: #fff; border: 2px solid #d6c4a8;
+            border-radius: var(--radius-sm); padding: 10px 6px;
+            color: #3f271a; font-size: 12px; font-weight: 800;
+            cursor: pointer; transition: all 0.2s; text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            box-shadow: 0 2px 4px rgba(60,40,20,0.06);
+        }
+        .tool-btn:hover { background: #fdf5e6; border-color: #b45309; transform: translateY(-1px); }
+        .tool-btn.active {
+            border-color: #b45309; background: #fffbeb; color: #9a3412;
+            box-shadow: 0 0 0 2px rgba(180,83,9,0.25), 0 3px 6px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        .tool-btn .tool-icon { font-size: 22px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
+        .tool-btn.disabled { opacity: 0.3; pointer-events: none; }
+
+        /* Actions Section */
+        .actions-section { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: flex-end; background: #faf5ea; }
+        .btn-action {
+            width: 100%; padding: 12px; border: none; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-undo { background: #e7decb; color: #432818; border: 1px solid #cfb792; }
+        .btn-undo:hover { background: #ded2bd; color: #1c1008; }
+        .btn-reset { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .btn-reset:hover { background: #fecaca; }
+        .btn-check {
+            background: linear-gradient(135deg, #15803d, #166534);
+            color: #fff; font-size: 15px; box-shadow: 0 4px 0 #14532d;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+        .btn-check:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-check:active { transform: translateY(2px); box-shadow: 0 2px 0 #14532d; }
+
+        /* === OVERLAYS === */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(24,17,10,0.85); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        .overlay.hidden { display: none; }
+        .overlay-box {
+            background: #fdfbf7;
+            border: 3px solid #b45309;
+            border-radius: 24px; padding: 40px; text-align: center;
+            max-width: 480px; width: 90%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), inset 0 0 30px rgba(180,83,9,0.06);
+            color: #2c1810;
+        }
+        .overlay-emoji { font-size: 64px; margin-bottom: 16px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
+        .overlay-title { font-size: 28px; font-weight: 900; color: #7c2d12; margin-bottom: 8px; }
+        .overlay-desc { font-size: 15px; color: #6b5548; line-height: 1.7; margin-bottom: 24px; font-weight: 600; }
+        .overlay-btn {
+            padding: 14px 36px; border: none; border-radius: 14px;
+            font-size: 17px; font-weight: 900; cursor: pointer;
+            transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .overlay-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .overlay-btn.primary {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            color: #fffbeb; box-shadow: 0 4px 0 #78350f;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .overlay-btn.primary:active { transform: translateY(2px); box-shadow: 0 2px 0 #78350f; }
+        .overlay-btn.green {
+            background: linear-gradient(135deg, #15803d, #166534);
+            color: white; box-shadow: 0 4px 0 #14532d;
+        }
+
+        /* Stage clear */
+        .clear-stars { font-size: 40px; margin-bottom: 12px; letter-spacing: 6px; }
+
+        /* Wrong answer shake */
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+        .shake { animation: shake 0.5s; }
+
+        /* Toast */
+        .toast {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #b91c1c; color: white; padding: 12px 24px;
+            border-radius: 12px; font-size: 14px; font-weight: 800;
+            z-index: 200; transition: transform 0.3s ease;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            border: 2px solid #f87171;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: #15803d; border-color: #4ade80; }
+
+        /* Portrait warning */
+        #portrait-warning { display: none; }
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            #portrait-warning {
+                display: flex; position: fixed; top: 0; left: 0;
+                width: 100vw; height: 100vh; height: 100dvh;
+                background: #18110a; z-index: 9999; color: #fef3c7;
+                flex-direction: column; align-items: center; justify-content: center;
+                font-size: 20px; font-weight: 700; text-align: center; gap: 16px;
+            }
+            #game-container { display: none !important; }
+        }
+
+        /* Snap indicator */
+        .snap-indicator {
+            position: absolute; pointer-events: none;
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 2.5px solid #059669; background: rgba(5, 150, 105, 0.25);
+            transform: translate(-50%, -50%); z-index: 5;
+            display: none;
+            box-shadow: 0 0 10px rgba(5,150,105,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="portrait-warning">📱<br><br>화면을 가로로 돌려주세요!<br><span style="font-size:14px;color:#94a3b8;font-weight:400">쾌적한 작도를 위해 가로 모드를 권장합니다</span></div>
+
+    <div id="game-container">
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <div class="header-title">🏴‍☠️ 보물찾기 작도 게임</div>
+                <div class="stage-badge" id="stageBadge">STAGE 1 / 6</div>
+            </div>
+            <div class="progress-wrap">
+                <div class="progress-dots" id="progressDots"></div>
+            </div>
+        </header>
+
+        <!-- Canvas Area -->
+        <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="mainCanvas"></canvas>
+            <div class="snap-indicator" id="snapIndicator"></div>
+            <div class="toast" id="toast"></div>
+
+            <!-- Start Overlay -->
+            <div class="overlay" id="startOverlay">
+                <div class="overlay-box">
+                    <div style="width:104px; height:104px; margin:0 auto 14px; border-radius:50%; border:3px solid #f59e0b; box-shadow:0 6px 18px rgba(67,40,24,0.45); overflow:hidden; background:#2c1810;">
+                        <img src="assets/tokens/compass.jpg" alt="Compass" style="width:100%; height:100%; object-fit:cover; display:block;">
+                    </div>
+                    <div class="overlay-title">보물찾기 작도 게임</div>
+                    <div class="overlay-desc">
+                        전설의 해적 보물을 찾기 위해<br>
+                        10개의 작도 미션을 수행하라!<br><br>
+                        <span style="font-size:13px; color:#8c6d46">컴퍼스와 자를 사용해 기하학적 작도를 완성하세요.</span>
+                    </div>
+                    <button class="overlay-btn primary" onclick="startGame()">🗺️ 모험 시작!</button>
+                </div>
+            </div>
+
+            <!-- Stage Clear Overlay -->
+            <div class="overlay hidden" id="clearOverlay">
+                <div class="overlay-box">
+                    <div class="clear-stars">⭐⭐⭐</div>
+                    <div class="overlay-emoji" id="clearEmoji">🎉</div>
+                    <div class="overlay-title" id="clearTitle">미션 성공!</div>
+                    <div class="overlay-desc" id="clearDesc">정확한 작도입니다!</div>
+                    <button class="overlay-btn green" id="clearBtn" onclick="nextStage()">➡️ 다음 스테이지</button>
+                </div>
+            </div>
+
+            <!-- Game Complete Overlay -->
+            <div class="overlay hidden" id="completeOverlay">
+                <div class="overlay-box">
+                    <div style="width:116px; height:116px; margin:0 auto 14px; border-radius:50%; border:4px solid #f59e0b; box-shadow:0 0 24px rgba(245,158,11,0.6); overflow:hidden; background:#2c1810;">
+                        <img src="assets/tokens/chest.jpg" alt="Treasure Chest" style="width:100%; height:100%; object-fit:cover; display:block;">
+                    </div>
+                    <div class="overlay-title" style="background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">보물을 찾았다!</div>
+                    <div class="overlay-desc">
+                        축하합니다! 🎉<br>
+                        10개의 작도 미션을 모두 완료하고<br>
+                        전설의 해적 보물을 발견했습니다!<br><br>
+                        <span style="font-size:13px; color:#8c6d46">당신은 진정한 작도 마스터입니다! 🏆</span>
+                    </div>
+                    <button class="overlay-btn primary" onclick="restartGame()">🔄 처음부터 다시</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Panel -->
+        <div class="side-panel" id="sidePanel">
+            <div class="mission-section">
+                <div class="mission-emoji" id="missionEmoji">🏝️</div>
+                <div class="mission-title" id="missionTitle">해적 섬 상륙</div>
+                <div class="mission-subtitle" id="missionSubtitle"></div>
+                <div class="mission-desc" id="missionDesc">미션 설명</div>
+            </div>
+            <div class="tool-status" id="toolStatus">🔧 도구를 선택하세요</div>
+            <div class="tools-section">
+                <div class="tools-label">🧰 작도 도구</div>
+                <div class="tools-grid">
+                    <button class="tool-btn" id="btnRuler" onclick="selectTool('ruler')">
+                        <span class="tool-icon">📏</span>자 (직선)
+                    </button>
+                    <button class="tool-btn" id="btnCompass" onclick="selectTool('compass')">
+                        <span class="tool-icon">⭕</span>컴퍼스
+                    </button>
+                    <button class="tool-btn" id="btnPoint" onclick="selectTool('point')">
+                        <span class="tool-icon">📍</span>점 찍기
+                    </button>
+                    <button class="tool-btn" id="btnTransfer" onclick="selectTool('transfer')">
+                        <span class="tool-icon">🔄</span>길이 복사
+                    </button>
+                </div>
+            </div>
+            <div class="actions-section">
+                <button class="btn-action btn-undo" onclick="undoAction()">↩️ 되돌리기</button>
+                <button class="btn-action btn-reset" onclick="resetStage()">🔄 초기화</button>
+                <button class="btn-action btn-check" onclick="checkAnswer()">✅ 정답 확인</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ============================================================
+// SECTION 1: GEOMETRY UTILITIES
+// ============================================================
+const Geo = {
+    dist(p1, p2) {
+        return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+    },
+
+    midpoint(p1, p2) {
+        return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    },
+
+    slopeAngle(p1, p2) {
+        return Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    },
+
+    normalizeAngle(a) {
+        while (a > Math.PI) a -= 2 * Math.PI;
+        while (a < -Math.PI) a += 2 * Math.PI;
+        return a;
+    },
+
+    angleDiff(a1, a2) {
+        let d = Geo.normalizeAngle(a1 - a2);
+        return Math.abs(d);
+    },
+
+    circleCircleIntersections(c1, r1, c2, r2) {
+        const d = Geo.dist(c1, c2);
+        if (d > r1 + r2 + 1 || d < Math.abs(r1 - r2) - 1 || d < 0.001) return [];
+        const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        const hSq = r1 * r1 - a * a;
+        if (hSq < 0) return [];
+        const h = Math.sqrt(Math.max(0, hSq));
+        const px = c1.x + a * (c2.x - c1.x) / d;
+        const py = c1.y + a * (c2.y - c1.y) / d;
+        const dx = h * (c2.y - c1.y) / d;
+        const dy = h * (c2.x - c1.x) / d;
+        if (h < 0.5) return [{ x: px, y: py }];
+        return [
+            { x: px + dx, y: py - dy },
+            { x: px - dx, y: py + dy }
+        ];
+    },
+
+    lineLineIntersection(a1, a2, b1, b2) {
+        const d = (a1.x - a2.x) * (b1.y - b2.y) - (a1.y - a2.y) * (b1.x - b2.x);
+        if (Math.abs(d) < 0.0001) return null;
+        const t = ((a1.x - b1.x) * (b1.y - b2.y) - (a1.y - b1.y) * (b1.x - b2.x)) / d;
+        return {
+            x: a1.x + t * (a2.x - a1.x),
+            y: a1.y + t * (a2.y - a1.y)
+        };
+    },
+
+    lineCircleIntersections(p1, p2, c, r) {
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        const fx = p1.x - c.x, fy = p1.y - c.y;
+        const a = dx * dx + dy * dy;
+        const b = 2 * (fx * dx + fy * dy);
+        const cc = fx * fx + fy * fy - r * r;
+        let disc = b * b - 4 * a * cc;
+        if (disc < 0) return [];
+        disc = Math.sqrt(Math.max(0, disc));
+        const results = [];
+        const t1 = (-b - disc) / (2 * a);
+        const t2 = (-b + disc) / (2 * a);
+        results.push({ x: p1.x + t1 * dx, y: p1.y + t1 * dy });
+        if (Math.abs(disc) > 0.01) {
+            results.push({ x: p1.x + t2 * dx, y: p1.y + t2 * dy });
+        }
+        return results;
+    },
+
+    projectPointToLine(point, lp1, lp2, isSegment = false) {
+        const A = point.x - lp1.x, B = point.y - lp1.y;
+        const C = lp2.x - lp1.x, D = lp2.y - lp1.y;
+        const lenSq = C * C + D * D;
+        if (lenSq < 0.001) return { x: lp1.x, y: lp1.y, dist: Geo.dist(point, lp1) };
+        let param = (A * C + B * D) / lenSq;
+        if (isSegment) {
+            param = Math.max(0, Math.min(1, param));
+        }
+        const proj = {
+            x: lp1.x + param * C,
+            y: lp1.y + param * D
+        };
+        return { x: proj.x, y: proj.y, dist: Geo.dist(point, proj) };
+    },
+
+    pointToLineDistance(point, lp1, lp2) {
+        return Geo.projectPointToLine(point, lp1, lp2, false).dist;
+    },
+
+    perpendicularBisectorDir(p1, p2) {
+        const mid = Geo.midpoint(p1, p2);
+        const nx = -(p2.y - p1.y);
+        const ny = p2.x - p1.x;
+        const len = Math.sqrt(nx * nx + ny * ny);
+        return { point: mid, dir: { x: nx / len, y: ny / len } };
+    },
+
+    angleBisectorDir(A, B, C) {
+        const ba = { x: A.x - B.x, y: A.y - B.y };
+        const bc = { x: C.x - B.x, y: C.y - B.y };
+        const lenBA = Math.sqrt(ba.x * ba.x + ba.y * ba.y);
+        const lenBC = Math.sqrt(bc.x * bc.x + bc.y * bc.y);
+        const uBA = { x: ba.x / lenBA, y: ba.y / lenBA };
+        const uBC = { x: bc.x / lenBC, y: bc.y / lenBC };
+        const bisect = { x: uBA.x + uBC.x, y: uBA.y + uBC.y };
+        const lenB = Math.sqrt(bisect.x * bisect.x + bisect.y * bisect.y);
+        if (lenB < 0.001) return { x: uBA.y, y: -uBA.x }; // perpendicular fallback
+        return { x: bisect.x / lenB, y: bisect.y / lenB };
+    },
+
+    rayLineIntersection(rayOrigin, rayDir, lp1, lp2) {
+        const dx = lp2.x - lp1.x, dy = lp2.y - lp1.y;
+        const denom = rayDir.x * dy - rayDir.y * dx;
+        if (Math.abs(denom) < 0.0001) return null;
+        const t = ((lp1.x - rayOrigin.x) * dy - (lp1.y - rayOrigin.y) * dx) / denom;
+        if (t < 0) return null; // behind ray origin
+        return { x: rayOrigin.x + t * rayDir.x, y: rayOrigin.y + t * rayDir.y };
+    },
+
+    extendLineToCanvas(p1, p2, w, h) {
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return { a: p1, b: p2 };
+        let tMin = -1e9, tMax = 1e9;
+        // Extend from p1 in both directions: p = p1 + t*(p2-p1)
+        if (Math.abs(dx) > 0.001) {
+            const t1 = (0 - p1.x) / dx;
+            const t2 = (w - p1.x) / dx;
+            tMin = Math.max(tMin, Math.min(t1, t2));
+            tMax = Math.min(tMax, Math.max(t1, t2));
+        }
+        if (Math.abs(dy) > 0.001) {
+            const t1 = (0 - p1.y) / dy;
+            const t2 = (h - p1.y) / dy;
+            tMin = Math.max(tMin, Math.min(t1, t2));
+            tMax = Math.min(tMax, Math.max(t1, t2));
+        }
+        return {
+            a: { x: p1.x + tMin * dx, y: p1.y + tMin * dy },
+            b: { x: p1.x + tMax * dx, y: p1.y + tMax * dy }
+        };
+    },
+
+    randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+    }
+};
+
+
+// ============================================================
+// SECTION 2: STAGE DEFINITIONS
+// ============================================================
+const STAGES = [
+    // ------------------------------------------------------------
+    // [STAGE 1] 해적 섬 상륙 (정삼각형 / 같은 거리 작도)
+    // ------------------------------------------------------------
+    {
+        id: 1,
+        title: '해적 섬 상륙',
+        subtitle: '',
+        emoji: '🏝️',
+        bgColor: ['#f9f3e5', '#ede0c8'],
+        narrative: '해골 섬에 도착했다! 낡은 암호문에 따르면, 바위 A와 야자수 B에서 떨어진 거리가 선분 AB의 길이와 완전히 똑같은 지점 중 숲에 가까운 쪽인 지점 C에 첫 번째 보물 상자의 황금 열쇠가 묻혀 있다고 한다. 지점 C를 찾아 점을 찍어라!',
+        setup(cw, ch) {
+            const abLen = Geo.randomBetween(220, 280);
+            const ax = Geo.randomBetween(160, Math.min(260, cw - abLen - 140));
+            const ay = Geo.randomBetween(250, 320);
+            const bx = ax + abLen;
+            const by = ay + Geo.randomBetween(-15, 15);
+            const A = { x: ax, y: ay };
+            const B = { x: bx, y: by };
+            const ab = Geo.dist(A, B);
+            const intersections = Geo.circleCircleIntersections(A, ab, B, ab);
+
+            // 숲 토큰을 A, B의 아래쪽에 배치 (y좌표를 약 170px 아래로)
+            const forestPos = { x: (A.x + B.x) / 2, y: Math.max(A.y, B.y) + 170 };
+
+            // 두 교점 중 숲에 가까운 쪽(아래쪽 교점)이 유일한 정답
+            const targetC = intersections.reduce((closest, pt) =>
+                Geo.dist(pt, forestPos) < Geo.dist(closest, forestPos) ? pt : closest, intersections[0]);
+            const otherC = intersections.find(pt => pt !== targetC);
+
+            return {
+                fixedPoints: [
+                    { pos: A, label: 'A (바위)', icon: '🪨', imgKey: 'rock' },
+                    { pos: B, label: 'B (야자수)', icon: '🌴', imgKey: 'palm' },
+                    { pos: forestPos, label: '울창한 숲', icon: '🌲', imgKey: 'forest' }
+                ],
+                fixedLines: [{ p1: A, p2: B, style: 'dashed', color: '#8c6d46', label: '선분 AB' }],
+                fixedCircles: [],
+                targets: [targetC],
+                otherC,
+                tolerance: 18,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const studentCircles = drawn.filter(o => o.type === 'circle');
+            const studentPoints = drawn.filter(o => o.type === 'point');
+
+            const ab = Geo.dist(data.fixedPoints[0].pos, data.fixedPoints[1].pos);
+            const A = data.fixedPoints[0].pos;
+            const B = data.fixedPoints[1].pos;
+
+            const hasCircleA = studentCircles.some(c => Geo.dist(c.center, A) < 20 && Math.abs(c.radius - ab) < 25);
+            const hasCircleB = studentCircles.some(c => Geo.dist(c.center, B) < 20 && Math.abs(c.radius - ab) < 25);
+
+            if (!hasCircleA || !hasCircleB) {
+                return {
+                    success: false,
+                    message: '바위 A와 야자수 B를 각각 중심으로 하고 반지름이 선분 AB인 컴퍼스 원을 먼저 작도해야 합니다! ⭕'
+                };
+            }
+
+            if (studentPoints.length === 0) {
+                return { success: false, message: '두 원이 만나는 교점에 [📍 점 찍기] 도구로 점을 찍어주세요!' };
+            }
+
+            for (const sp of studentPoints) {
+                if (Geo.dist(sp.pos, data.targets[0]) < 18) {
+                    return { success: true, message: '완벽한 정삼각형 작도입니다! 숲 근처에서 황금 열쇠 C를 찾았습니다! 🗝️✨' };
+                }
+                if (data.otherC && Geo.dist(sp.pos, data.otherC) < 18) {
+                    return { success: false, message: '그 교점도 거리는 같지만 숲에서 멉니다! 숲에 더 가까운 쪽 지점 C에 점을 찍어야 합니다. 🌲' };
+                }
+            }
+            return { success: false, message: '두 컴퍼스 원이 정확히 만나는 교점에 점을 찍어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 2] 등대의 비밀 신호 (선분의 길이의 2배 작도)
+    // ------------------------------------------------------------
+    {
+        id: 2,
+        title: '등대의 비밀 신호',
+        subtitle: '',
+        emoji: '🗼',
+        bgColor: ['#f6f1e5', '#e9decb'],
+        narrative: '등대지기의 비밀 일지에 따르면, 선착장 P에서 등대 Q 방향으로 똑바로 나아가 선분 PQ 길이의 정확히 2배가 되는 바다 위의 비밀 암초 지점 R에 두 번째 단서가 숨겨져 있다고 한다. 점 R을 찾아라!',
+        setup(cw, ch) {
+            const P = { x: Geo.randomBetween(160, 220), y: Geo.randomBetween(280, 360) };
+            const angle = Geo.randomBetween(-10, 10) * Math.PI / 180;
+            const d = Geo.randomBetween(140, 170);
+            const Q = { x: P.x + d * Math.cos(angle), y: P.y + d * Math.sin(angle) };
+            const R = { x: P.x + 2 * d * Math.cos(angle), y: P.y + 2 * d * Math.sin(angle) };
+
+            return {
+                fixedPoints: [
+                    { pos: P, label: 'P (선착장)', icon: '⚓', imgKey: 'ship' },
+                    { pos: Q, label: 'Q (등대)', icon: '🗼', imgKey: 'lighthouse' }
+                ],
+                fixedLines: [
+                    { p1: P, p2: Q, style: 'solid', color: '#1e3a8a', label: '선분 PQ' }
+                ],
+                fixedCircles: [],
+                P, Q, targetR: R, d,
+                targets: [R],
+                tolerance: 18,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+            const points = drawn.filter(o => o.type === 'point');
+
+            const hasLinePQ = lines.some(l => {
+                const distP = Geo.pointToLineDistance(data.P, l.p1, l.p2);
+                const distQ = Geo.pointToLineDistance(data.Q, l.p1, l.p2);
+                return distP < 14 && distQ < 14;
+            });
+
+            if (!hasLinePQ) {
+                return {
+                    success: false,
+                    message: '자로 선분 PQ를 등대 Q 너머로 길게 연장하는 직선을 먼저 그어보세요! 📏'
+                };
+            }
+
+            const hasCircleQ = circles.some(c => {
+                return Geo.dist(c.center, data.Q) < 18 && Math.abs(c.radius - data.d) < 22;
+            });
+
+            if (!hasCircleQ) {
+                return {
+                    success: false,
+                    message: '컴퍼스(또는 길이 복사)로 선분 PQ의 길이를 재어, 등대 Q를 중심으로 원을 그려보세요! ⭕'
+                };
+            }
+
+            if (points.length === 0) {
+                return { success: false, message: '연장된 직선과 컴퍼스 원이 만나는 2배 지점에 [📍 점 찍기]로 점을 찍어주세요!' };
+            }
+
+            for (const sp of points) {
+                if (Geo.dist(sp.pos, data.targetR) < 18) {
+                    return { success: true, message: '완벽한 2배 길이 작도입니다! 비밀 암초 거점 R을 발견했습니다! 🗼⚓✨' };
+                }
+            }
+
+            return { success: false, message: '선분 PQ의 정확히 2배 거리에 위치한 암초 점 R에 점을 찍어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 3] 암호문의 방위각 (같은 크기의 각 작도)
+    // ------------------------------------------------------------
+    {
+        id: 3,
+        title: '암호문의 방위각',
+        subtitle: '',
+        emoji: '🧭',
+        bgColor: ['#fbf7ee', '#ede2cb'],
+        narrative: '망루의 고대 나침반 각도를 복사해야 비밀 해류로 들어갈 수 있다! 출발점 O에서 뻗어나가는 기준선에 고대 나침반과 똑같은 크기의 각을 이루는 새로운 항로를 작도하라!',
+        setup(cw, ch) {
+            const refAngle = Geo.randomBetween(32, 58) * Math.PI / 180;
+            const E = { x: 130, y: 330 };
+            const rayLen = 170;
+            const ray1End = { x: E.x + rayLen, y: E.y };
+            const ray2End = { x: E.x + rayLen * Math.cos(-refAngle), y: E.y + rayLen * Math.sin(-refAngle) };
+            const O = { x: 560, y: 340 };
+            const baseEnd = { x: O.x + 180, y: O.y };
+            const targetSlope1 = -refAngle;
+            const targetSlope2 = refAngle;
+
+            return {
+                fixedPoints: [
+                    { pos: E, label: 'E (나침반 꼭짓점)', icon: '📐', imgKey: 'compass' },
+                    { pos: O, label: 'O (출발점)', icon: '🧭', imgKey: 'ship' }
+                ],
+                fixedLines: [
+                    { p1: E, p2: ray1End, style: 'solid', color: '#1e3a8a' },
+                    { p1: E, p2: ray2End, style: 'solid', color: '#1e3a8a' },
+                    { p1: O, p2: baseEnd, style: 'solid', color: '#c2410c', label: '기준 항로' }
+                ],
+                fixedCircles: [],
+                refAngle,
+                vertexE: E,
+                vertexO: O,
+                targets: [targetSlope1, targetSlope2],
+                tolerance: 4 * Math.PI / 180,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+
+            if (circles.length < 2) {
+                return {
+                    success: false,
+                    message: '컴퍼스를 사용해 꼭짓점 E의 호와 출발점 O의 호를 작도해야 합니다! ⭕'
+                };
+            }
+
+            for (const l of lines) {
+                const d1 = Geo.dist(l.p1, data.vertexO);
+                const d2 = Geo.dist(l.p2, data.vertexO);
+                if (d1 > 20 && d2 > 20) continue;
+                const farPt = d1 <= 20 ? l.p2 : l.p1;
+                const nearPt = d1 <= 20 ? l.p1 : l.p2;
+                const studentAngle = Math.atan2(farPt.y - nearPt.y, farPt.x - nearPt.x);
+                for (const ts of data.targets) {
+                    const diff = Geo.angleDiff(studentAngle, ts);
+                    if (diff < data.tolerance) {
+                        return { success: true, message: '비밀 해류로 향하는 방위각을 정확히 복사했습니다! 🧭⛵✨' };
+                    }
+                }
+            }
+            return { success: false, message: '출발점 O에서 시작하는 항로가 기준 각도와 같은 크기를 이루도록 자로 직선을 그어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 4] 감시탑의 지하 통로 (선분의 수직이등분선 작도)
+    // ------------------------------------------------------------
+    {
+        id: 4,
+        title: '감시탑의 지하 통로',
+        subtitle: '',
+        emoji: '🏰',
+        bgColor: ['#f8f2e6', '#ebe0cc'],
+        narrative: '두 감시탑 M, N 사이의 정중앙을 지나면서 탑의 경계선과 수직을 이루는 비밀 지하 통로가 존재한다! 그 통로를 작도하라!',
+        setup(cw, ch) {
+            const mnDist = Geo.randomBetween(240, 320);
+            const mx = Geo.randomBetween(180, cw - mnDist - 180);
+            const my = Geo.randomBetween(280, 360);
+            const angle = Geo.randomBetween(-20, 20) * Math.PI / 180;
+            const M = { x: mx, y: my };
+            const N = { x: mx + mnDist * Math.cos(angle), y: my + mnDist * Math.sin(angle) };
+
+            const pb = Geo.perpendicularBisectorDir(M, N);
+            return {
+                fixedPoints: [
+                    { pos: M, label: 'M (탑)', icon: '🏰', imgKey: 'tower' },
+                    { pos: N, label: 'N (탑)', icon: '🏰', imgKey: 'tower' },
+                ],
+                fixedLines: [
+                    { p1: M, p2: N, style: 'dashed', color: '#8c6d46', label: '선분 MN' }
+                ],
+                fixedCircles: [],
+                M, N,
+                midpoint: pb.point,
+                bisectorDir: pb.dir,
+                tolerance: 15,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+
+            const hasCircleM = circles.some(c => Geo.dist(c.center, data.M) < 20);
+            const hasCircleN = circles.some(c => Geo.dist(c.center, data.N) < 20);
+
+            if (!hasCircleM || !hasCircleN || circles.length < 2) {
+                return {
+                    success: false,
+                    message: '두 탑 M, N을 중심으로 하고 같은 반지름을 가진 컴퍼스 원 2개를 먼저 그려 교점을 찾아야 합니다! ⭕'
+                };
+            }
+
+            const mnAngle = Math.atan2(data.N.y - data.M.y, data.N.x - data.M.x);
+
+            for (const l of lines) {
+                const distToMid = Geo.pointToLineDistance(data.midpoint, l.p1, l.p2);
+                if (distToMid > 14) continue;
+
+                const lAngle = Math.atan2(l.p2.y - l.p1.y, l.p2.x - l.p1.x);
+                let angleDiff = Math.abs(Geo.angleDiff(lAngle, mnAngle));
+                if (Math.abs(angleDiff - Math.PI / 2) < 0.08) {
+                    return { success: true, message: '정확한 수직이등분선입니다! 비밀 지하 통로가 열렸습니다! 🏰🗝️' };
+                }
+            }
+
+            return { success: false, message: '두 원의 교점을 연결하여 선분 MN의 수직이등분선을 자로 그어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 5] 찢어진 삼각 지도 (세 변의 길이가 주어진 삼각형 SSS 작도)
+    // ------------------------------------------------------------
+    {
+        id: 5,
+        title: '찢어진 삼각 지도',
+        subtitle: '',
+        emoji: '📐',
+        bgColor: ['#f6f0e2', '#e5dac5'],
+        narrative: '단서로 남겨진 세 변의 길이 a, b, c를 이용하여 찢어진 전설의 삼각 지대를 복원해야 한다! 밑변 P₁P₂를 바탕으로 컴퍼스를 이용해 삼각형을 완성하고, 세 꼭짓점 모두에 [📍 점 찍기]로 점을 찍어라!',
+        setup(cw, ch) {
+            const a = Geo.randomBetween(240, 300);
+            const b = Geo.randomBetween(190, 250);
+            const c = Geo.randomBetween(180, 240);
+
+            const p1x = Geo.randomBetween(220, 280);
+            const p1y = Geo.randomBetween(380, 440);
+            const P1 = { x: p1x, y: p1y };
+            const P2 = { x: p1x + a, y: p1y };
+
+            const refY = 60;
+            const ref1S = { x: 50, y: refY };
+            const ref1E = { x: 50 + a, y: refY };
+            const ref2S = { x: 50, y: refY + 30 };
+            const ref2E = { x: 50 + b, y: refY + 30 };
+            const ref3S = { x: 50, y: refY + 60 };
+            const ref3E = { x: 50 + c, y: refY + 60 };
+
+            const targets = Geo.circleCircleIntersections(P1, b, P2, c);
+            return {
+                fixedPoints: [
+                    { pos: P1, label: 'P₁ (출발점)', icon: '📍', imgKey: 'compass' },
+                    { pos: P2, label: 'P₂ (단서 지점)', icon: '📍', imgKey: 'temple' },
+                ],
+                fixedLines: [
+                    { p1: ref1S, p2: ref1E, style: 'solid', color: '#b91c1c', label: '단서 a' },
+                    { p1: ref2S, p2: ref2E, style: 'solid', color: '#1e40af', label: '단서 b' },
+                    { p1: ref3S, p2: ref3E, style: 'solid', color: '#047857', label: '단서 c' },
+                    { p1: P1, p2: P2, style: 'dashed', color: '#8c6d46', label: '밑변 a' },
+                ],
+                fixedCircles: [],
+                sides: { a, b, c },
+                baseStart: P1,
+                baseEnd: P2,
+                targets: targets,
+                tolerance: 18,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const studentPoints = drawn.filter(o => o.type === 'point');
+            const circles = drawn.filter(o => o.type === 'circle');
+
+            if (circles.length < 2) {
+                return {
+                    success: false,
+                    message: '단서 b, c의 길이를 컴퍼스(길이 복사)로 재어서 꼭짓점 P₁, P₂에서 원을 그려 교점을 찾아야 합니다! ⭕'
+                };
+            }
+
+            if (studentPoints.length < 3) {
+                return {
+                    success: false,
+                    message: '삼각형의 세 꼭짓점을 모두 완성해야 합니다! 밑변 P₁, P₂와 교점까지 총 3개의 점을 모두 찍어주세요. 📍'
+                };
+            }
+
+            const { a, b, c } = data.sides;
+            const tol = 18;
+
+            for (let i = 0; i < studentPoints.length; i++) {
+                for (let j = i + 1; j < studentPoints.length; j++) {
+                    for (let k = j + 1; k < studentPoints.length; k++) {
+                        const pts = [studentPoints[i].pos, studentPoints[j].pos, studentPoints[k].pos];
+                        const d01 = Geo.dist(pts[0], pts[1]);
+                        const d12 = Geo.dist(pts[1], pts[2]);
+                        const d20 = Geo.dist(pts[2], pts[0]);
+                        const actualDistances = [d01, d12, d20].sort((x, y) => x - y);
+                        const expectedDistances = [a, b, c].sort((x, y) => x - y);
+
+                        const matches =
+                            Math.abs(actualDistances[0] - expectedDistances[0]) < tol &&
+                            Math.abs(actualDistances[1] - expectedDistances[1]) < tol &&
+                            Math.abs(actualDistances[2] - expectedDistances[2]) < tol;
+
+                        if (matches) {
+                            return { success: true, message: '완벽한 SSS 합동 삼각형 작도입니다! 세 꼭짓점을 모두 복원했습니다! 📐✨' };
+                        }
+                    }
+                }
+            }
+
+            return {
+                success: false,
+                message: '세 꼭짓점 사이의 거리가 각각 단서 a, b, c와 일치하도록 정확한 세 점에 점을 찍어주세요.'
+            };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 6] 유령 순찰선의 감시망 (평행선 작도)
+    // ------------------------------------------------------------
+    {
+        id: 6,
+        title: '유령 순찰선의 감시망',
+        subtitle: '',
+        emoji: '🚢',
+        bgColor: ['#f5f0e4', '#e8dfce'],
+        narrative: '해적 순찰선의 정규 순찰선 ℓ이 지나고 있다! 이 순찰선에 발각되지 않으려면 항로 ℓ과 완벽히 평행하면서, 비밀 관측소 Q를 통과하는 은밀한 항로를 작도해야 한다!',
+        setup(cw, ch) {
+            const angle = Geo.randomBetween(-25, 25) * Math.PI / 180;
+            const lineY = Geo.randomBetween(360, 440);
+            const L1 = { x: 50, y: lineY - 200 * Math.tan(angle) };
+            const L2 = { x: 750, y: lineY + 500 * Math.tan(angle) };
+            const slope = Geo.slopeAngle(L1, L2);
+            const Q = {
+                x: Geo.randomBetween(320, 520),
+                y: Geo.randomBetween(140, 220)
+            };
+            const shipPos = Geo.midpoint(L1, L2);
+            return {
+                fixedPoints: [
+                    { pos: Q, label: 'Q (관측소)', icon: '🔭', imgKey: 'telescope' },
+                    { pos: shipPos, label: '순찰선', icon: '🚢', imgKey: 'ship' },
+                ],
+                fixedLines: [
+                    { p1: L1, p2: L2, style: 'solid', color: '#b91c1c', label: 'ℓ (순찰 항로)', extend: true }
+                ],
+                fixedCircles: [],
+                lineL: { p1: L1, p2: L2 },
+                slope,
+                pointQ: Q,
+                tolerance: 0.06,
+                pointTolerance: 14,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+
+            if (circles.length < 2 && lines.length < 2) {
+                return {
+                    success: false,
+                    message: '관측소 Q를 지나는 보조선을 긋고, 동위각이나 엇각을 복사하는 작도를 수행해야 합니다! 📐'
+                };
+            }
+
+            for (const l of lines) {
+                const s = Geo.slopeAngle(l.p1, l.p2);
+                const slopeDiff = Math.abs(Geo.angleDiff(s, data.slope));
+                const isParallel = slopeDiff < data.tolerance || Math.abs(slopeDiff - Math.PI) < data.tolerance;
+                const d = Geo.pointToLineDistance(data.pointQ, l.p1, l.p2);
+                const passesQ = d < data.pointTolerance;
+
+                if (isParallel && passesQ) {
+                    return { success: true, message: '순찰선을 완벽하게 회피하는 평행 항로를 개척했습니다! 🚢✨' };
+                }
+            }
+            return { success: false, message: '관측소 Q를 통과하면서 항로 ℓ과 완벽히 평행한 직선을 자로 그어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 7] 해적선의 비밀 정박지 (수직이등분선 ∩ 거리 R의 원: X, Y 두 점 모두 찍기)
+    // ------------------------------------------------------------
+    {
+        id: 7,
+        title: '해적선의 비밀 정박지',
+        subtitle: '',
+        emoji: '⚓',
+        bgColor: ['#f8f3e7', '#eae0cd'],
+        narrative: '두 해안 기지 A와 B에서 완전히 같은 거리에 있으면서, 동시에 기지 A로부터 안전거리 R만큼 떨어진 바다 위의 두 비밀 정박지 X, Y에 각 보물선의 닻이 내려져 있다! 두 조건을 만족하는 지점 X, Y를 찾아 점을 찍어라!',
+        setup(cw, ch) {
+            // 화면 안착을 위한 완벽한 기하 밸런싱
+            const A = { x: 290, y: 320 };
+            const B = { x: 570, y: 320 };
+            const dAB = Geo.dist(A, B); // 280
+            const halfDist = dAB / 2; // 140
+            const R = 200; // 안전거리 R > 140
+            const dy = Math.sqrt(R * R - halfDist * halfDist); // sqrt(40000 - 19600) = sqrt(20400) ≈ 142.8
+            const midX = (A.x + B.x) / 2; // 430
+            const targetX = { x: midX, y: 320 - dy }; // (430, 177.2) - 화면 상단 안전지대
+            const targetY = { x: midX, y: 320 + dy }; // (430, 462.8) - 화면 하단 안전지대
+
+            const refStart = { x: 60, y: 60 };
+            const refEnd = { x: 60 + R, y: 60 };
+
+            return {
+                fixedPoints: [
+                    { pos: A, label: 'A (서쪽 기지)', icon: '🏰', imgKey: 'tower' },
+                    { pos: B, label: 'B (동쪽 기지)', icon: '🏰', imgKey: 'tower' },
+                ],
+                fixedLines: [
+                    { p1: A, p2: B, style: 'dashed', color: '#8c6d46', label: '선분 AB' },
+                    { p1: refStart, p2: refEnd, style: 'solid', color: '#b45309', label: '안전거리 R' }
+                ],
+                fixedCircles: [],
+                A, B, R, targetX, targetY,
+                targets: [targetX, targetY],
+                tolerance: 18,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+            const points = drawn.filter(o => o.type === 'point');
+
+            // 1. 수직이등분선 검증
+            const mid = Geo.midpoint(data.A, data.B);
+            const hasBisector = lines.some(l => {
+                const distToMid = Geo.pointToLineDistance(mid, l.p1, l.p2);
+                if (distToMid > 15) return false;
+                const s = Geo.slopeAngle(l.p1, l.p2);
+                return Math.abs(Math.abs(s) - Math.PI / 2) < 0.08;
+            });
+
+            if (!hasBisector) {
+                return {
+                    success: false,
+                    message: '두 기지 A, B로부터 같은 거리에 있는 [수직이등분선]을 먼저 작도해야 합니다! 📏'
+                };
+            }
+
+            // 2. 컴퍼스 원 검증 (A 중심 반지름 R)
+            const hasCircleR = circles.some(c => {
+                return Geo.dist(c.center, data.A) < 20 && Math.abs(c.radius - data.R) < 22;
+            });
+
+            if (!hasCircleR) {
+                return {
+                    success: false,
+                    message: '컴퍼스로 안전거리 R을 복사하여 기지 A를 중심으로 하는 원을 그려보세요! ⭕'
+                };
+            }
+
+            // 3. 교점 X, Y 두 점 모두 찍었는지 검증
+            if (points.length === 0) {
+                return { success: false, message: '수직이등분선과 컴퍼스 원이 만나는 두 비밀 정박지 X, Y에 각각 [📍 점 찍기]로 점을 찍어주세요!' };
+            }
+
+            const hasX = points.some(p => Geo.dist(p.pos, data.targetX) < 18);
+            const hasY = points.some(p => Geo.dist(p.pos, data.targetY) < 18);
+
+            if (hasX && hasY) {
+                return { success: true, message: '놀랍습니다! 두 비밀 정박지 X와 Y를 모두 찾아내 보물선에 접선했습니다! ⚓⚓✨' };
+            }
+
+            if (hasX || hasY) {
+                return { success: false, message: '한 곳을 찾았습니다! 두 비밀 정박지 X와 Y 두 곳 모두에 점을 찍어야 합니다! ⚓' };
+            }
+
+            return { success: false, message: '수직이등분선과 반지름 R인 원이 정확히 만나는 두 교점에 각각 점을 찍어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 8] 협곡의 순풍 항로 (각의 이등분선 작도)
+    // ------------------------------------------------------------
+    {
+        id: 8,
+        title: '협곡의 순풍 항로',
+        subtitle: '',
+        emoji: '⛰️',
+        bgColor: ['#f5f0e4', '#e8dfce'],
+        narrative: '거친 암벽 협곡의 꼭짓점 B에서 두 절벽 사이의 각을 정확히 반으로 가르는 순풍의 항로를 타야 침몰하지 않고 빠져나갈 수 있다! 그 항로를 작도하라!',
+        setup(cw, ch) {
+            const B = { x: Geo.randomBetween(320, 380), y: Geo.randomBetween(380, 440) };
+            const alpha = Geo.randomBetween(50, 72) * Math.PI / 180;
+            const midAngle = -Math.PI / 2 + Geo.randomBetween(-15, 15) * Math.PI / 180;
+            const th1 = midAngle - alpha / 2;
+            const th2 = midAngle + alpha / 2;
+            const rayLen = 220;
+            const r1 = { x: B.x + rayLen * Math.cos(th1), y: B.y + rayLen * Math.sin(th1) };
+            const r2 = { x: B.x + rayLen * Math.cos(th2), y: B.y + rayLen * Math.sin(th2) };
+
+            return {
+                fixedPoints: [
+                    { pos: B, label: 'B (협곡 입구)', icon: '⛰️', imgKey: 'rock' }
+                ],
+                fixedLines: [
+                    { p1: B, p2: r1, style: 'solid', color: '#6b21a8', label: '절벽 1' },
+                    { p1: B, p2: r2, style: 'solid', color: '#6b21a8', label: '절벽 2' }
+                ],
+                fixedCircles: [],
+                B, midAngle, alpha,
+                tolerance: 3.5 * Math.PI / 180,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+
+            if (circles.length < 2) {
+                return {
+                    success: false,
+                    message: '협곡 꼭짓점 B에서 호를 그리고, 두 변과의 교점에서 원을 그려 교점을 찾아야 합니다! ⭕'
+                };
+            }
+
+            for (const l of lines) {
+                const distB = Geo.pointToLineDistance(data.B, l.p1, l.p2);
+                if (distB > 14) continue;
+
+                const lAngle = Math.atan2(l.p2.y - l.p1.y, l.p2.x - l.p1.x);
+                const diff1 = Math.abs(Geo.angleDiff(lAngle, data.midAngle));
+                const diff2 = Math.abs(Geo.angleDiff(lAngle, data.midAngle + Math.PI));
+
+                if (diff1 < data.tolerance || diff2 < data.tolerance) {
+                    return { success: true, message: '완벽한 각의 이등분선입니다! 순풍을 타고 협곡을 돌파했습니다! ⛰️⛵✨' };
+                }
+            }
+
+            return { success: false, message: '꼭짓점 B를 지나면서 두 절벽 사이를 정확히 이등분하는 직선을 자로 그어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 9] 신전의 비밀 제단 (각의 이등분선 ∩ DE의 수직이등분선 - 90도 직교 밸런싱)
+    // ------------------------------------------------------------
+    {
+        id: 9,
+        title: '신전의 비밀 제단',
+        subtitle: '',
+        emoji: '🏛️',
+        bgColor: ['#f8f2e4', '#ebe0ca'],
+        narrative: '고대 신전의 비밀 제단 T는 두 신전 기둥 D, E로부터 같은 거리에 있으면서, 동시에 신전 입구 협곡의 각 ∠B를 정확히 절반으로 나누는 직선 위에 놓여 있다! 두 선의 교점을 찾아 비밀 제단 T를 밝혀라!',
+        setup(cw, ch) {
+            // 직교 밸런싱: 각의 이등분선(-45도)과 DE의 수직이등분선(+45도)이 90도 직교
+            const B = { x: 180, y: 480 };
+            const r1 = { x: 560, y: 480 }; // 수평 변 (0도)
+            const r2 = { x: 180, y: 140 }; // 수직 변 (-90도)
+
+            // 제단 T: B(180, 480)에서 -45도 방향 (x + y = 660)
+            const T = { x: 440, y: 220 };
+
+            // 선분 DE: 중점 (510, 290)에서 -45도 방향으로 뻗음 -> 수직이등분선은 +45도 방향으로 T(440, 220)을 지남
+            const D = { x: 446, y: 354 };
+            const E = { x: 574, y: 226 };
+
+            return {
+                fixedPoints: [
+                    { pos: B, label: 'B (협곡 입구)', icon: '⛰️', imgKey: 'rock' },
+                    { pos: D, label: 'D (신전 기둥)', icon: '🏛️', imgKey: 'temple' },
+                    { pos: E, label: 'E (신전 기둥)', icon: '🏛️', imgKey: 'temple' },
+                ],
+                fixedLines: [
+                    { p1: B, p2: r1, style: 'solid', color: '#6b21a8' },
+                    { p1: B, p2: r2, style: 'solid', color: '#6b21a8' },
+                    { p1: D, p2: E, style: 'dashed', color: '#0f766e', label: '선분 DE' },
+                ],
+                fixedCircles: [],
+                targets: [T],
+                tolerance: 18,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const studentPoints = drawn.filter(o => o.type === 'point');
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+
+            if (circles.length < 2 || lines.length < 2) {
+                return {
+                    success: false,
+                    message: '각의 이등분선과 선분 DE의 수직이등분선을 모두 작도해야 합니다! 📐'
+                };
+            }
+
+            if (studentPoints.length === 0) {
+                return { success: false, message: '두 작도선이 만나는 교점에 [📍 점 찍기]로 점을 찍어주세요!' };
+            }
+
+            for (const sp of studentPoints) {
+                for (const t of data.targets) {
+                    if (Geo.dist(sp.pos, t) < 18) {
+                        return { success: true, message: '완벽한 복합 작도입니다! 신전의 비밀 제단 T를 찾았습니다! 🏛️💎✨' };
+                    }
+                }
+            }
+            return { success: false, message: '각의 이등분선과 수직이등분선이 정확히 만나는 교점에 점을 찍어보세요.' };
+        }
+    },
+
+    // ------------------------------------------------------------
+    // [STAGE 10] 해적왕의 최종 보물 지도 (👑 종합 작도 문항)
+    // ------------------------------------------------------------
+    {
+        id: 10,
+        title: '해적왕의 최종 보물 지도',
+        subtitle: '',
+        emoji: '👑',
+        bgColor: ['#fbf6ea', '#ede1c9'],
+        narrative: '해적왕이 남긴 최종 보물 지도!\n❶ 선분 AC를 그린다.\n❷ 반직선 AB 위에 있고, ∠BAC = ∠ACE가 되는 점 E를 찾아라.\n❸ 선분 AC와 선분 DE의 교점 F를 찾아라.\n❹ 점 E에서 점 D의 방향으로 선분 EF의 2배만큼 걸어가라.\n❺ 그곳에 전설의 보물이 묻혀 있다!',
+        setup(cw, ch) {
+            const A = { x: 260, y: 340 };
+            const B = { x: 380, y: 450 };
+            const C = { x: 650, y: 430 };
+            const D = { x: 520, y: 130 };
+
+            const vAB = { x: B.x - A.x, y: B.y - A.y };
+            const vAC = { x: C.x - A.x, y: C.y - A.y };
+            const mAC = { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 };
+
+            // 이등변삼각형 ACE: AE = CE (수직이등분선 교점)
+            const dotNum = (mAC.x - A.x) * vAC.x + (mAC.y - A.y) * vAC.y;
+            const dotDenom = vAB.x * vAC.x + vAB.y * vAC.y;
+            const t = dotNum / dotDenom;
+            const E = { x: A.x + t * vAB.x, y: A.y + t * vAB.y };
+
+            // 선분 DE와 선분 AC의 교점 F
+            const vDE = { x: D.x - E.x, y: D.y - E.y };
+            const denom = vAC.x * vDE.y - vAC.y * vDE.x;
+            const num = (E.x - A.x) * vDE.y - (E.y - A.y) * vDE.x;
+            const s = num / denom;
+            const F = { x: A.x + s * vAC.x, y: A.y + s * vAC.y };
+
+            const distEF = Math.hypot(F.x - E.x, F.y - E.y);
+            const distED = Math.hypot(D.x - E.x, D.y - E.y);
+            const uED = { x: vDE.x / distED, y: vDE.y / distED };
+
+            // 점 E에서 D 방향으로 EF의 2배 지점 (최종 보물!)
+            const targetTreasure = {
+                x: E.x + 2 * distEF * uED.x,
+                y: E.y + 2 * distEF * uED.y
+            };
+
+            // 반직선 AB 연장선
+            const abRayEnd = { x: A.x + 2.2 * vAB.x, y: A.y + 2.2 * vAB.y };
+
+            return {
+                fixedPoints: [
+                    { pos: A, label: 'A (등대)', icon: '🗼', imgKey: 'lighthouse' },
+                    { pos: B, label: 'B (오두막)', icon: '🛖', imgKey: 'hut' },
+                    { pos: C, label: 'C (마을)', icon: '🏘️', imgKey: 'village' },
+                    { pos: D, label: 'D (성채)', icon: '🏰', imgKey: 'tower' },
+                ],
+                fixedLines: [
+                    { p1: A, p2: abRayEnd, style: 'dashed', color: '#c2410c', label: '반직선 AB', extend: true }
+                ],
+                fixedCircles: [],
+                A, B, C, D, E, F,
+                targets: [targetTreasure],
+                tolerance: 18,
+                info: '',
+            };
+        },
+        validate(drawn, data) {
+            const lines = drawn.filter(o => o.type === 'line');
+            const circles = drawn.filter(o => o.type === 'circle');
+            const points = drawn.filter(o => o.type === 'point');
+
+            // 1. 선분 AC를 지나는 직선 검증
+            const hasLineAC = lines.some(l => {
+                return Geo.pointToLineDistance(data.A, l.p1, l.p2) < 14 &&
+                       Geo.pointToLineDistance(data.C, l.p1, l.p2) < 14;
+            });
+
+            if (!hasLineAC) {
+                return {
+                    success: false,
+                    message: '1단계: 등대 A와 마을 C를 잇는 선분 AC를 자로 먼저 그어보세요! 📏'
+                };
+            }
+
+            // 2. 작도선 검증 (호/원 또는 직선 DE)
+            if (circles.length < 1 && lines.length < 2) {
+                return {
+                    success: false,
+                    message: '2단계 & 3단계: 컴퍼스로 각을 복사해 점 E를 찾고, 성채 D와 점 E를 연결해보세요! 📐'
+                };
+            }
+
+            // 3. 점 찍기 검증
+            if (points.length === 0) {
+                return {
+                    success: false,
+                    message: '점 E에서 성채 D 방향으로 EF의 2배가 되는 지점에 [📍 점 찍기]로 보물 위치를 표시하세요!'
+                };
+            }
+
+            for (const sp of points) {
+                if (Geo.dist(sp.pos, data.targets[0]) < 18) {
+                    return {
+                        success: true,
+                        message: '대단합니다!! 5단계 암호를 완벽히 풀어 해적왕의 전설적인 보물을 찾았습니다! 🏆💎👑🎉'
+                    };
+                }
+            }
+
+            return {
+                success: false,
+                message: '점 E에서 점 D 방향으로 선분 EF 길이의 2배만큼 떨어진 위치에 정확히 점을 찍어보세요.'
+            };
+        }
+    }
+];
+
+
+// ============================================================
+// SECTION 3: GAME STATE
+// ============================================================
+const state = {
+    currentStage: 0,
+    stageData: null,
+    drawnObjects: [],
+    undoStack: [],
+    currentTool: null, // 'ruler' | 'compass' | 'point' | 'segment'
+    toolState: null,
+    snapPoints: [],
+    stagesCleared: new Array(10).fill(false),
+    mousePos: { x: 0, y: 0 },
+    canvasW: 0,
+    canvasH: 0,
+};
+
+let canvas, ctx, canvasWrap;
+let animFrameId;
+
+
+// ============================================================
+// SECTION 4: INITIALIZATION & GAME CONTROL
+// ============================================================
+function initGame() {
+    canvas = document.getElementById('mainCanvas');
+    ctx = canvas.getContext('2d');
+    canvasWrap = document.getElementById('canvasWrap');
+    resizeCanvas();
+    window.addEventListener('resize', () => { resizeCanvas(); scaleContainer(); render(); });
+    scaleContainer();
+    setupEvents();
+    updateProgressDots();
+}
+
+function resizeCanvas() {
+    const rect = canvasWrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 900 * dpr;
+    canvas.height = 644 * dpr;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    state.canvasW = 900;
+    state.canvasH = 644;
+}
+
+function scaleContainer() {
+    const container = document.getElementById('game-container');
+    const scaleX = window.innerWidth / 1200;
+    const scaleY = window.innerHeight / 700;
+    const scale = Math.min(scaleX, scaleY, 1);
+    container.style.transform = `translate(-50%, -50%) scale(${scale})`;
+}
+
+function startGame() {
+    document.getElementById('startOverlay').classList.add('hidden');
+    loadStage(0);
+}
+
+function restartGame() {
+    state.stagesCleared = [false, false, false, false, false, false];
+    document.getElementById('completeOverlay').classList.add('hidden');
+    updateProgressDots();
+    loadStage(0);
+}
+
+function loadStage(idx) {
+    state.currentStage = idx;
+    state.drawnObjects = [];
+    state.undoStack = [];
+    state.currentTool = null;
+    state.toolState = null;
+    state.snapPoints = [];
+
+    const stg = STAGES[idx];
+    state.stageData = stg.setup(state.canvasW, state.canvasH);
+
+    // Add fixed points to snap points
+    for (const fp of state.stageData.fixedPoints) {
+        if (fp.pos) state.snapPoints.push(fp.pos);
+    }
+
+    // Debug: coordinate balancing validation
+    console.log(`[Stage ${idx + 1}] "${stg.title}" loaded`);
+    if (state.stageData.targets) {
+        console.log('  정답 좌표:', state.stageData.targets);
+        for (const t of state.stageData.targets) {
+            const inBounds = t.x >= 0 && t.x <= state.canvasW && t.y >= 0 && t.y <= state.canvasH;
+            console.log(`  → (${Math.round(t.x)}, ${Math.round(t.y)})`, inBounds ? '✅ 캔버스 내' : '❌ 캔버스 외');
+        }
+    }
+
+    // Update UI
+    document.getElementById('stageBadge').textContent = `STAGE ${idx + 1} / ${STAGES.length}`;
+    document.getElementById('missionEmoji').textContent = stg.emoji;
+    document.getElementById('missionTitle').textContent = stg.title;
+    document.getElementById('missionSubtitle').textContent = stg.subtitle;
+    document.getElementById('missionDesc').textContent = stg.narrative;
+    document.getElementById('toolStatus').textContent = '🔧 도구를 선택하세요';
+
+    // Reset tool buttons
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+
+    updateProgressDots();
+    render();
+}
+
+function nextStage() {
+    document.getElementById('clearOverlay').classList.add('hidden');
+    if (state.currentStage < STAGES.length - 1) {
+        loadStage(state.currentStage + 1);
+    } else {
+        // Game complete!
+        document.getElementById('completeOverlay').classList.remove('hidden');
+        if (typeof confetti !== 'undefined') {
+            // Grand finale confetti
+            const dur = 3000;
+            const end = Date.now() + dur;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f59e0b', '#ef4444', '#10b981'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f59e0b', '#ef4444', '#10b981'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            })();
+        }
+    }
+}
+
+function updateProgressDots() {
+    const container = document.getElementById('progressDots');
+    container.innerHTML = '';
+    for (let i = 0; i < STAGES.length; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot';
+        if (state.stagesCleared[i]) dot.classList.add('done');
+        if (i === state.currentStage && !state.stagesCleared[i]) dot.classList.add('current');
+        dot.textContent = state.stagesCleared[i] ? '✓' : (i + 1);
+        container.appendChild(dot);
+    }
+}
+
+
+// ============================================================
+// SECTION 5: TOOL SYSTEM
+// ============================================================
+function selectTool(tool) {
+    state.currentTool = tool;
+    state.toolState = null;
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    const btnMap = { ruler: 'btnRuler', compass: 'btnCompass', point: 'btnPoint', transfer: 'btnTransfer' };
+    if (btnMap[tool]) document.getElementById(btnMap[tool]).classList.add('active');
+
+    const statusMap = {
+        ruler: '📏 자: 두 점을 클릭하여 직선을 긋습니다',
+        compass: '⭕ 컴퍼스: 중심점 클릭 → 반지름점 클릭',
+        point: '📍 점 찍기: 캔버스를 클릭하여 점을 찍습니다',
+        transfer: '🔄 길이 복사: 컴퍼스로 잴 선분의 시작점을 클릭하세요'
+    };
+    document.getElementById('toolStatus').textContent = statusMap[tool] || '🔧 도구를 선택하세요';
+    render();
+}
+
+function getSnapPoint(pos) {
+    // 1순위: 기존 점 및 교점 스냅 (임계값 14px)
+    let bestPoint = null, bestPointDist = 14;
+    for (const sp of state.snapPoints) {
+        const d = Geo.dist(pos, sp);
+        if (d < bestPointDist) {
+            bestPointDist = d;
+            bestPoint = sp;
+        }
+    }
+    if (bestPoint) return bestPoint;
+
+    // 2순위: 직선 및 선분 위로의 수선 발 투영 스냅 (임계값 12px)
+    const allLines = [];
+    if (state.stageData) {
+        for (const fl of (state.stageData.fixedLines || [])) {
+            allLines.push({ p1: fl.p1, p2: fl.p2, isSegment: !fl.extend });
+        }
+    }
+    for (const obj of state.drawnObjects) {
+        if (obj.type === 'line') allLines.push({ p1: obj.p1, p2: obj.p2, isSegment: false });
+        if (obj.type === 'segment') allLines.push({ p1: obj.p1, p2: obj.p2, isSegment: true });
+    }
+
+    let bestLineProj = null, bestLineDist = 12;
+    for (const line of allLines) {
+        const proj = Geo.projectPointToLine(pos, line.p1, line.p2, line.isSegment);
+        if (proj.dist < bestLineDist) {
+            bestLineDist = proj.dist;
+            bestLineProj = { x: proj.x, y: proj.y };
+        }
+    }
+
+    return bestLineProj;
+}
+
+function recalcSnapPoints() {
+    state.snapPoints = [];
+    // Fixed points
+    if (state.stageData) {
+        for (const fp of state.stageData.fixedPoints) {
+            if (fp.pos) state.snapPoints.push(fp.pos);
+        }
+    }
+    // Student points
+    for (const obj of state.drawnObjects) {
+        if (obj.type === 'point') state.snapPoints.push(obj.pos);
+    }
+    // Compute intersections between all drawn objects + fixed objects
+    const allCircles = [];
+    const allLines = [];
+
+    if (state.stageData) {
+        for (const fc of (state.stageData.fixedCircles || [])) {
+            allCircles.push(fc);
+        }
+        for (const fl of (state.stageData.fixedLines || [])) {
+            allLines.push(fl);
+        }
+    }
+    for (const obj of state.drawnObjects) {
+        if (obj.type === 'circle') allCircles.push({ center: obj.center, radius: obj.radius });
+        if (obj.type === 'line' || obj.type === 'segment') allLines.push({ p1: obj.p1, p2: obj.p2 });
+    }
+
+    // Circle-Circle intersections
+    for (let i = 0; i < allCircles.length; i++) {
+        for (let j = i + 1; j < allCircles.length; j++) {
+            const pts = Geo.circleCircleIntersections(
+                allCircles[i].center, allCircles[i].radius,
+                allCircles[j].center, allCircles[j].radius
+            );
+            state.snapPoints.push(...pts);
+        }
+    }
+    // Line-Line intersections
+    for (let i = 0; i < allLines.length; i++) {
+        for (let j = i + 1; j < allLines.length; j++) {
+            const pt = Geo.lineLineIntersection(allLines[i].p1, allLines[i].p2, allLines[j].p1, allLines[j].p2);
+            if (pt && pt.x > -100 && pt.x < state.canvasW + 100 && pt.y > -100 && pt.y < state.canvasH + 100) {
+                state.snapPoints.push(pt);
+            }
+        }
+    }
+    // Line-Circle intersections
+    for (const line of allLines) {
+        for (const circle of allCircles) {
+            const pts = Geo.lineCircleIntersections(line.p1, line.p2, circle.center, circle.radius);
+            for (const pt of pts) {
+                if (pt.x > -50 && pt.x < state.canvasW + 50 && pt.y > -50 && pt.y < state.canvasH + 50) {
+                    state.snapPoints.push(pt);
+                }
+            }
+        }
+    }
+}
+
+function addDrawnObject(obj) {
+    state.drawnObjects.push(obj);
+    state.undoStack.push(obj);
+    recalcSnapPoints();
+    render();
+}
+
+function undoAction() {
+    if (state.drawnObjects.length === 0) return;
+    state.drawnObjects.pop();
+    state.undoStack.pop();
+    recalcSnapPoints();
+    render();
+}
+
+function resetStage() {
+    state.drawnObjects = [];
+    state.undoStack = [];
+    state.toolState = null;
+    recalcSnapPoints();
+    render();
+}
+
+function checkAnswer() {
+    const stg = STAGES[state.currentStage];
+    const result = stg.validate(state.drawnObjects, state.stageData);
+
+    if (result.success) {
+        state.stagesCleared[state.currentStage] = true;
+        updateProgressDots();
+
+        // Show success overlay
+        const isFinal = state.currentStage === STAGES.length - 1;
+        const clearEmoji = isFinal ? '💎' : '🎉';
+        document.getElementById('clearEmoji').textContent = clearEmoji;
+        document.getElementById('clearTitle').textContent = isFinal ? '보물 발견!' : '미션 성공!';
+        document.getElementById('clearDesc').textContent = result.message;
+
+        if (isFinal) {
+            document.getElementById('clearBtn').textContent = '🏆 보물 획득!';
+        } else {
+            document.getElementById('clearBtn').textContent = '➡️ 다음 스테이지';
+        }
+
+        document.getElementById('clearOverlay').classList.remove('hidden');
+
+        // Confetti!
+        if (typeof confetti !== 'undefined') {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#f59e0b', '#10b981', '#3b82f6'] });
+        }
+    } else {
+        showToast(result.message, false);
+        // Shake canvas
+        canvasWrap.classList.add('shake');
+        setTimeout(() => canvasWrap.classList.remove('shake'), 500);
+    }
+}
+
+function showToast(msg, success = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast' + (success ? ' success' : '');
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+
+// ============================================================
+// SECTION 6: EVENT HANDLERS
+// ============================================================
+function setupEvents() {
+    canvas.addEventListener('mousedown', onPointerDown);
+    canvas.addEventListener('mousemove', onPointerMove);
+    canvas.addEventListener('mouseup', onPointerUp);
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+    // Prevent context menu
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '1') selectTool('ruler');
+        else if (e.key === '2') selectTool('compass');
+        else if (e.key === '3') selectTool('point');
+        else if (e.key === '4') selectTool('transfer');
+        else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoAction(); }
+        else if (e.key === 'Escape') {
+            state.toolState = null;
+            if (state.currentTool) selectTool(state.currentTool);
+            render();
+        }
+    });
+}
+
+function getCanvasPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (e.clientX - rect.left) * (state.canvasW / rect.width),
+        y: (e.clientY - rect.top) * (state.canvasH / rect.height)
+    };
+}
+
+function onTouchStart(e) {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        onPointerDown({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+}
+function onTouchMove(e) {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        onPointerMove({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+}
+function onTouchEnd(e) {
+    e.preventDefault();
+    onPointerUp(e);
+}
+
+function onPointerDown(e) {
+    const pos = getCanvasPos(e);
+    const snapped = getSnapPoint(pos) || pos;
+
+    if (!state.currentTool) return;
+
+    if (state.currentTool === 'point') {
+        addDrawnObject({ type: 'point', pos: { ...snapped } });
+        return;
+    }
+
+    if (state.currentTool === 'ruler') {
+        if (!state.toolState) {
+            state.toolState = { p1: { ...snapped } };
+            document.getElementById('toolStatus').textContent = '📏 두 번째 점을 클릭하세요';
+        } else {
+            const p1 = state.toolState.p1;
+            const p2 = { ...snapped };
+            if (Geo.dist(p1, p2) > 5) {
+                addDrawnObject({ type: 'line', p1, p2 });
+            }
+            state.toolState = null;
+            document.getElementById('toolStatus').textContent = '📏 자: 두 점을 클릭하여 직선을 긋습니다';
+        }
+        render();
+        return;
+    }
+
+    if (state.currentTool === 'compass') {
+        if (!state.toolState) {
+            state.toolState = { center: { ...snapped } };
+            document.getElementById('toolStatus').textContent = '⭕ 반지름을 결정할 점을 클릭하세요';
+        } else {
+            const center = state.toolState.center;
+            const radius = Geo.dist(center, snapped);
+            if (radius > 5) {
+                addDrawnObject({ type: 'circle', center, radius });
+            }
+            state.toolState = null;
+            document.getElementById('toolStatus').textContent = '⭕ 컴퍼스: 중심점 클릭 → 반지름점 클릭';
+        }
+        render();
+        return;
+    }
+
+    if (state.currentTool === 'transfer') {
+        if (!state.toolState || !state.toolState.p1) {
+            // Step 1: 시작점 클릭 (길이 측정 시작)
+            state.toolState = { p1: { ...snapped } };
+            document.getElementById('toolStatus').textContent = '🔄 컴퍼스로 잴 선분의 끝점을 클릭하세요';
+        } else if (state.toolState.p1 && !state.toolState.capturedRadius) {
+            // Step 2: 끝점 클릭 (길이 측정 완료)
+            const dist = Geo.dist(state.toolState.p1, snapped);
+            if (dist > 5) {
+                state.toolState = {
+                    capturedRadius: dist,
+                    p1: state.toolState.p1,
+                    p2: { ...snapped }
+                };
+                document.getElementById('toolStatus').textContent = '🔄 길이를 잡았습니다! 원을 그릴 중심점을 클릭하세요 (취소: ESC)';
+            }
+        } else if (state.toolState.capturedRadius) {
+            // Step 3: 중심점 클릭 (원 그리기 & 완료)
+            const center = { ...snapped };
+            const radius = state.toolState.capturedRadius;
+            addDrawnObject({ type: 'circle', center, radius });
+            state.toolState = null;
+            document.getElementById('toolStatus').textContent = '🔄 길이 복사: 컴퍼스로 잴 선분의 시작점을 클릭하세요';
+        }
+        render();
+        return;
+    }
+}
+
+function onPointerMove(e) {
+    const pos = getCanvasPos(e);
+    state.mousePos = pos;
+
+    // Update snap indicator
+    const snap = getSnapPoint(pos);
+    const indicator = document.getElementById('snapIndicator');
+    if (snap) {
+        const rect = canvas.getBoundingClientRect();
+        indicator.style.display = 'block';
+        indicator.style.left = (snap.x * rect.width / state.canvasW) + 'px';
+        indicator.style.top = (snap.y * rect.height / state.canvasH) + 'px';
+    } else {
+        indicator.style.display = 'none';
+    }
+
+    render();
+}
+
+function onPointerUp(e) {
+    // Currently not needed for click-based tools
+}
+
+
+// ============================================================
+// SECTION 7: RENDERING ENGINE
+// ============================================================
+function render() {
+    if (!ctx || !state.stageData) return;
+    const w = state.canvasW, h = state.canvasH;
+
+    // Clear with parchment radial gradient
+    const stg = STAGES[state.currentStage];
+    const grad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, Math.max(w, h) * 0.75);
+    grad.addColorStop(0, stg.bgColor[0]);
+    grad.addColorStop(1, stg.bgColor[1]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Parchment vintage border vignette
+    const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.75);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(120, 83, 40, 0.14)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    drawGrid(w, h);
+
+    // Stage-specific decorations
+    drawStageDecorations(w, h);
+
+    // Fixed objects (Antique Tokens)
+    drawFixedObjects();
+
+    // Student drawn objects
+    drawStudentObjects();
+
+    // Tool preview
+    drawToolPreview();
+
+    // Snap points (subtle)
+    drawSnapPoints();
+
+    // Info overlay
+    if (state.stageData.info) {
+        ctx.save();
+        ctx.font = '700 13px Pretendard, sans-serif';
+        ctx.fillStyle = '#78350f';
+        ctx.textAlign = 'right';
+        ctx.fillText(state.stageData.info, w - 16, h - 12);
+        ctx.restore();
+    }
+}
+
+function drawStageDecorations(w, h) {
+    const stageIdx = state.currentStage;
+    ctx.save();
+
+    // 1. 고대 나침반 로즈 (우측 상단 앤틱 장식)
+    drawCompassRose(w - 75, 75, 42);
+
+    // 2. 바다 잔물결 파도선 (교과서 사진의 부드러운 청록 물결 느낌)
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 1.2;
+    ctx.globalAlpha = 0.18;
+    const wavePatterns = [
+        { x: 60, y: 140, count: 4 },
+        { x: w - 180, y: h - 120, count: 5 },
+        { x: 120, y: h - 80, count: 4 },
+        { x: w / 2 - 50, y: 100, count: 3 }
+    ];
+    for (const wp of wavePatterns) {
+        for (let i = 0; i < wp.count; i++) {
+            ctx.beginPath();
+            const sx = wp.x + (i % 2) * 15;
+            const sy = wp.y + i * 14;
+            ctx.moveTo(sx, sy);
+            ctx.bezierCurveTo(sx + 15, sy - 5, sx + 25, sy + 5, sx + 40, sy);
+            ctx.stroke();
+        }
+    }
+
+    // 3. 스테이지별 랜드마크 장식
+    ctx.globalAlpha = 0.2;
+    if (stageIdx === 0) {
+        // 해변 파도
+        ctx.strokeStyle = '#0369a1';
+        for (let i = 0; i < 3; i++) {
+            ctx.beginPath();
+            for (let x = 0; x < w; x += 10) {
+                const y = h - 25 - i * 14 + Math.sin(x * 0.02 + i) * 5;
+                x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+    } else if (stageIdx === 1) {
+        // 별자리 / 방위각 선
+        ctx.fillStyle = '#b45309';
+        for (let i = 0; i < 15; i++) {
+            const sx = (i * 137.5 + 40) % w;
+            const sy = (i * 97.3 + 30) % (h * 0.5);
+            ctx.beginPath();
+            ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    } else if (stageIdx === 3) {
+        // 작은 나무들 (교과서 느낌)
+        ctx.fillStyle = '#15803d';
+        for (let i = 0; i < 6; i++) {
+            const tx = (i * 140 + 50) % (w - 100);
+            const ty = h - 45 - (i % 2) * 20;
+            ctx.beginPath();
+            ctx.arc(tx, ty, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    ctx.restore();
+
+    // Stage 2 기준 각도 호(arc) 표시
+    if (stageIdx === 1 && state.stageData.refAngle) {
+        const data = state.stageData;
+        const E = data.fixedPoints[0].pos;
+        ctx.save();
+        ctx.strokeStyle = '#c2410c';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(E.x, E.y, 42, -data.refAngle, 0);
+        ctx.stroke();
+        // 각도 라벨
+        ctx.font = '800 12px Pretendard, sans-serif';
+        ctx.fillStyle = '#9a3412';
+        ctx.textAlign = 'center';
+        const labelAngle = -data.refAngle / 2;
+        ctx.fillText('기준 각',
+            E.x + 58 * Math.cos(labelAngle), E.y + 58 * Math.sin(labelAngle));
+        ctx.restore();
+    }
+}
+
+// 앤틱 나침반 바람 장미 (Compass Rose) 렌더러
+function drawCompassRose(cx, cy, r) {
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = '#855a36';
+    ctx.lineWidth = 1.2;
+
+    // 외곽 링
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.7, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 4방위 포인터
+    const dirs = [
+        { dx: 0, dy: -r, label: 'N' },
+        { dx: r, dy: 0, label: 'E' },
+        { dx: 0, dy: r, label: 'S' },
+        { dx: -r, dy: 0, label: 'W' }
+    ];
+    for (const d of dirs) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + d.dx, cy + d.dy);
+        ctx.stroke();
+
+        ctx.font = '800 9px serif';
+        ctx.fillStyle = '#78350f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(d.label, cx + d.dx * 1.2, cy + d.dy * 1.2);
+    }
+    ctx.restore();
+}
+
+function drawGrid(w, h) {
+    ctx.save();
+    // 양피지 고대 지도 격자선 (은은한 갈색 보더)
+    ctx.strokeStyle = 'rgba(133, 90, 54, 0.08)';
+    ctx.lineWidth = 1;
+    const step = 45;
+    for (let x = step; x < w; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = step; y < h; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function drawFixedObjects() {
+    const data = state.stageData;
+    if (!data) return;
+
+    // Fixed lines
+    for (const fl of (data.fixedLines || [])) {
+        ctx.save();
+        ctx.strokeStyle = fl.color || '#8c6d46';
+        ctx.lineWidth = 2.2;
+        if (fl.style === 'dashed') ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        if (fl.extend) {
+            const ext = Geo.extendLineToCanvas(fl.p1, fl.p2, state.canvasW, state.canvasH);
+            ctx.moveTo(ext.a.x, ext.a.y);
+            ctx.lineTo(ext.b.x, ext.b.y);
+        } else {
+            ctx.moveTo(fl.p1.x, fl.p1.y);
+            ctx.lineTo(fl.p2.x, fl.p2.y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        if (fl.label) {
+            const mid = Geo.midpoint(fl.p1, fl.p2);
+            ctx.font = '800 12px Pretendard, sans-serif';
+            ctx.fillStyle = fl.color || '#78350f';
+            ctx.textAlign = 'center';
+            ctx.fillText(fl.label, mid.x, mid.y - 12);
+        }
+        ctx.restore();
+    }
+
+    // Fixed circles
+    for (const fc of (data.fixedCircles || [])) {
+        ctx.save();
+        ctx.strokeStyle = fc.color || '#8c6d46';
+        ctx.lineWidth = 1.5;
+        if (fc.style === 'dashed') ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.arc(fc.center.x, fc.center.y, fc.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Fixed points: 고급 원형 앤틱 액자 토큰으로 렌더링!
+    for (const fp of (data.fixedPoints || [])) {
+        drawAntiqueToken(fp.pos, fp.icon, fp.label, fp.imgKey);
+    }
+}
+
+// ============================================================
+// 🎨 토큰 이미지 로더 & 매퍼
+// ============================================================
+const TOKEN_IMAGE_SRCS = {
+    rock: 'assets/tokens/rock.jpg',
+    palm: 'assets/tokens/palm.jpg',
+    compass: 'assets/tokens/compass.jpg',
+    ship: 'assets/tokens/ship.jpg',
+    telescope: 'assets/tokens/telescope.jpg',
+    tower: 'assets/tokens/tower.jpg',
+    temple: 'assets/tokens/temple.jpg',
+    chest: 'assets/tokens/chest.jpg',
+    hut: 'assets/tokens/hut.jpg',
+    village: 'assets/tokens/village.jpg',
+    lighthouse: 'assets/tokens/lighthouse.jpg',
+    forest: 'assets/tokens/forest.jpg',
+};
+
+const tokenImages = {};
+
+function initTokenImages() {
+    for (const [key, src] of Object.entries(TOKEN_IMAGE_SRCS)) {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+            tokenImages[key] = img;
+            if (typeof render === 'function') render();
+        };
+        img.onerror = () => {
+            console.warn(`[토큰 이미지 로드 실패] ${key}: ${src}`);
+        };
+    }
+}
+initTokenImages();
+
+function resolveTokenImage(imgKey, icon) {
+    if (imgKey && tokenImages[imgKey] && tokenImages[imgKey].complete && tokenImages[imgKey].naturalWidth > 0) {
+        return tokenImages[imgKey];
+    }
+    if (icon) {
+        let matchedKey = null;
+        if (icon.includes('🪨') || icon.includes('⛰️')) matchedKey = 'rock';
+        else if (icon.includes('🌴')) matchedKey = 'palm';
+        else if (icon.includes('🧭') || icon.includes('📐')) matchedKey = 'compass';
+        else if (icon.includes('🚢')) matchedKey = 'ship';
+        else if (icon.includes('🔭')) matchedKey = 'telescope';
+        else if (icon.includes('🏰')) matchedKey = 'tower';
+        else if (icon.includes('🏛️')) matchedKey = 'temple';
+        else if (icon.includes('💎') || icon.includes('👑') || icon.includes('🎁')) matchedKey = 'chest';
+        else if (icon.includes('📍') || icon.includes('⚓')) matchedKey = 'compass';
+        else if (icon.includes('🛖') || icon.includes('🏠')) matchedKey = 'hut';
+        else if (icon.includes('🏘️') || icon.includes('⛪')) matchedKey = 'village';
+        else if (icon.includes('🗼')) matchedKey = 'lighthouse';
+        else if (icon.includes('🌲') || icon.includes('🌳')) matchedKey = 'forest';
+
+        if (matchedKey && tokenImages[matchedKey] && tokenImages[matchedKey].complete && tokenImages[matchedKey].naturalWidth > 0) {
+            return tokenImages[matchedKey];
+        }
+    }
+    return null;
+}
+
+// 👑 원형 앤틱 액자 토큰 렌더러 (중심 핀 + 메탈 베젤 + 원형 일러스트 + 명판 리본)
+function drawAntiqueToken(pos, icon, label, imgKey) {
+    ctx.save();
+
+    // 1. 기하학적 정밀 작도 핀 (Rivet Pin Dot)
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#b45309';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#dc2626';
+    ctx.fill();
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 라벨이나 아이콘이 없으면 핀 점만 그리고 종료
+    if (!icon && !label && !imgKey) {
+        ctx.restore();
+        return;
+    }
+
+    const frameRadius = 26; // 액자 크기: 일러스트가 선명하게 보이도록 26px
+    const frameY = pos.y - 38;
+    const innerRadius = frameRadius - 3.5;
+
+    // 2. 액자 하단 연결 브론즈 핀 포인터 (액자와 정밀 작도점을 연결하는 나침반 바늘 형태)
+    ctx.beginPath();
+    ctx.moveTo(pos.x - 3, frameY + frameRadius - 1);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.lineTo(pos.x + 3, frameY + frameRadius - 1);
+    ctx.closePath();
+    ctx.fillStyle = '#b45309';
+    ctx.fill();
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 3. 액자 외곽 그림자
+    ctx.save();
+    ctx.shadowColor = 'rgba(67, 40, 24, 0.45)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 5;
+
+    // 4. 액자 골드/브론즈 메탈 베젤 림
+    const rimGrad = ctx.createLinearGradient(pos.x - frameRadius, frameY - frameRadius, pos.x + frameRadius, frameY + frameRadius);
+    rimGrad.addColorStop(0, '#fde68a');
+    rimGrad.addColorStop(0.3, '#d97706');
+    rimGrad.addColorStop(0.7, '#92400e');
+    rimGrad.addColorStop(1, '#451a03');
+
+    ctx.beginPath();
+    ctx.arc(pos.x, frameY, frameRadius, 0, Math.PI * 2);
+    ctx.fillStyle = rimGrad;
+    ctx.fill();
+    ctx.restore(); // 그림자 리셋
+
+    // 5. 액자 골드 림 하이라이트 (금속 양각 입체감)
+    ctx.beginPath();
+    ctx.arc(pos.x, frameY, frameRadius - 1, 0, Math.PI * 2);
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 6. 액자 내부 인셋 베이스 (양피지 톤 바탕)
+    ctx.beginPath();
+    ctx.arc(pos.x, frameY, innerRadius, 0, Math.PI * 2);
+    ctx.fillStyle = '#fef3c7';
+    ctx.fill();
+
+    // 7. 액자 내부 일러스트 이미지 렌더링 (원형 마스킹)
+    const tokenImg = resolveTokenImage(imgKey, icon);
+    let imageDrawn = false;
+
+    if (tokenImg && tokenImg.complete && tokenImg.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(pos.x, frameY, innerRadius, 0, Math.PI * 2);
+        ctx.clip();
+
+        // 사각 외곽 테두리를 자연스럽게 없애고 본체 일러스트를 확대 크롭
+        const cropRatio = 0.76;
+        const sw = tokenImg.naturalWidth * cropRatio;
+        const sh = tokenImg.naturalHeight * cropRatio;
+        const sx = (tokenImg.naturalWidth - sw) / 2;
+        const sy = (tokenImg.naturalHeight - sh) / 2;
+
+        ctx.drawImage(
+            tokenImg,
+            sx, sy, sw, sh,
+            pos.x - innerRadius, frameY - innerRadius,
+            innerRadius * 2, innerRadius * 2
+        );
+
+        // 액자 유리 및 앤틱 비네팅 오버레이 (광택 + 입체 굴곡감)
+        const glassGrad = ctx.createLinearGradient(pos.x - innerRadius, frameY - innerRadius, pos.x + innerRadius, frameY + innerRadius);
+        glassGrad.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+        glassGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0)');
+        glassGrad.addColorStop(0.8, 'rgba(67, 40, 24, 0.15)');
+        glassGrad.addColorStop(1, 'rgba(67, 40, 24, 0.45)');
+        ctx.fillStyle = glassGrad;
+        ctx.beginPath();
+        ctx.arc(pos.x, frameY, innerRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+        imageDrawn = true;
+    }
+
+    // 이미지가 없거나 로드 전인 경우 이모지 폴백
+    if (!imageDrawn && icon) {
+        ctx.font = '22px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(icon, pos.x, frameY + 1);
+    }
+
+    // 안쪽 림 라인
+    ctx.beginPath();
+    ctx.arc(pos.x, frameY, innerRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(120, 53, 15, 0.6)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // 8. 앤틱 명판 리본 (라벨)
+    if (label) {
+        ctx.font = '800 11px Pretendard, -apple-system, sans-serif';
+        const txtMetrics = ctx.measureText(label);
+        const tagW = Math.max(txtMetrics.width + 16, 42);
+        const tagH = 19;
+        const tagX = pos.x - tagW / 2;
+        const tagY = frameY - frameRadius - 13;
+
+        // 리본 그림자
+        ctx.save();
+        ctx.shadowColor = 'rgba(67, 40, 24, 0.35)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 2;
+
+        // 리본 베이스
+        ctx.beginPath();
+        ctx.roundRect(tagX, tagY, tagW, tagH, 5);
+        ctx.fillStyle = '#29180d';
+        ctx.fill();
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.restore();
+
+        // 리본 텍스트
+        ctx.fillStyle = '#fef3c7';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, pos.x, tagY + tagH / 2);
+    }
+
+    ctx.restore();
+}
+
+function drawStudentObjects() {
+    for (const obj of state.drawnObjects) {
+        ctx.save();
+        if (obj.type === 'line') {
+            // 학생 직선: 클래식 잉크 마린 딥 네이비
+            ctx.strokeStyle = '#1e3a8a';
+            ctx.lineWidth = 2.2;
+            const ext = Geo.extendLineToCanvas(obj.p1, obj.p2, state.canvasW, state.canvasH);
+            ctx.beginPath();
+            ctx.moveTo(ext.a.x, ext.a.y);
+            ctx.lineTo(ext.b.x, ext.b.y);
+            ctx.stroke();
+            // 정의 점
+            drawSmallDot(obj.p1, '#1e3a8a');
+            drawSmallDot(obj.p2, '#1e3a8a');
+        } else if (obj.type === 'circle') {
+            // 학생 컴퍼스 원: 앤틱 세피아 오렌지-테라코타
+            ctx.strokeStyle = '#c2410c';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(obj.center.x, obj.center.y, obj.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            drawSmallDot(obj.center, '#c2410c');
+        } else if (obj.type === 'point') {
+            // 학생 점: 앤틱 붉은 왁스 씰 루비 포인트
+            ctx.beginPath();
+            ctx.arc(obj.pos.x, obj.pos.y, 6.5, 0, Math.PI * 2);
+            ctx.fillStyle = '#dc2626';
+            ctx.fill();
+            ctx.strokeStyle = '#fef08a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+function drawSmallDot(pos, color) {
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+}
+
+function drawToolPreview() {
+    if (!state.toolState) return;
+    const mp = getSnapPoint(state.mousePos) || state.mousePos;
+
+    ctx.save();
+    ctx.globalAlpha = 0.65;
+    ctx.setLineDash([6, 4]);
+
+    // Ruler preview
+    if (state.currentTool === 'ruler' && state.toolState.p1) {
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const ext = Geo.extendLineToCanvas(state.toolState.p1, mp, state.canvasW, state.canvasH);
+        ctx.moveTo(ext.a.x, ext.a.y);
+        ctx.lineTo(ext.b.x, ext.b.y);
+        ctx.stroke();
+    }
+
+    // Compass preview (NO radius number)
+    if (state.currentTool === 'compass' && state.toolState.center) {
+        const radius = Geo.dist(state.toolState.center, mp);
+        ctx.strokeStyle = '#ea580c';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(state.toolState.center.x, state.toolState.center.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    // Transfer compass preview
+    if (state.currentTool === 'transfer' && state.toolState) {
+        if (state.toolState.p1 && !state.toolState.capturedRadius) {
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(state.toolState.p1.x, state.toolState.p1.y);
+            ctx.lineTo(mp.x, mp.y);
+            ctx.stroke();
+
+            // Marker at starting point
+            ctx.beginPath();
+            ctx.arc(state.toolState.p1.x, state.toolState.p1.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#0284c7';
+            ctx.fill();
+        } else if (state.toolState.capturedRadius) {
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(mp.x, mp.y, state.toolState.capturedRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Center marker at mouse position
+            ctx.beginPath();
+            ctx.arc(mp.x, mp.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#0284c7';
+            ctx.fill();
+        }
+    }
+
+    ctx.restore();
+}
+
+function drawSnapPoints() {
+    ctx.save();
+    for (const sp of state.snapPoints) {
+        // Only show if near mouse
+        const d = Geo.dist(sp, state.mousePos);
+        if (d < 30) {
+            const alpha = Math.max(0, 1 - d / 30) * 0.6;
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(sp.x, sp.y, 5, 0, Math.PI * 2);
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+}
+
+
+// ============================================================
+// SECTION 8: STARTUP
+// ============================================================
+window.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>
