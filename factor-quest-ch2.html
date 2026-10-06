@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>소인수 원정대 2 · 공약수와 공배수 (Factor Quest Ch.2)</title>
+<style>
+:root{
+  --primary:#5b5bd6; --primary-d:#4141b4; --primary-soft:#eef0ff;
+  --accent:#ff8a4c; --accent-d:#db6a2e; --accent-soft:#fff2ea;
+  --success:#12b76a; --success-soft:#e8f8f0;
+  --warn:#f5a524; --warn-soft:#fff6e2;
+  --danger:#f04438; --danger-soft:#fdeceb;
+  --bg:#f4f6fb; --card:#fff; --ink:#1d2433; --muted:#667085; --line:#e4e7ef;
+  --star:#ffc233; --r:20px; --shadow:0 8px 28px rgba(29,36,51,.08);
+  --gcd-col:#5b5bd6; --lcm-col:#ff8a4c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:disabled{cursor:default}
+.hidden{display:none!important}
+.app{max-width:960px;margin:0 auto;padding:16px 16px 48px;min-height:100vh}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.3px}
+.logo .mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#e2468a);display:grid;place-items:center;color:#fff;font-size:20px}
+.ch-badge{font-size:12px;background:var(--accent-soft);color:var(--accent-d);font-weight:800;padding:3px 8px;border-radius:99px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:700;font-size:15px}
+.pill .s{color:var(--star)}
+.iconbtn{padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:700;font-size:15px;transition:transform .1s}
+.iconbtn:active{transform:scale(.95)}
+
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* buttons */
+.btn{padding:14px 22px;border-radius:14px;font-weight:800;font-size:17px;transition:transform .1s,filter .15s,background .15s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.primary{background:var(--primary);color:#fff;box-shadow:0 6px 0 var(--primary-d)}
+.btn.primary:active:not(:disabled){box-shadow:0 2px 0 var(--primary-d);transform:translateY(4px)}
+.btn.primary:disabled{background:#c7cbe0;box-shadow:0 6px 0 #aab0c8}
+.btn.ghost{background:#fff;border:2px solid var(--line);color:var(--ink)}
+.btn.accent{background:var(--accent);color:#fff;box-shadow:0 6px 0 var(--accent-d)}
+.btn.accent:active:not(:disabled){box-shadow:0 2px 0 var(--accent-d);transform:translateY(4px)}
+.btn.big{width:100%;font-size:19px;padding:17px}
+.link{color:var(--primary);font-weight:700;font-size:14px;padding:6px 10px;border-radius:10px;background:var(--primary-soft)}
+
+/* MAP */
+.hero{background:linear-gradient(135deg,#e2468a 0%,#ff8a4c 55%,#f5a524 100%);color:#fff;border-radius:26px;padding:26px 26px 22px;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(255,138,76,.3)}
+.hero h1{margin:0 0 4px;font-size:clamp(24px,4.5vw,34px);letter-spacing:-.5px}
+.hero p{margin:0;opacity:.95;font-size:15px}
+.hero .deco{position:absolute;right:-10px;top:-14px;font-size:110px;opacity:.18;font-weight:900;transform:rotate(-8deg)}
+.hero-prog{margin-top:16px;display:flex;align-items:center;gap:12px}
+.hero-prog .bar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.28);overflow:hidden}
+.hero-prog .bar i{display:block;height:100%;background:var(--star);border-radius:99px;transition:width .6s}
+.hero-prog b{font-size:15px;white-space:nowrap}
+
+.path{position:relative;padding:34px 0 20px}
+.path svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.node-row{display:flex;justify-content:center;margin-bottom:26px;position:relative;z-index:1}
+.node-wrap{display:flex;flex-direction:column;align-items:center;transform:translateX(calc(var(--o) * min(24vw, 170px)));width:150px}
+.node{width:82px;height:82px;border-radius:50%;background:#fff;border:4px solid var(--line);display:grid;place-items:center;font-size:30px;font-weight:900;color:#b6bccb;box-shadow:0 6px 0 #d8dce7;transition:transform .12s}
+.node:active{transform:translateY(3px)}
+.node.open{background:var(--accent);border-color:#fff;color:#fff;box-shadow:0 6px 0 var(--accent-d),0 0 0 4px var(--accent-soft)}
+.node.cleared{background:var(--success);color:#fff;border-color:#fff;box-shadow:0 6px 0 #0c8a50,0 0 0 4px var(--success-soft)}
+.node.boss.open,.node.boss.cleared{background:linear-gradient(135deg,#8b5cf6,#e2468a);box-shadow:0 6px 0 #6b3fc7,0 0 0 4px #f4edff}
+.node.current{animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 var(--accent-d),0 0 0 4px var(--accent-soft)}50%{box-shadow:0 6px 0 var(--accent-d),0 0 0 14px rgba(255,138,76,.15)}}
+.node-label{margin-top:10px;text-align:center;font-weight:800;font-size:15px;line-height:1.3}
+.node-label small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.node-stars{font-size:18px;letter-spacing:2px;color:#d5d9e3;margin-top:2px}
+.node-stars .on{color:var(--star)}
+.map-foot{text-align:center;margin-top:10px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.map-foot button,.map-foot a{color:var(--muted);font-size:13.5px;text-decoration:underline;font-weight:600}
+
+/* INTRO */
+.intro-head{text-align:center;margin-bottom:16px}
+.intro-head small{display:inline-block;background:var(--accent-soft);color:var(--accent-d);font-weight:800;padding:4px 12px;border-radius:99px;font-size:13px;letter-spacing:.5px}
+.intro-head h2{margin:8px 0 2px;font-size:clamp(24px,4vw,30px);letter-spacing:-.4px}
+.intro-head p{margin:0;color:var(--muted)}
+.newbadge{display:inline-block;font-weight:800;color:var(--accent-d);background:var(--accent-soft);padding:4px 12px;border-radius:99px;font-size:13px;margin-bottom:10px}
+.kcard{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+.khead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.kicon{width:52px;height:52px;border-radius:16px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900;flex-shrink:0}
+.khead small{color:var(--muted);font-weight:700;font-size:13px}
+.khead h3{margin:0;font-size:22px;letter-spacing:-.3px}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.rule-grid{grid-template-columns:1fr}}
+.panel{border-radius:16px;padding:18px;font-size:16px}
+.panel h4{margin:0 0 10px;font-size:14px;letter-spacing:.3px;display:flex;align-items:center;gap:6px}
+.panel.easy{background:var(--primary-soft)}
+.panel.easy h4{color:var(--primary)}
+.panel.why{background:var(--accent-soft)}
+.panel.why h4{color:var(--accent-d)}
+.panel p{margin:8px 0}
+.big-rule{font-size:19px;font-weight:700;line-height:1.5;margin-top:0!important}
+mark{background:linear-gradient(transparent 55%,#ffd76a 55%);color:inherit;padding:0 2px}
+.ex{background:#fff;border-radius:12px;padding:12px 14px;font-size:16px;display:grid;gap:4px}
+.eq{background:#fff;border-radius:12px;padding:12px 14px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:15.5px;line-height:1.8;margin:8px 0;border:1.5px dashed #f3c4a6}
+.cc{font-weight:700}
+.y{color:var(--success);font-weight:800}
+.n{color:var(--danger);font-weight:800}
+.intro-nav{display:flex;gap:10px;margin-top:18px;align-items:center}
+.intro-nav .btn{flex:1}
+.cdots{display:flex;gap:6px;justify-content:center;margin-top:14px}
+.cdots i{width:8px;height:8px;border-radius:99px;background:#d3d7e3;transition:all .2s}
+.cdots i.on{width:24px;background:var(--accent)}
+.brief-list{display:grid;gap:10px;margin:6px 0 16px;padding:0;list-style:none}
+.brief-list li{display:flex;gap:12px;align-items:center;background:#f7f8fc;border-radius:14px;padding:12px 14px;font-weight:700}
+.brief-list li span.i{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.brief-list li small{display:block;color:var(--muted);font-weight:600;font-size:13px}
+.star-rule{display:flex;gap:8px;flex-wrap:wrap}
+.star-rule span{background:#fffbea;border:1.5px solid #ffe7a3;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:700}
+
+/* PLAY */
+.playbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ptitle{flex:1;text-align:center;line-height:1.25}
+.ptitle small{display:block;color:var(--accent-d);font-weight:800;font-size:12px;letter-spacing:.5px}
+.ptitle b{font-size:18px}
+.meter{background:#fff;border-radius:14px;padding:6px 12px;box-shadow:var(--shadow);text-align:center;line-height:1.2}
+.meter .st{font-size:18px;letter-spacing:1px;color:#d5d9e3}
+.meter .st .on{color:var(--star)}
+.meter small{display:block;font-size:11px;color:var(--muted);font-weight:700}
+.meter.drop{animation:shake .45s}
+.mdots{display:flex;gap:6px;margin-bottom:14px}
+.mdots i{flex:1;height:8px;border-radius:99px;background:#dde1ec;transition:background .3s}
+.mdots i.done{background:var(--success)}
+.mdots i.cur{background:var(--accent)}
+.mission-card{background:#fff;border-radius:var(--r);padding:24px;box-shadow:var(--shadow);min-height:300px}
+@media (max-width:520px){.mission-card{padding:18px}}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.qtag{font-weight:800;font-size:13px;padding:5px 12px;border-radius:99px}
+.t-coprime{background:#f6ebff;color:#8a3fd1}
+.t-cdiv{background:#e8f0ff;color:#2f5fd0}
+.t-ladder{background:#fff1e3;color:#c45d12}
+.t-align{background:#e6f7f5;color:#0e8c7e}
+.t-real{background:#ffe9f0;color:#c42a63}
+.q{font-size:clamp(21px,3.4vw,28px);font-weight:800;letter-spacing:-.4px;line-height:1.4;margin:4px 0 6px}
+.bn{color:var(--primary);background:var(--primary-soft);padding:0 8px;border-radius:10px;font-variant-numeric:tabular-nums}
+.bn2{color:var(--accent-d);background:var(--accent-soft);padding:0 8px;border-radius:10px;font-variant-numeric:tabular-nums}
+.kk{color:var(--accent-d)}
+.sub{color:var(--muted);font-size:15px;margin-bottom:16px}
+
+.ox-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.ox{min-height:110px;border-radius:18px;font-size:20px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:3px solid transparent;transition:transform .1s}
+.ox span{font-size:36px;line-height:1}
+.ox.o{background:var(--success-soft);color:#0c8a50}
+.ox.x{background:var(--danger-soft);color:#c4281c}
+.ox:active:not(:disabled){transform:scale(.97)}
+.ox:disabled{opacity:.45}
+.ox.chosen{opacity:1;border-color:currentColor}
+
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 16px}
+.chips.grid2{display:grid;grid-template-columns:repeat(2,1fr)}
+.chips.grid3{display:grid;grid-template-columns:repeat(3,1fr)}
+.chip{min-width:64px;padding:14px 10px;border-radius:14px;border:2.5px solid var(--line);background:#fff;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;transition:all .12s;box-shadow:0 3px 0 #e1e4ec}
+@media (max-width:420px){.chip{font-size:17px;padding:12px 6px}}
+.chip:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+.chip.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-d);box-shadow:0 3px 0 #c7caf5}
+.chip.ok{border-color:var(--success);background:var(--success-soft);color:#0c8a50;box-shadow:none}
+.chip.bad{border-color:var(--danger);background:var(--danger-soft);color:#c4281c;animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.actions{display:flex;gap:10px;justify-content:flex-end}
+
+.fb{margin-top:16px;padding:16px 18px;border-radius:16px;border-left:6px solid;font-size:16px;animation:fadeUp .3s}
+.fb.ok{background:var(--success-soft);border-color:var(--success)}
+.fb.bad{background:var(--danger-soft);border-color:var(--danger)}
+.fb.info{background:var(--warn-soft);border-color:var(--warn)}
+.fb .ttl{font-weight:800;font-size:18px;margin-bottom:4px}
+.fb .ln{margin:4px 0}
+
+/* ============================================================
+   교과서 스타일 세로줄 정렬 뷰 (Textbook Column Alignment Grid)
+============================================================ */
+.textbook-card{background:#fafbfd;border:2.5px solid var(--line);border-radius:22px;padding:22px 18px;margin:14px 0 18px;box-shadow:inset 0 2px 6px rgba(0,0,0,.02);overflow-x:auto}
+.tb-guide-tip{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;color:var(--muted);margin-bottom:14px;background:#fff;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line)}
+.tb-guide-tip b{color:var(--primary)}
+.tb-guide-tip b.lcm-t{color:var(--accent-d)}
+
+.tg-board{display:inline-flex;flex-direction:column;min-width:100%;gap:10px}
+.tg-row{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:900;position:relative}
+.tg-label{min-width:100px;font-size:17.5px;color:#333c4e;font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tg-label small{color:var(--muted);font-size:13.5px;font-weight:600}
+.tg-cols{display:flex;align-items:center;gap:6px}
+.tg-col{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:76px}
+.tg-col-header{font-size:13px;font-weight:800;color:#8590a6;padding:2px 0;letter-spacing:.3px}
+
+.tg-btn{width:100%;min-height:50px;border-radius:14px;border:2.5px solid var(--line);background:#fff;font-size:21px;font-weight:900;display:flex;align-items:center;justify-content:center;transition:all .12s;box-shadow:0 3px 0 #e2e5ee;cursor:pointer}
+.tg-btn:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+.tg-btn.active-gcd{background:var(--primary);color:#fff;border-color:var(--primary-d);box-shadow:0 3px 0 var(--primary-d);transform:translateY(2px)}
+.tg-btn.active-lcm{background:var(--accent);color:#fff;border-color:var(--accent-d);box-shadow:0 3px 0 var(--accent-d);transform:translateY(2px)}
+.tg-btn.empty-cell{background:#f1f3f8;border-style:dashed;color:#a8afc2;font-size:14.5px;box-shadow:none}
+.tg-btn.empty-cell.active-gcd{background:#e2e5f0;color:#545e75;border-color:#7e8ba6}
+
+.tg-op{font-size:20px;font-weight:900;color:#a7adc0;padding:0 2px;user-select:none}
+.tg-divider{height:2px;background:repeating-linear-gradient(90deg,var(--line),var(--line) 8px,transparent 8px,transparent 14px);margin:4px 0}
+
+.tg-target-slot{width:100%;min-height:54px;border-radius:14px;border:2.5px dashed #cbd2e3;background:#fff;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900;color:#a5adc2;transition:all .15s}
+.tg-target-slot.filled-gcd{border-style:solid;border-color:var(--primary);background:var(--primary-soft);color:var(--primary-d);box-shadow:0 3px 0 #c4c7f5}
+.tg-target-slot.filled-lcm{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--accent-d);box-shadow:0 3px 0 #fcd2be}
+.tg-target-slot.filled-none{border-style:dashed;border-color:#b9c1d4;background:#edf0f7;color:#6b7489;font-size:14.5px}
+
+.tg-preview{margin-top:14px;background:#fff;border-radius:16px;padding:14px 18px;border:2px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.tg-prev-math{font-size:20px;font-weight:900}
+.tg-prev-math b{color:var(--primary)}
+.tg-prev-math b.lcm-t{color:var(--accent-d)}
+
+/* DUAL LADDER (거꾸로 나눗셈) */
+.dual-ladder-wrap{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;margin:12px 0 18px}
+@media (max-width:640px){.dual-ladder-wrap{grid-template-columns:1fr}}
+.dl-board{font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;min-width:210px;background:#fcfdff;border-radius:18px;padding:16px;border:2px solid var(--line)}
+.dl-row{display:flex;align-items:stretch;animation:fadeUp .3s}
+.dl-div{width:52px;text-align:right;padding:8px 12px 8px 0;color:var(--primary);font-weight:900}
+.dl-div.gcd-hit{background:var(--primary-soft);border-radius:8px;color:var(--primary-d)}
+.dl-nums{display:flex;gap:18px;padding:8px 18px;border-left:3px solid var(--ink);border-bottom:3px solid var(--ink);flex:1}
+.dl-row.last .dl-nums{border-left:none;border-bottom:none;padding-left:21px;color:var(--accent-d)}
+.dl-row.last .dl-nums.lcm-hit{background:var(--accent-soft);border-radius:8px}
+.dl-row.curr{background:#f0f3fa;border-radius:10px}
+.dl-status{padding:8px;font-size:14.5px;font-weight:700;color:var(--muted)}
+.dl-status.done{color:var(--success)}
+
+.pbtns{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media (max-width:480px){.pbtns{grid-template-columns:repeat(3,1fr)}}
+.pbtn{padding:15px 0;border-radius:14px;background:var(--ink);color:#fff;font-size:20px;font-weight:800;box-shadow:0 5px 0 #000;transition:transform .08s}
+.pbtn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #000}
+.pbtn:disabled{background:#c9cdd8;box-shadow:0 5px 0 #aeb3c0}
+.pbtn.done-btn{background:var(--success);box-shadow:0 5px 0 #0c8a50;grid-column:span 2}
+
+.res-banner{margin-top:14px;border-radius:18px;padding:18px;background:linear-gradient(135deg,#f1f0ff,#fff3ea);text-align:center;animation:popIn .35s}
+.res-banner .big{font-size:clamp(22px,4vw,30px);font-weight:900;margin:6px 0}
+.res-banner .mid{font-size:16px;font-weight:700;color:#475067}
+@keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+
+/* REAL LIFE QUIZ */
+.case-card{background:#fdfdfe;border:2px solid var(--line);border-radius:18px;padding:18px;margin:12px 0 16px;font-size:18px;font-weight:700;line-height:1.6}
+.type-select{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.ts-btn{padding:16px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:18px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .12s}
+.ts-btn:active{transform:translateY(2px)}
+.ts-btn.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-d)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(20,24,40,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.overlay.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:26px;padding:28px 24px 22px;width:100%;max-width:440px;max-height:92vh;overflow:auto;text-align:center;transform:scale(.9);transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+.overlay.show .modal{transform:scale(1)}
+.modal.wide{max-width:920px;text-align:left;padding:22px}
+.modal h2{margin:4px 0 6px;font-size:26px;letter-spacing:-.4px}
+.modal p{color:var(--muted);margin:6px 0}
+.mstars{font-size:58px;letter-spacing:6px;margin:6px 0 4px;color:#e1e4ec}
+.mstars span{display:inline-block}
+.mstars .on{color:var(--star);animation:starPop .5s both}
+@keyframes starPop{0%{transform:scale(0) rotate(-90deg)}70%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1)}}
+.mbtns{display:grid;gap:10px;margin-top:18px}
+.mbtns.two{grid-template-columns:1fr 1.4fr}
+.unlock{margin-top:12px;background:var(--accent-soft);color:var(--accent-d);border-radius:14px;padding:10px;font-weight:700}
+.book-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.book-top h2{margin:0;font-size:22px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:thin}
+.tab{flex-shrink:0;padding:8px 14px;border-radius:12px;background:#f1f3f8;font-weight:800;font-size:14px;color:#475067}
+.tab.on{background:var(--accent);color:#fff}
+.tab:disabled{opacity:.45}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;transition:all .25s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:70;pointer-events:none;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="logo">
+      <div class="mark">⚔️</div>
+      <div>
+        <span>소인수 원정대 2</span>
+        <span class="ch-badge">Ch.2 공약수와 공배수</span>
+      </div>
+    </div>
+    <div class="tb-right">
+      <span class="pill"><span class="s">★</span><span id="totalStars">0</span></span>
+      <button class="iconbtn" id="bookBtn" title="비법 도감">📖<span class="hide-sm"> 도감</span></button>
+      <button class="iconbtn" id="soundBtn" title="효과음">🔊</button>
+    </div>
+  </header>
+
+  <!-- MAP -->
+  <section class="screen" id="s-map">
+    <div class="hero">
+      <div class="deco">G · L</div>
+      <h1>공약수와 공배수의 비밀</h1>
+      <p>교과서 세로줄 정렬로 소인수를 맞추고 지수를 쏙!<br>소인수분해를 활용해 최대공약수와 최소공배수를 완벽히 정복해요.</p>
+      <div class="hero-prog"><div class="bar"><i id="heroBar"></i></div><b id="heroTxt">0 / 24</b></div>
+    </div>
+    <div class="path" id="path"><svg id="pathSvg"></svg></div>
+    <div class="map-foot">
+      <a href="factor-quest.html" title="챕터 1로 이동">← Ch.1 소인수분해로 이동</a>
+      <button id="resetBtn">Ch.2 기록 초기화</button>
+    </div>
+  </section>
+
+  <!-- INTRO -->
+  <section class="screen" id="s-intro">
+    <div class="playbar">
+      <button class="iconbtn" id="introBack">← 지도</button>
+      <div class="ptitle"></div>
+      <button class="iconbtn hidden" id="introSkip">바로 시작 ▶</button>
+    </div>
+    <div class="intro-head" id="introHead"></div>
+    <div id="introBody"></div>
+    <div class="cdots" id="introDots"></div>
+    <div class="intro-nav">
+      <button class="btn ghost" id="introPrev">◀ 이전</button>
+      <button class="btn primary" id="introNext">다음 ▶</button>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="s-play">
+    <div class="playbar">
+      <button class="iconbtn" id="playBack">← 지도</button>
+      <div class="ptitle" id="playTitle"></div>
+      <div class="meter" id="meter"></div>
+    </div>
+    <div class="mdots" id="mdots"></div>
+    <div class="mission-card" id="mission"></div>
+    <div class="nextbar hidden" id="nextBar" style="margin-top:16px">
+      <button class="btn primary big" id="nextBtn">다음 미션 ▶</button>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+/* ============ 유틸 ============ */
+const $ = s => document.querySelector(s);
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const fmt = n => n.toLocaleString('ko-KR');
+const gcd = (a,b) => b===0 ? a : gcd(b, a%b);
+const lcm = (a,b) => (a*b)/gcd(a,b);
+const divisorsOf = n => { const r=[]; for(let i=1;i<=n;i++) if(n%i===0) r.push(i); return r; };
+const commonDivisors = (a,b) => { const ga=divisorsOf(a), gb=new Set(divisorsOf(b)); return ga.filter(x=>gb.has(x)); };
+const isPrime = n => { if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; };
+const factorize = n => { const f=[]; let m=n; for(let p=2;m>1;p++){ while(m%p===0){f.push(p);m/=p;} } return f; };
+const groupF = f => { const g=new Map(); f.forEach(p=>g.set(p,(g.get(p)||0)+1)); return [...g.entries()]; };
+const powHTML = (g, sep=' × ') => g.map(([p,e]) => e>1 ? `${p}<sup>${e}</sup>` : `${p}`).join(sep);
+const hasB = n => [0,1,3,6,7,8].includes(n%10);
+const jo = (n,a,b) => hasB(n) ? a : b;
+const bigN = n => `<span class="bn">${fmt(n)}</span>`;
+const bigN2 = n => `<span class="bn2">${fmt(n)}</span>`;
+const Y = '<span class="y">✔</span>', N = '<span class="n">✘</span>';
+
+/* ============ 사운드 (Web Audio) ============ */
+const SFX = {
+  ctx:null, on:true,
+  ensure(){ if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) this.ctx=new AC(); }
+            if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); return this.ctx; },
+  tone(f,d=.12,type='sine',delay=0,vol=.18){
+    if(!this.on) return; const c=this.ensure(); if(!c) return;
+    const t=c.currentTime+delay, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+.05);
+  },
+  click(){ this.tone(520,.06,'triangle',0,.08); },
+  pop(){ this.tone(700,.07,'triangle',0,.14); this.tone(1050,.08,'triangle',.05,.1); },
+  correct(){ this.tone(660,.13,'sine',0,.22); this.tone(990,.22,'sine',.1,.22); },
+  wrong(){ this.tone(200,.16,'square',0,.06); this.tone(150,.24,'square',.12,.06); },
+  clear(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,.25,'triangle',i*.12,.2)); this.tone(1319,.6,'sine',.5,.16); },
+  fanfare(){ [392,523,659,784,659,784,1047].forEach((f,i)=>this.tone(f,.28,'triangle',i*.14,.2)); this.tone(1568,.9,'sine',1.0,.14); }
+};
+
+/* ============ 비법 도감 카드 (2분할: 직관 vs 수학적 이유) ============ */
+const CARDS = {
+  coprime:{kind:'concept',icon:'🤝',title:'공약수와 서로소',lt:'💡 직관적 정의',rt:'🔎 수학적 성질',
+    left:`<p class="big-rule">두 수의 <mark>최대공약수가 1</mark>일 때, 두 수를 <b>서로소</b>라고 해요.</p>
+      <div class="ex"><div>8의 약수: 1, 2, 4, 8</div><div>9의 약수: 1, 3, 9</div><div>→ 공약수가 <b>1뿐</b>이므로 8과 9는 <b>서로소 ${Y}</b></div></div>
+      <p>💡 서로 다른 두 소수(예: 3과 7)나 연속한 두 자연수는 무조건 서로소예요!</p>`,
+    right:`<p class="big-rule"><b>두 수의 공약수는 최대공약수의 약수</b>예요.</p>
+      <div class="eq">24와 36의 최대공약수 = 12<br>12의 약수: 1, 2, 3, 4, 6, 12<br>→ 24와 36의 공약수와 정확히 일치!</div>
+      <p class="cc">👉 최대공약수만 구하면 모든 공약수를 한 번에 찾을 수 있어요!</p>`},
+  matrix_gcd:{kind:'rule',icon:'📐',title:'소인수분해로 최대공약수 구하기 (핵심)',lt:'💡 세로줄 정렬 비법',rt:'🔎 왜 작은 지수를 택할까?',
+    left:`<p class="big-rule">소인수별로 <mark>세로줄 자리를 맞추어</mark> 쓴 뒤,<br><mark>공통인 밑</mark>에서 지수가 <mark>작거나 같은 것</mark>을 쏙 뽑아 곱해요!</p>
+      <div class="eq">A (36) = 2<sup>2</sup> × 3<sup>2</sup><br>B (90) = 2 &nbsp; × 3<sup>2</sup> × 5<br>------------------------<br><b>G (18) = 2 &nbsp; × 3<sup>2</sup></b> (5는 공통 아님)</div>`,
+    right:`<p>2<sup>2</sup>(2 두 개)와 2(2 한 개)가 있을 때, <b>둘 다 동시에 나누어줄 수 있는</b> 공통 묶음은 2 한 개뿐이에요.</p>
+      <div class="eq">A = [2] × 2 × [3 × 3]<br>B = [2] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; × [3 × 3] × 5</div>
+      <p class="cc">👉 양쪽에 <b>공통으로 겹치는 소인수</b>만 모으기 때문에 <b>지수가 작은 쪽</b>을 택하는 거예요!</p>`},
+  dual_gcd:{kind:'rule',icon:'🪜',title:'거꾸로 나눗셈과 최대공약수',lt:'💡 동시 나눗셈 비법',rt:'🔎 왜 왼쪽 줄만 곱할까?',
+    left:`<p class="big-rule">두 수를 동시에 나눌 수 있는 공약수로 나누어 몫이 <mark>서로소</mark>가 될 때까지 진행해요.</p>
+      <div class="ex"><div><b>2</b> | 24&nbsp;&nbsp;&nbsp;36</div><div><b>2</b> | 12&nbsp;&nbsp;&nbsp;18</div><div><b>3</b> | &nbsp;6&nbsp;&nbsp;&nbsp;&nbsp;9</div><div>--- 2&nbsp;&nbsp;&nbsp;&nbsp;3 (서로소!)</div></div>
+      <p><b>최대공약수(G)</b> = 왼쪽 세로줄의 곱 = 2 × 2 × 3 = <b>12</b></p>`,
+    right:`<p>왼쪽의 나눈 수들은 24와 36이 <b>공통으로 가지고 있는 소인수</b>들이에요.</p>
+      <div class="eq">24 = (2 × 2 × 3) × 2 = 12 × 2<br>36 = (2 × 2 × 3) × 3 = 12 × 3</div>
+      <p class="cc">👉 두 수를 모두 나누어떨어지게 하는 가장 큰 묶음은 공통 부분인 <b>12</b>예요!</p>`},
+  lcm_rule:{kind:'concept',icon:'🌊',title:'공배수와 최소공배수',lt:'💡 직관적 개념',rt:'🔎 수학적 성질',
+    left:`<p class="big-rule">두 수의 공통인 배수 중 <mark>가장 작은 수</mark>를 <b>최소공배수(LCM)</b>라고 해요.</p>
+      <div class="ex"><div>4의 배수: 4, 8, <b>12</b>, 16, 20, <b>24</b>...</div><div>6의 배수: 6, <b>12</b>, 18, <b>24</b>, 30...</div><div>→ 최소공배수 = <b>12</b></div></div>`,
+    right:`<p class="big-rule"><b>두 수의 공배수는 최소공배수의 배수</b>예요.</p>
+      <div class="eq">4와 6의 최소공배수 = 12<br>12의 배수: 12, 24, 36, 48, 60...<br>→ 4와 6의 모든 공배수와 일치!</div>
+      <p class="cc">👉 공배수를 일일이 나열하지 않아도 최소공배수의 배수를 구하면 끝!</p>`},
+  matrix_lcm:{kind:'rule',icon:'🌌',title:'소인수분해로 최소공배수 구하기 (핵심)',lt:'💡 세로줄 정렬 비법',rt:'🔎 왜 큰 지수와 모든 밑일까?',
+    left:`<p class="big-rule">소인수별로 세로줄을 맞춘 뒤,<br><mark>모든 밑</mark>을 다 적고, 지수는 <mark>크거나 같은 것</mark>을 쏙 뽑아 곱해요!</p>
+      <div class="eq">A (36) = 2<sup>2</sup> × 3<sup>2</sup><br>B (90) = 2 &nbsp; × 3<sup>2</sup> × 5<br>------------------------<br><b>L (180)= 2<sup>2</sup> × 3<sup>2</sup> × 5</b></div>`,
+    right:`<p>A의 배수도 되고 B의 배수도 되려면 <b>A의 소인수와 B의 소인수를 모두 넉넉하게 포함</b>해야 해요.</p>
+      <div class="eq">2는 적어도 2개 필요 (A를 포함하려면)<br>3은 적어도 2개 필요 (B를 포함하려면)<br>5도 1개 필요 (B를 포함하려면)</div>
+      <p class="cc">👉 두 수를 모두 품을 수 있는 가장 작은 그릇을 만드는 원리예요!</p>`},
+  dual_lcm:{kind:'rule',icon:'🅻',title:'거꾸로 나눗셈과 최소공배수',lt:'💡 L자 곱셈 비법',rt:'🔎 왜 몫까지 다 곱할까?',
+    left:`<p class="big-rule">몫이 서로소가 될 때까지 나눈 뒤,<br><mark>왼쪽 줄과 밑바닥 몫을 'L자'로 모두 곱해요.</mark></p>
+      <div class="ex"><div><b>2</b> | 24&nbsp;&nbsp;&nbsp;36</div><div><b>2</b> | 12&nbsp;&nbsp;&nbsp;18</div><div><b>3</b> | &nbsp;6&nbsp;&nbsp;&nbsp;&nbsp;9</div><div>--- <b>2</b>&nbsp;&nbsp;&nbsp;&nbsp;<b>3</b></div></div>
+      <p><b>최소공배수(L)</b> = 2 × 2 × 3 × <b>2 × 3</b> = <b>72</b></p>`,
+    right:`<p>24(12×2)와 36(12×3)의 배수가 되려면, 공통 부분 12뿐만 아니라 <b>남은 소인수 2와 3도 모두 채워 넣어야</b> 해요.</p>
+      <div class="eq">72 = 24 × 3 (24의 배수 ${Y})<br>72 = 36 × 2 (36의 배수 ${Y})</div>
+      <p class="cc">👉 공통 소인수(G)에 각 수의 남은 몫(a, b)을 곱해주므로 <b>L = G × a × b</b>!</p>`},
+  product_rel:{kind:'concept',icon:'✨',title:'A × B = G × L의 마법',lt:'💡 두 수의 곱 공식',rt:'🔎 증명 비법',
+    left:`<p class="big-rule">두 자연수 A, B의 곱은<br><mark>최대공약수(G)와 최소공배수(L)의 곱</mark>과 항상 같아요!</p>
+      <div class="ex"><div>두 수: 12와 18 (곱 = 216)</div><div>G = 6, L = 36 (곱 = 6 × 36 = 216)</div><div><b>12 × 18 = 6 × 36 = 216 ${Y}</b></div></div>`,
+    right:`<p>두 수를 G와 서로소인 몫(a, b)으로 나타내 봐요.</p>
+      <div class="eq">A = G × a, &nbsp;B = G × b<br>L = G × a × b<br>A × B = (G × a) × (G × b) = G × (G × a × b) = <b>G × L</b></div>
+      <p class="cc">👉 G는 두 번 곱해질 뻔한 공통부분을 한 번 잡아주고, L이 나머지를 채워주기 때문이에요!</p>`},
+  real_life:{kind:'concept',icon:'🧭',title:'실생활 문장제 판별법',lt:'💡 언제 G이고 언제 L일까?',rt:'🔎 키워드 나침반',
+    left:`<p class="big-rule"><b>최대공약수(G)</b>: 큰 것을 <mark>작게 쪼개어 똑같이 나눌 때</mark><br><b>최소공배수(L)</b>: 작은 것을 <mark>반복해서 쌓거나 동시에 만날 때</mark></p>`,
+    right:`<div class="eq"><b>[최대공약수 키워드]</b><br>• 가능한 한 큰 정사각형 타일 붙이기<br>• 남김없이 똑같이 나누어 주기<br>• 가장 큰 그릇으로 나누어 담기<br><br><b>[최소공배수 키워드]</b><br>• 버스나 신호등이 처음으로 다시 동시에 출발<br>• 작은 블록을 쌓아 가장 작은 정육면체 만들기<br>• 톱니바퀴가 처음 맞물린 자리에서 다시 맞물릴 때</div>`}
+};
+const BOOK_ORDER = ['coprime','matrix_gcd','dual_gcd','lcm_rule','matrix_lcm','dual_lcm','product_rel','real_life'];
+const BOOK_LABEL = {coprime:'공약수·서로소',matrix_gcd:'소인수분해와 최대공약수',dual_gcd:'나눗셈과 최대공약수',lcm_rule:'공배수·최소공배수',matrix_lcm:'소인수분해와 최소공배수',dual_lcm:'나눗셈과 최소공배수',product_rel:'A×B = G×L',real_life:'실생활 판별법'};
+
+/* ============ 챕터 2 스테이지 정의 (소인수분해 방법이 주가 되는 나선형 구조) ============ */
+const STAGES_CH2 = [
+  {title:'인연의 숲', sub:'공약수와 서로소 · 기초 소인수 세로줄 맞추기', cards:['coprime','matrix_gcd'],
+   types:['coprime_ox','common_div','align_gcd','gcd_quiz'], pairs:[[8,12],[12,18],[15,20],[9,15],[14,21]]},
+  {title:'지수의 거울 I', sub:'소인수분해 세로줄 정렬로 최대공약수(GCD) 정복', cards:['matrix_gcd'],
+   types:['align_gcd','align_gcd','dual_gcd','gcd_quiz'], pairs:[[24,36],[28,42],[36,54],[30,45],[40,60]]},
+  {title:'쌍둥이 사다리', sub:'사다리 나눗셈과 소인수분해의 교차 연결', cards:['dual_gcd'],
+   types:['coprime_find','dual_gcd','align_gcd','gcd_quiz'], pairs:[[36,90],[48,72],[60,84],[72,108]]},
+  {title:'약속의 강', sub:'공배수와 최소공배수 · 기초 소인수 세로줄 맞추기', cards:['lcm_rule','matrix_lcm'],
+   types:['lcm_ox','common_mul','align_lcm','lcm_quiz'], pairs:[[4,6],[6,9],[8,12],[10,15],[12,18]]},
+  {title:'지수의 거울 II', sub:'소인수분해 세로줄 정렬로 최소공배수(LCM) 정복', cards:['matrix_lcm'],
+   types:['align_lcm','align_lcm','dual_lcm','lcm_quiz'], pairs:[[18,24],[20,30],[24,36],[36,48],[45,60]]},
+  {title:'우주의 그물', sub:'소인수분해식 하나로 G와 L을 동시에 완성하기', cards:['matrix_gcd','matrix_lcm'],
+   types:['align_dual','align_dual','dual_dual','lcm_quiz'], pairs:[[36,90],[40,60],[54,72],[72,90],[60,84]]},
+  {title:'쌍둥이의 비밀', sub:'A × B = G × L 공식과 실생활 문장제 판별', cards:['product_rel','real_life'],
+   types:['real_case','rel_calc','align_dual','real_case'], pairs:[[12,18],[16,24],[24,36],[20,28]]},
+  {title:'조화의 탑', sub:'최종 보스 · 세로줄 정렬 듀얼 배틀 총결전', cards:[], boss:true,
+   types:['align_dual','dual_dual','real_case','rel_calc','align_dual'], pairs:[[48,72],[60,90],[72,120],[84,126],[96,144]]}
+];
+const MAP_OFFSET = [0,.65,1,.35,-.35,-1,-.65,0];
+const MTYPE = {
+  coprime_ox:{icon:'🤝',name:'서로소 판별',desc:'두 수가 서로소인지 판별하기',cls:'t-coprime'},
+  coprime_find:{icon:'🔍',name:'서로소 찾기',desc:'보기 중 서로소인 두 수 고르기',cls:'t-coprime'},
+  common_div:{icon:'⛏️',name:'공약수 발굴',desc:'두 수의 공약수를 모두 찾기',cls:'t-cdiv'},
+  align_gcd:{icon:'📐',name:'세로줄 소인수 (GCD)',desc:'소인수 세로줄 맞추고 작은 지수 터치',cls:'t-align'},
+  dual_gcd:{icon:'🪜',name:'최대공약수 사다리',desc:'동시 나눗셈으로 최대공약수 구하기',cls:'t-ladder'},
+  lcm_ox:{icon:'🌊',name:'공배수 판별',desc:'주어진 수가 공배수인지 판별하기',cls:'t-cdiv'},
+  common_mul:{icon:'🎯',name:'공배수 찾기',desc:'보기 중 공배수만 골라내기',cls:'t-cdiv'},
+  align_lcm:{icon:'🌌',name:'세로줄 소인수 (LCM)',desc:'모든 소인수 모으고 큰 지수 터치',cls:'t-align'},
+  dual_lcm:{icon:'🅻',name:'최소공배수 L자',desc:'동시 나눗셈 후 L자 전체 곱하기',cls:'t-ladder'},
+  align_dual:{icon:'✨',name:'세로줄 듀얼 마스터',desc:'한 번의 정렬로 G와 L 거듭제곱 완성',cls:'t-align'},
+  dual_dual:{icon:'⚔️',name:'G & L 사다리 듀얼',desc:'사다리 하나로 G와 L 둘 다 구하기',cls:'t-ladder'},
+  rel_calc:{icon:'🔑',name:'A×B = G×L',desc:'두 수의 곱 공식을 이용해 빈칸 채우기',cls:'t-align'},
+  real_case:{icon:'🧭',name:'실생활 탐정',desc:'문제를 읽고 G인지 L인지 판별 후 계산',cls:'t-real'},
+  gcd_quiz:{icon:'💡',name:'최대공약수 확인',desc:'계산 결과를 확인하는 퀴즈',cls:'t-ladder'},
+  lcm_quiz:{icon:'💡',name:'최소공배수 확인',desc:'계산 결과를 확인하는 퀴즈',cls:'t-ladder'}
+};
+const calcStars = m => m<=1 ? 3 : m<=4 ? 2 : 1;
+
+/* ============ 저장 ============ */
+const KEY = 'factorQuest_ch2_v2';
+const TEACHER = location.hash === '#teacher';
+let save = (() => {
+  try { const s = JSON.parse(localStorage.getItem(KEY));
+        if (s && Array.isArray(s.stars)) { while (s.stars.length < STAGES_CH2.length) s.stars.push(0); return s; } } catch(e){}
+  return { stars: STAGES_CH2.map(()=>0), sound: true };
+})();
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch(e){} };
+const unlocked = i => TEACHER || i===0 || save.stars[i-1] > 0;
+const totalStars = () => save.stars.reduce((a,b)=>a+b,0);
+SFX.on = save.sound !== false;
+
+/* ============ 화면 전환 ============ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='map') renderMap();
+  updateTop();
+}
+function updateTop(){ $('#totalStars').textContent = totalStars(); $('#soundBtn').textContent = SFX.on?'🔊':'🔇'; }
+let toastT;
+function toast(msg){ const t=$('#toast'); t.innerHTML=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+function openModal(html, wide=false){ const m=$('#modal'); m.className='modal'+(wide?' wide':''); m.innerHTML=html; $('#overlay').classList.add('show'); }
+function closeModal(){ $('#overlay').classList.remove('show'); }
+$('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay' && $('#modal').classList.contains('wide')) closeModal(); });
+
+/* ============ 지도 ============ */
+function renderMap(){
+  const path=$('#path'); path.querySelectorAll('.node-row').forEach(n=>n.remove());
+  const firstOpen = STAGES_CH2.findIndex((_,i)=>unlocked(i) && save.stars[i]===0);
+  STAGES_CH2.forEach((st,i)=>{
+    const open=unlocked(i), stars=save.stars[i];
+    const row=document.createElement('div'); row.className='node-row';
+    row.innerHTML = `<div class="node-wrap" style="--o:${MAP_OFFSET[i]}">
+      <button class="node ${open?(stars?'cleared':'open'):''} ${st.boss?'boss':''} ${i===firstOpen?'current':''}" aria-label="스테이지 ${i+1}">
+        ${open ? (st.boss?'👑':i+1) : '🔒'}</button>
+      <div class="node-label"><small>STAGE ${i+1}</small>${st.title}
+        <div class="node-stars">${[1,2,3].map(s=>`<span class="${s<=stars?'on':''}">★</span>`).join('')}</div></div></div>`;
+    row.querySelector('.node').onclick = () => {
+      SFX.click();
+      if(!open){ toast(`🔒 STAGE ${i}을(를) 먼저 클리어해야 열려요!`); return; }
+      openIntro(i);
+    };
+    path.appendChild(row);
+  });
+  const ts=totalStars(), max=STAGES_CH2.length*3;
+  $('#heroBar').style.width = (ts/max*100)+'%';
+  $('#heroTxt').textContent = `★ ${ts} / ${max}`;
+  requestAnimationFrame(drawPath);
+}
+function drawPath(){
+  const wrap=$('#path'), svg=$('#pathSvg'); if(!wrap.offsetParent) return;
+  const r=wrap.getBoundingClientRect();
+  const pts=[...wrap.querySelectorAll('.node')].map(n=>{const b=n.getBoundingClientRect(); return [b.left+b.width/2-r.left, b.top+b.height/2-r.top];});
+  svg.setAttribute('width',r.width); svg.setAttribute('height',r.height);
+  const seg=(a,b)=>{const my=(a[1]+b[1])/2; return ` C ${a[0]} ${my}, ${b[0]} ${my}, ${b[0]} ${b[1]}`;};
+  let dAll='', dDone='';
+  pts.forEach((p,i)=>{ if(i===0){dAll=`M ${p[0]} ${p[1]}`; dDone=dAll; return;}
+    const s=seg(pts[i-1],p); dAll+=s; if(unlocked(i)) dDone+=s; });
+  svg.innerHTML = `<path d="${dAll}" fill="none" stroke="#d8dce7" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 16"/>
+                   <path d="${dDone}" fill="none" stroke="#ffb288" stroke-width="8" stroke-linecap="round"/>`;
+}
+window.addEventListener('resize', ()=>{ if($('#s-map').classList.contains('active')) drawPath(); });
+
+/* ============ 비법 도감 ============ */
+function cardUnlocked(key){
+  if(TEACHER) return true;
+  const i=STAGES_CH2.findIndex(s=>s.cards.includes(key)); return i>=0 && unlocked(i);
+}
+function cardHTML(key){
+  const c=CARDS[key];
+  return `<div class="kcard"><div class="khead"><span class="kicon">${c.icon}</span><div><small>${c.kind==='rule'?'공약수·공배수 비법':'핵심 개념'}</small><h3>${c.title}</h3></div></div>
+    <div class="rule-grid"><div class="panel easy"><h4>${c.lt}</h4>${c.left}</div><div class="panel why"><h4>${c.rt}</h4>${c.right}</div></div></div>`;
+}
+function openBook(key){
+  if(!key || !cardUnlocked(key)) key = BOOK_ORDER.find(cardUnlocked) || 'coprime';
+  const tabs = BOOK_ORDER.map(k=>{ const ok=cardUnlocked(k);
+    return `<button class="tab ${k===key?'on':''}" data-k="${k}" ${ok?'':'disabled'}>${ok?'':'🔒 '}${BOOK_LABEL[k]}</button>`; }).join('');
+  openModal(`<div class="book-top"><h2>📖 Ch.2 비법 도감</h2><button class="iconbtn" data-close>닫기 ✕</button></div>
+    <div class="tabs">${tabs}</div><div id="bookBody">${cardHTML(key)}</div>`, true);
+  $('#modal').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ SFX.click(); openBook(t.dataset.k); });
+  const on=$('#modal .tab.on'); if(on) on.scrollIntoView({inline:'center',block:'nearest'});
+}
+document.addEventListener('click', e=>{
+  const r=e.target.closest('[data-book]'); if(r){ SFX.click(); openBook(r.dataset.book); return; }
+  if(e.target.closest('[data-close]')){ SFX.click(); closeModal(); }
+});
+
+/* ============ 스테이지 인트로 ============ */
+const G = { si:0, cards:[], ci:0, missions:[], mi:0, mistakes:0 };
+function openIntro(i){
+  G.si=i; G.cards=[...STAGES_CH2[i].cards.map(k=>({k})), {brief:true}]; G.ci=0;
+  $('#introSkip').classList.toggle('hidden', !(save.stars[i]>0));
+  show('intro'); renderIntro();
+}
+function briefHTML(st){
+  const items=st.types.map(t=>{const m=MTYPE[t];
+    return `<li><span class="i ${m.cls}">${m.icon}</span><div>${m.name}<small>${m.desc}</small></div></li>`;}).join('');
+  return `<div class="kcard"><div class="khead"><span class="kicon" style="background:var(--accent)">🚩</span><div><small>미션 브리핑</small><h3>${st.boss?'최종 보스에 도전!':'이번 탐험의 미션'}</h3></div></div>
+    <ul class="brief-list">${items}</ul>
+    <div class="star-rule"><span>실수 0~1회 ★★★</span><span>실수 2~4회 ★★</span><span>실수 5회 이상 ★</span></div>
+    <p style="color:var(--muted);font-size:14px;margin:12px 0 0">미션 중 막히면 언제든 📖 버튼으로 비법을 다시 볼 수 있어요.</p></div>`;
+}
+function renderIntro(){
+  const st=STAGES_CH2[G.si], c=G.cards[G.ci], last=G.ci===G.cards.length-1;
+  $('#introHead').innerHTML = `<small>STAGE ${G.si+1}${st.boss?' · BOSS':''}</small><h2>${st.title}</h2><p>${st.sub}</p>`;
+  $('#introBody').innerHTML = c.brief ? briefHTML(st)
+    : `<div class="newbadge">✨ 새로운 비법 ${G.ci+1} / ${G.cards.length-1}</div>${cardHTML(c.k)}`;
+  $('#introDots').innerHTML = G.cards.map((_,i)=>`<i class="${i===G.ci?'on':''}"></i>`).join('');
+  $('#introPrev').disabled = G.ci===0; $('#introPrev').style.visibility = G.ci===0?'hidden':'visible';
+  $('#introNext').textContent = last ? '🚩 탐험 시작!' : '다음 ▶';
+  $('#introNext').className = 'btn ' + (last?'accent':'primary');
+}
+$('#introPrev').onclick=()=>{ SFX.click(); if(G.ci>0){G.ci--; renderIntro();} };
+$('#introNext').onclick=()=>{ SFX.click(); if(G.ci<G.cards.length-1){G.ci++; renderIntro(); window.scrollTo({top:0,behavior:'smooth'});} else startStage(G.si); };
+$('#introSkip').onclick=()=>{ SFX.click(); startStage(G.si); };
+$('#introBack').onclick=()=>{ SFX.click(); show('map'); };
+
+/* ============ 문제 생성 로직 ============ */
+function createMissions(st){
+  const pairs = shuffle(st.pairs);
+  let pi = 0;
+  const nextPair = () => pairs[(pi++) % pairs.length];
+  return st.types.map(type => {
+    const [a, b] = nextPair();
+    switch(type){
+      case 'coprime_ox': {
+        const isCo = Math.random() < 0.5;
+        let x, y;
+        if(isCo){
+          const pool = [[8,9],[9,14],[15,16],[21,25],[14,15],[12,35],[10,21],[7,18]];
+          [x, y] = pick(pool);
+        } else {
+          const g = pick([2,3,4,5]);
+          x = g * rand(2,6); y = g * rand(3,7);
+          if(gcd(x,y)===1) y+=g;
+        }
+        return {type, a:x, b:y, ans:gcd(x,y)===1};
+      }
+      case 'coprime_find': {
+        const coPairs = [[8,15],[9,16],[14,27],[15,28],[21,26],[25,36]];
+        const nonPairs = [[12,18],[14,21],[15,25],[18,27],[24,36],[20,35]];
+        const target = pick(coPairs);
+        const decoys = shuffle(nonPairs).slice(0,3);
+        const opts = shuffle([target, ...decoys]);
+        return {type, opts, correct: target};
+      }
+      case 'common_div': {
+        return {type, a, b, g: gcd(a,b), sel: new Set(), done:false};
+      }
+      case 'align_gcd': {
+        return {type, a, b, g: gcd(a,b), mode:'gcd', done:false};
+      }
+      case 'dual_gcd': {
+        return {type, a, b, curA:a, curB:b, steps:[], g:gcd(a,b), mode:'gcd', done:false};
+      }
+      case 'lcm_ox': {
+        const L = lcm(a,b);
+        const isMul = Math.random() < 0.5;
+        const val = isMul ? L * rand(1,3) : (Math.random()<0.5 ? L - a : L + pick([1,2,3]));
+        return {type, a, b, n: val, ans: val%a===0 && val%b===0};
+      }
+      case 'common_mul': {
+        const L = lcm(a,b);
+        const goods = [L, L*2, L*3];
+        const bads = [L-a, L+a, L*2-b, a*b+1, L+2].filter(x=>x%a!==0 || x%b!==0);
+        const nums = shuffle([...goods, ...shuffle(bads).slice(0,3)]);
+        return {type, a, b, L, nums, sel:new Set(), done:false};
+      }
+      case 'align_lcm': {
+        return {type, a, b, l: lcm(a,b), mode:'lcm', done:false};
+      }
+      case 'dual_lcm': {
+        return {type, a, b, curA:a, curB:b, steps:[], g:gcd(a,b), l:lcm(a,b), mode:'lcm', done:false};
+      }
+      case 'align_dual': {
+        return {type, a, b, g:gcd(a,b), l:lcm(a,b), mode:'dual', done:false};
+      }
+      case 'dual_dual': {
+        return {type, a, b, curA:a, curB:b, steps:[], g:gcd(a,b), l:lcm(a,b), mode:'dual', done:false};
+      }
+      case 'rel_calc': {
+        const G = gcd(a,b), L = lcm(a,b);
+        const blank = pick(['g','l','b']);
+        return {type, a, b, G, L, blank, done:false};
+      }
+      case 'real_case': {
+        const cases = [
+          {story:`가로의 길이가 ${a}cm, 세로의 길이가 ${b}cm인 직사각형 모양의 벽에 남는 부분 없이 가능한 한 큰 정사각형 타일을 붙이려고 합니다. 타일의 한 변의 길이는?`, ans:'gcd', val:gcd(a,b), unit:'cm', exp:'벽을 남김없이 쪼개어 타일을 채우므로 최대공약수!'},
+          {story:`어느 역에서 일반 버스는 ${a}분마다, 급행 버스는 ${b}분마다 출발합니다. 오전 9시에 두 버스가 동시에 출발한 후 처음으로 다시 동시에 출발하는 시각은 몇 분 뒤일까요?`, ans:'lcm', val:lcm(a,b), unit:'분 뒤', exp:'시간이 반복되며 다시 만나는 최초의 순간이므로 최소공배수!'},
+          {story:`사탕 ${a}개와 초콜릿 ${b}개를 가능한 한 많은 학생에게 남김없이 똑같이 나누어 주려고 합니다. 몇 명의 학생에게 나누어 줄 수 있을까요?`, ans:'gcd', val:gcd(a,b), unit:'명', exp:'두 종류의 간식을 똑같이 나누어 주므로 최대공약수!'},
+          {story:`가로 ${a}cm, 세로 ${b}cm인 직사각형 타일을 빈틈없이 이어 붙여 가장 작은 정사각형을 만들려고 합니다. 정사각형의 한 변의 길이는?`, ans:'lcm', val:lcm(a,b), unit:'cm', exp:'작은 타일을 이어 붙여 더 큰 정사각형을 만드므로 최소공배수!'}
+        ];
+        return {type, ...pick(cases), done:false};
+      }
+      case 'gcd_quiz': {
+        return {type, a, b, ans:gcd(a,b)};
+      }
+      case 'lcm_quiz': {
+        return {type, a, b, ans:lcm(a,b)};
+      }
+      default:
+        return {type:'coprime_ox', a, b, ans:gcd(a,b)===1};
+    }
+  });
+}
+
+/* ============ 스테이지 실행 ============ */
+function startStage(i){
+  G.si=i; G.mi=0; G.mistakes=0;
+  G.missions = createMissions(STAGES_CH2[i]);
+  show('play'); renderMission();
+}
+function renderHUD(drop=false){
+  const st=STAGES_CH2[G.si], s=calcStars(G.mistakes);
+  $('#playTitle').innerHTML = `<small>STAGE ${G.si+1} · 미션 ${G.mi+1}/${G.missions.length}</small><b>${st.title}</b>`;
+  const m=$('#meter');
+  m.innerHTML = `<div class="st">${[1,2,3].map(i=>`<span class="${i<=s?'on':''}">★</span>`).join('')}</div><small>실수 ${G.mistakes}</small>`;
+  if(drop){ m.classList.remove('drop'); void m.offsetWidth; m.classList.add('drop'); }
+  $('#mdots').innerHTML = G.missions.map((_,i)=>`<i class="${i<G.mi?'done':i===G.mi?'cur':''}"></i>`).join('');
+}
+function addMistake(){ const before=calcStars(G.mistakes); G.mistakes++; SFX.wrong(); renderHUD(calcStars(G.mistakes)<before); }
+function renderMission(){
+  const m=G.missions[G.mi], box=$('#mission');
+  $('#nextBar').classList.add('hidden'); renderHUD();
+  box.innerHTML=''; box.style.animation='none'; void box.offsetWidth; box.style.animation='fadeUp .35s ease';
+  
+  const handlers = {
+    coprime_ox: rCoprimeOX,
+    coprime_find: rCoprimeFind,
+    common_div: rCommonDiv,
+    align_gcd: rTextbookAlign,
+    align_lcm: rTextbookAlign,
+    align_dual: rTextbookAlignDual,
+    dual_gcd: rDualLadder,
+    dual_lcm: rDualLadder,
+    dual_dual: rDualLadder,
+    lcm_ox: rLcmOX,
+    common_mul: rCommonMul,
+    rel_calc: rRelCalc,
+    real_case: rRealCase,
+    gcd_quiz: rQuickQuiz,
+    lcm_quiz: rQuickQuiz
+  };
+  (handlers[m.type] || rCoprimeOX)(m, box);
+}
+function missionDone(){
+  const last = G.mi===G.missions.length-1;
+  $('#nextBtn').textContent = last ? '🏁 스테이지 완료!' : '다음 미션 ▶';
+  $('#nextBar').classList.remove('hidden');
+  setTimeout(()=>$('#nextBar').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+$('#nextBtn').onclick=()=>{ SFX.click(); G.mi++; if(G.mi>=G.missions.length) stageClear(); else { renderMission(); window.scrollTo({top:0,behavior:'smooth'}); } };
+$('#playBack').onclick=()=>{
+  SFX.click();
+  openModal(`<div style="font-size:44px">🏕️</div><h2>탐험을 멈출까요?</h2><p>지금 나가면 이번 스테이지는 처음부터 다시 해야 해요.</p>
+    <div class="mbtns two"><button class="btn ghost" id="mQuit">지도로</button><button class="btn primary" data-close>계속하기</button></div>`);
+  $('#mQuit').onclick=()=>{ closeModal(); show('map'); };
+};
+function feedback(box, kind, title, lines=[]){
+  const w=box.querySelector('.fbwrap');
+  w.innerHTML = `<div class="fb ${kind}"><div class="ttl">${title}</div>${lines.map(l=>`<div class="ln">${l}</div>`).join('')}</div>`;
+}
+const mhead = (t, extra='') => `<div class="mhead"><span class="qtag ${MTYPE[t].cls}">${MTYPE[t].icon} ${MTYPE[t].name}</span>${extra}</div>`;
+
+/* ============================================================
+   1. [신규/혁신] 교과서 스타일 세로줄 정렬 소인수분해 인터랙션 (Single Mode: GCD or LCM)
+============================================================ */
+function rTextbookAlign(m, box){
+  const isGCD = m.mode === 'gcd';
+  const fA = groupF(factorize(m.a)), fB = groupF(factorize(m.b));
+  const mapA = new Map(fA), mapB = new Map(fB);
+  const primes = [...new Set([...mapA.keys(), ...mapB.keys()])].sort((a,b)=>a-b);
+
+  const tagTitle = isGCD ? '세로줄 정렬과 최대공약수' : '세로줄 정렬과 최소공배수';
+  const guideTip = isGCD
+    ? `💡 <b>최대공약수(G)</b>: 각 소인수 열에서 <b>공통인 것 중 지수가 작거나 같은 항</b>을 터치하세요! (공통이 아닌 열은 비워둡니다)`
+    : `💡 <b class="lcm-t">최소공배수(L)</b>: 각 소인수 열에서 <b>모든 소인수를 모으고 지수가 크거나 같은 항</b>을 터치하세요!`;
+
+  box.innerHTML = `${mhead(m.type, `<button class="link" data-book="${isGCD?'matrix_gcd':'matrix_lcm'}">📖 세로줄 비법</button>`)}
+    <div class="q">${bigN(m.a)}와 ${bigN2(m.b)}의 <span class="kk">${tagTitle}</span></div>
+    <div class="sub">교과서처럼 소인수별로 <b>세로줄 자리</b>를 맞추었어요. 위·아래 항 중 알맞은 것을 <b>직접 터치</b>하세요!</div>
+    <div class="textbook-card">
+      <div class="tb-guide-tip">${guideTip}</div>
+      <div class="tg-board" id="tgBoard"></div>
+      <div class="tg-preview">
+        <div class="tg-prev-math" id="tgPrev">선택 결과: <span style="color:var(--muted)">각 열에서 항을 터치하세요</span></div>
+        <button class="btn ${isGCD?'primary':'accent'}" id="tgSubmit">선택 완료</button>
+      </div>
+    </div>
+    <div class="fbwrap"></div>`;
+
+  const board = box.querySelector('#tgBoard');
+  const selections = new Map(); // prime -> { chosenExp: number, source: 'A'|'B'|'none' }
+
+  // 보드 렌더링 함수
+  function renderBoard(){
+    let h = '';
+    // Row 1: A
+    h += `<div class="tg-row"><div class="tg-label">A (${m.a}) =</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const e = mapA.get(p) || 0;
+      const termHTML = e === 0 ? '-' : (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`);
+      const isSel = selections.get(p)?.source === 'A';
+      const cls = isSel ? (isGCD ? 'active-gcd' : 'active-lcm') : (e === 0 ? 'empty-cell' : '');
+      h += `<div class="tg-col">
+              <span class="tg-col-header">소인수 ${p}</span>
+              <button class="tg-btn ${cls}" data-row="A" data-p="${p}" data-e="${e}" ${e===0?'disabled':''}>${termHTML}</button>
+            </div>`;
+    });
+    h += `</div></div>`;
+
+    // Row 2: B
+    h += `<div class="tg-row"><div class="tg-label">B (${m.b}) =</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const e = mapB.get(p) || 0;
+      const termHTML = e === 0 ? '-' : (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`);
+      const isSel = selections.get(p)?.source === 'B';
+      const cls = isSel ? (isGCD ? 'active-gcd' : 'active-lcm') : (e === 0 ? 'empty-cell' : '');
+      h += `<div class="tg-col">
+              <button class="tg-btn ${cls}" data-row="B" data-p="${p}" data-e="${e}" ${e===0?'disabled':''}>${termHTML}</button>
+            </div>`;
+    });
+    h += `</div></div>`;
+
+    // Divider
+    h += `<div class="tg-divider"></div>`;
+
+    // Row 3: Target Slots
+    const targetLabel = isGCD ? `G (최대공약수) =` : `L (최소공배수) =`;
+    h += `<div class="tg-row"><div class="tg-label" style="font-weight:900;color:${isGCD?'var(--primary)':'var(--accent-d)'}">${targetLabel}</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const sel = selections.get(p);
+      let slotHTML = `?`;
+      let slotClass = '';
+      if(sel){
+        if(sel.chosenExp > 0){
+          slotHTML = sel.chosenExp > 1 ? `${p}<sup>${sel.chosenExp}</sup>` : `${p}`;
+          slotClass = isGCD ? 'filled-gcd' : 'filled-lcm';
+        } else {
+          slotHTML = `(제외)`;
+          slotClass = 'filled-none';
+        }
+      }
+      h += `<div class="tg-col">
+              <div class="tg-target-slot ${slotClass}">${slotHTML}</div>
+            </div>`;
+    });
+    h += `</div></div>`;
+
+    board.innerHTML = h;
+
+    // 이벤트 바인딩
+    board.querySelectorAll('.tg-btn[data-p]').forEach(btn => {
+      btn.onclick = () => {
+        if(m.done) return;
+        const p = +btn.dataset.p;
+        const row = btn.dataset.row;
+        const e = +btn.dataset.e;
+        SFX.click();
+
+        // 토글 동작
+        const cur = selections.get(p);
+        if(cur && cur.source === row){
+          selections.delete(p);
+        } else {
+          selections.set(p, { chosenExp: e, source: row });
+        }
+        renderBoard();
+        updatePreview();
+      };
+    });
+  }
+
+  function updatePreview(){
+    const prev = box.querySelector('#tgPrev');
+    const validPairs = [];
+    primes.forEach(p=>{
+      const sel = selections.get(p);
+      if(sel && sel.chosenExp > 0){
+        validPairs.push([p, sel.chosenExp]);
+      }
+    });
+    if(validPairs.length === 0){
+      prev.innerHTML = `선택 결과: <span style="color:var(--muted)">각 열에서 알맞은 항을 터치하세요</span>`;
+    } else {
+      const mathStr = powHTML(validPairs);
+      const val = validPairs.reduce((acc,[p,e]) => acc * (p**e), 1);
+      prev.innerHTML = `선택 결과: <b class="${isGCD?'':'lcm-t'}">${mathStr}</b> = <b>${fmt(val)}</b>`;
+    }
+  }
+
+  renderBoard();
+
+  // 제출 버튼
+  box.querySelector('#tgSubmit').onclick = () => {
+    if(m.done) return;
+    const errors = [];
+
+    primes.forEach(p=>{
+      const eA = mapA.get(p) || 0;
+      const eB = mapB.get(p) || 0;
+      const sel = selections.get(p);
+      const chosenExp = sel ? sel.chosenExp : 0;
+
+      if(isGCD){
+        const target = Math.min(eA, eB); // 둘 중 하나라도 0이면 0
+        if(chosenExp !== target){
+          if(target === 0){
+            errors.push(`소인수 <b>${p}</b>열: 두 수에 공통으로 들어있지 않으므로 최대공약수(G)에서는 <b>제외</b>해야 해요 (선택 취소).`);
+          } else {
+            errors.push(`소인수 <b>${p}</b>열: 공통인 것 중 <b>지수가 작거나 같은 쪽</b>인 <b>${p}${target>1?`<sup>${target}</sup>`:''}</b>을(를) 골라야 해요.`);
+          }
+        }
+      } else {
+        const target = Math.max(eA, eB);
+        if(chosenExp !== target){
+          errors.push(`소인수 <b>${p}</b>열: 두 수의 배수를 모두 품으려면 <b>지수가 크거나 같은 쪽</b>인 <b>${p}${target>1?`<sup>${target}</sup>`:''}</b>을(를) 골라야 해요.`);
+        }
+      }
+    });
+
+    if(errors.length === 0){
+      m.done = true;
+      SFX.correct();
+      box.querySelector('#tgSubmit').disabled = true;
+      box.querySelectorAll('.tg-btn').forEach(b=>b.disabled=true);
+
+      const targetVal = isGCD ? m.g : m.l;
+      const fTarget = groupF(factorize(targetVal));
+      feedback(box, 'ok', `🎉 완벽한 세로줄 정렬 추출!`,
+        [`${isGCD?'최대공약수(G)':'최소공배수(L)'} = <b>${powHTML(fTarget)} = ${fmt(targetVal)}</b>`,
+         isGCD ? '공통인 소인수 열에서 지수가 작거나 같은 것을 택해 곱했어요.' : '모든 소인수 열에서 지수가 크거나 같은 것을 택해 곱했어요.']);
+      missionDone();
+    } else {
+      addMistake();
+      feedback(box, 'bad', '세로줄 선택을 다시 점검해 봐요!', errors);
+    }
+  };
+}
+
+/* ============================================================
+   2. [신규/혁신] 교과서 스타일 세로줄 정렬 Dual Mode (G와 L 동시 완성)
+============================================================ */
+function rTextbookAlignDual(m, box){
+  const fA = groupF(factorize(m.a)), fB = groupF(factorize(m.b));
+  const mapA = new Map(fA), mapB = new Map(fB);
+  const primes = [...new Set([...mapA.keys(), ...mapB.keys()])].sort((a,b)=>a-b);
+
+  box.innerHTML = `${mhead('align_dual', `<button class="link" data-book="matrix_gcd">📖 소인수 듀얼 비법</button>`)}
+    <div class="q">${bigN(m.a)}와 ${bigN2(m.b)}의 <span class="kk">G & L 거듭제곱 듀얼 완성</span></div>
+    <div class="sub">세로줄 정렬 식 하나로 <b>최대공약수(G)</b>와 <b>최소공배수(L)</b>를 모두 완성하세요!</div>
+    <div class="textbook-card">
+      <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="tab on" id="tabGCD">1단계: 최대공약수 G (작은 지수)</button>
+        <button class="tab" id="tabLCM">2단계: 최소공배수 L (큰 지수)</button>
+      </div>
+      <div class="tb-guide-tip" id="dualTip">💡 <b>최대공약수(G) 모드</b>: 공통 소인수 중 <b>작은 지수</b>를 탭하세요! (공통 아님은 비움)</div>
+      <div class="tg-board" id="tgBoardDual"></div>
+      <div class="tg-preview">
+        <div class="tg-prev-math" id="dualPrev">G와 L을 차례로 채워주세요.</div>
+        <button class="btn primary" id="dualSubmit">선택 완료</button>
+      </div>
+    </div>
+    <div class="fbwrap"></div>`;
+
+  const selGCD = new Map();
+  const selLCM = new Map();
+  let currentTarget = 'GCD'; // 'GCD' | 'LCM'
+
+  const board = box.querySelector('#tgBoardDual');
+  const tip = box.querySelector('#dualTip');
+  const tabGCD = box.querySelector('#tabGCD');
+  const tabLCM = box.querySelector('#tabLCM');
+
+  tabGCD.onclick = () => { currentTarget = 'GCD'; tabGCD.classList.add('on'); tabLCM.classList.remove('on'); updateTip(); render(); };
+  tabLCM.onclick = () => { currentTarget = 'LCM'; tabLCM.classList.add('on'); tabGCD.classList.remove('on'); updateTip(); render(); };
+
+  function updateTip(){
+    if(currentTarget === 'GCD'){
+      tip.innerHTML = `💡 <b>최대공약수(G) 모드</b>: 공통 소인수 열에서 <b>작은 지수</b>를 탭하세요! (공통 아님은 비움)`;
+    } else {
+      tip.innerHTML = `💡 <b class="lcm-t">최소공배수(L) 모드</b>: 모든 소인수 열에서 <b>큰 지수</b>를 탭하세요!`;
+    }
+  }
+
+  function render(){
+    let h = '';
+    // Row 1: A
+    h += `<div class="tg-row"><div class="tg-label">A (${m.a}) =</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const e = mapA.get(p) || 0;
+      const termHTML = e === 0 ? '-' : (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`);
+      h += `<div class="tg-col">
+              <span class="tg-col-header">소인수 ${p}</span>
+              <button class="tg-btn ${e===0?'empty-cell':''}" data-row="A" data-p="${p}" data-e="${e}" ${e===0?'disabled':''}>${termHTML}</button>
+            </div>`;
+    });
+    h += `</div></div>`;
+
+    // Row 2: B
+    h += `<div class="tg-row"><div class="tg-label">B (${m.b}) =</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const e = mapB.get(p) || 0;
+      const termHTML = e === 0 ? '-' : (e > 1 ? `${p}<sup>${e}</sup>` : `${p}`);
+      h += `<div class="tg-col">
+              <button class="tg-btn ${e===0?'empty-cell':''}" data-row="B" data-p="${p}" data-e="${e}" ${e===0?'disabled':''}>${termHTML}</button>
+            </div>`;
+    });
+    h += `</div></div>`;
+
+    h += `<div class="tg-divider"></div>`;
+
+    // Target Row G
+    h += `<div class="tg-row" style="${currentTarget==='GCD'?'background:#eef2ff;border-radius:12px;padding:4px 0':''}">
+            <div class="tg-label" style="color:var(--primary);font-weight:900">G (최대공약수) =</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const sel = selGCD.get(p);
+      let sHTML = '?', sCls = '';
+      if(sel){
+        if(sel.chosenExp > 0){ sHTML = sel.chosenExp>1?`${p}<sup>${sel.chosenExp}</sup>`:`${p}`; sCls='filled-gcd'; }
+        else { sHTML = '(제외)'; sCls='filled-none'; }
+      }
+      h += `<div class="tg-col"><div class="tg-target-slot ${sCls}">${sHTML}</div></div>`;
+    });
+    h += `</div></div>`;
+
+    // Target Row L
+    h += `<div class="tg-row" style="${currentTarget==='LCM'?'background:#fff4ee;border-radius:12px;padding:4px 0':''}">
+            <div class="tg-label" style="color:var(--accent-d);font-weight:900">L (최소공배수) =</div><div class="tg-cols">`;
+    primes.forEach((p, idx)=>{
+      if(idx > 0) h += `<span class="tg-op">×</span>`;
+      const sel = selLCM.get(p);
+      let sHTML = '?', sCls = '';
+      if(sel){
+        if(sel.chosenExp > 0){ sHTML = sel.chosenExp>1?`${p}<sup>${sel.chosenExp}</sup>`:`${p}`; sCls='filled-lcm'; }
+        else { sHTML = '(제외)'; sCls='filled-none'; }
+      }
+      h += `<div class="tg-col"><div class="tg-target-slot ${sCls}">${sHTML}</div></div>`;
+    });
+    h += `</div></div>`;
+
+    board.innerHTML = h;
+
+    board.querySelectorAll('.tg-btn[data-p]').forEach(btn=>{
+      btn.onclick = () => {
+        if(m.done) return;
+        const p = +btn.dataset.p;
+        const row = btn.dataset.row;
+        const e = +btn.dataset.e;
+        SFX.click();
+
+        const activeMap = currentTarget === 'GCD' ? selGCD : selLCM;
+        const cur = activeMap.get(p);
+        if(cur && cur.source === row){
+          activeMap.delete(p);
+        } else {
+          activeMap.set(p, { chosenExp: e, source: row });
+        }
+        render();
+        updatePreview();
+      };
+    });
+  }
+
+  function updatePreview(){
+    const prev = box.querySelector('#dualPrev');
+    const gPairs = primes.map(p=>selGCD.get(p)?.chosenExp||0).filter(e=>e>0);
+    const lPairs = primes.map(p=>selLCM.get(p)?.chosenExp||0).filter(e=>e>0);
+    prev.innerHTML = `<div>G: <b>${gPairs.length?powHTML(primes.filter(p=>selGCD.get(p)?.chosenExp>0).map(p=>[p,selGCD.get(p).chosenExp])):'?'}</b> &nbsp;|&nbsp; L: <b class="lcm-t">${lPairs.length?powHTML(primes.filter(p=>selLCM.get(p)?.chosenExp>0).map(p=>[p,selLCM.get(p).chosenExp])):'?'}</b></div>`;
+  }
+
+  render();
+
+  box.querySelector('#dualSubmit').onclick = () => {
+    if(m.done) return;
+    const errors = [];
+
+    // GCD 체크
+    primes.forEach(p=>{
+      const eA = mapA.get(p) || 0, eB = mapB.get(p) || 0;
+      const target = Math.min(eA, eB);
+      const chosen = selGCD.get(p)?.chosenExp || 0;
+      if(chosen !== target){
+        if(target === 0) errors.push(`[G 오류] 소인수 <b>${p}</b>은 공통이 아니므로 최대공약수(G)에서는 비워야 해요.`);
+        else errors.push(`[G 오류] 소인수 <b>${p}</b>열: 최대공약수(G)는 작은 지수인 <b>${p}${target>1?`<sup>${target}</sup>`:''}</b>을(를) 골라야 해요.`);
+      }
+    });
+
+    // LCM 체크
+    primes.forEach(p=>{
+      const eA = mapA.get(p) || 0, eB = mapB.get(p) || 0;
+      const target = Math.max(eA, eB);
+      const chosen = selLCM.get(p)?.chosenExp || 0;
+      if(chosen !== target){
+        errors.push(`[L 오류] 소인수 <b>${p}</b>열: 최소공배수(L)는 큰 지수인 <b>${p}${target>1?`<sup>${target}</sup>`:''}</b>을(를) 골라야 해요.`);
+      }
+    });
+
+    if(errors.length === 0){
+      m.done = true;
+      SFX.correct();
+      box.querySelector('#dualSubmit').disabled = true;
+      box.querySelectorAll('.tg-btn').forEach(b=>b.disabled=true);
+      feedback(box,'ok','👑 소인수분해 듀얼 마스터 완벽 성공!',
+        [`최대공약수(G) = <b>${powHTML(groupF(factorize(m.g)))} = ${m.g}</b>`,
+         `최소공배수(L) = <b>${powHTML(groupF(factorize(m.l)))} = ${m.l}</b>`,
+         `A × B (${m.a*m.b}) = G × L (${m.g*m.l}) 성립!`]);
+      missionDone();
+    } else {
+      addMistake();
+      feedback(box,'bad','G 또는 L에 수정할 부분이 있어요!', errors);
+    }
+  };
+}
+
+/* ============================================================
+   3. 서로소 판별 O/X & 서로소 쌍 찾기
+============================================================ */
+function rCoprimeOX(m, box){
+  box.innerHTML = `${mhead('coprime_ox',`<button class="link" data-book="coprime">📖 서로소 비법</button>`)}
+    <div class="q">${bigN(m.a)}와 ${bigN2(m.b)}${jo(m.b,'은','는')} <span class="kk">서로소</span>일까요?</div>
+    <div class="sub">공약수가 1뿐인 두 수를 서로소라고 해요. 1 이외의 공약수가 있는지 확인해 보세요!</div>
+    <div class="ox-row"><button class="ox o" data-a="1"><span>⭕</span>맞아요 (서로소)</button><button class="ox x" data-a="0"><span>❌</span>아니에요</button></div>
+    <div class="fbwrap"></div>`;
+  box.querySelectorAll('.ox').forEach(b=>b.onclick=()=>{
+    const a = b.dataset.a==='1', ok = a===m.ans;
+    box.querySelectorAll('.ox').forEach(x=>x.disabled=true); b.classList.add('chosen');
+    const g = gcd(m.a, m.b);
+    ok ? SFX.correct() : addMistake();
+    const exp = m.ans
+      ? `최대공약수가 <b>1</b>뿐이므로 서로소가 맞아요! ${Y}`
+      : `최대공약수가 <b>${g}</b>이므로 서로소가 아니에요 (공약수: ${commonDivisors(m.a,m.b).join(', ')}) ${N}`;
+    feedback(box, ok?'ok':'bad', `${ok?'🎉 정답!':'😅 아쉬워요!'} ${m.a}와 ${m.b}${jo(m.b,'은','는')} 서로소${m.ans?'가 맞아요.':'가 아니에요.'}`, [exp]);
+    missionDone();
+  });
+}
+
+function rCoprimeFind(m, box){
+  box.innerHTML = `${mhead('coprime_find',`<button class="link" data-book="coprime">📖 서로소 비법</button>`)}
+    <div class="q">다음 중 <span class="kk">서로소인 두 수</span>를 고르세요</div>
+    <div class="sub">공약수가 1뿐인 쌍을 찾아 터치하세요.</div>
+    <div class="chips grid2">${m.opts.map(([x,y], idx)=>`<button class="chip" data-idx="${idx}">${x} 와 ${y}</button>`).join('')}</div>
+    <div class="fbwrap"></div>`;
+  box.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const [x,y] = m.opts[+c.dataset.idx];
+    const ok = gcd(x,y)===1;
+    if(ok){
+      c.classList.add('ok'); box.querySelectorAll('.chip').forEach(b=>b.disabled=true);
+      SFX.correct();
+      feedback(box,'ok',`🎉 정답! ${x}와 ${y}${jo(y,'은','는')} 서로소예요.`,
+        [`${x}의 약수: ${divisorsOf(x).join(', ')}`, `${y}의 약수: ${divisorsOf(y).join(', ')}`, `공약수가 <b>1뿐</b>이에요!`]);
+      missionDone();
+    } else {
+      addMistake(); c.classList.add('bad'); c.disabled=true;
+      const g = gcd(x,y);
+      feedback(box,'bad',`아쉬워요! ${x}와 ${y}${jo(y,'은','는')} 서로소가 아니에요.`,
+        [`공약수에 <b>${g}</b>이(가) 포함되어 있어요. (공통 약수: ${commonDivisors(x,y).join(', ')})`]);
+    }
+  });
+}
+
+/* ============================================================
+   4. 두 수의 공약수 발굴 (태그 수집)
+============================================================ */
+function rCommonDiv(m, box){
+  const all = commonDivisors(m.a, m.b);
+  box.innerHTML = `${mhead('common_div',`<button class="link" data-book="coprime">📖 공약수 성질</button>`)}
+    <div class="q">${bigN(m.a)}와 ${bigN2(m.b)}의 <span class="kk">공약수</span>를 모두 발굴하세요</div>
+    <div class="sub">💡 힌트: 두 수의 공약수는 <b>최대공약수(${m.g})의 약수</b>와 같아요!</div>
+    <div class="chips">${divisorsOf(Math.max(m.a,m.b)).map(n=>`<button class="chip" data-n="${n}">${n}</button>`).join('')}</div>
+    <div class="actions"><button class="btn primary" id="cdSubmit">선택 완료</button></div><div class="fbwrap"></div>`;
+  const chips = [...box.querySelectorAll('.chip')];
+  chips.forEach(c=>c.onclick=()=>{
+    if(m.done) return; SFX.click(); const n=+c.dataset.n;
+    c.classList.remove('bad');
+    m.sel.has(n)?m.sel.delete(n):m.sel.add(n);
+    c.classList.toggle('sel', m.sel.has(n));
+  });
+  box.querySelector('#cdSubmit').onclick=()=>{
+    if(m.sel.size===0){ toast('하나 이상 골라 주세요!'); return; }
+    const wrong = [...m.sel].filter(n => !all.includes(n));
+    const missed = all.filter(n => !m.sel.has(n));
+    if(!wrong.length && !missed.length){
+      m.done=true; SFX.correct();
+      chips.forEach(c=>{ c.disabled=true; if(all.includes(+c.dataset.n)) c.className='chip ok'; else c.style.opacity=.3; });
+      feedback(box,'ok',`🎉 완벽해요! ${m.a}와 ${m.b}의 공약수를 모두 찾았어요.`,
+        [`공약수: <b>${all.join(', ')}</b>`, `가장 큰 공약수인 <b>최대공약수는 ${m.g}</b>이고, 모든 공약수는 ${m.g}의 약수예요!`]);
+      box.querySelector('#cdSubmit').disabled=true; missionDone();
+    } else {
+      addMistake();
+      chips.forEach(c=>{ const n=+c.dataset.n; if(wrong.includes(n)){ c.classList.remove('sel'); void c.offsetWidth; c.classList.add('bad'); } });
+      wrong.forEach(n=>m.sel.delete(n));
+      const lines = wrong.map(n=>`${N} <b>${n}</b>은 둘 모두를 나누어떨어지게 하지 못해요.`);
+      if(missed.length) lines.push(`🔎 아직 찾지 못한 공약수가 <b>${missed.length}개</b> 더 있어요.`);
+      feedback(box,'bad','다시 확인해 봐요!', lines);
+    }
+  };
+}
+
+/* ============================================================
+   5. 동시 거꾸로 나눗셈 사다리 (Dual Ladder: GCD / LCM / Dual)
+============================================================ */
+const PRIMES = [2,3,5,7,11,13];
+function rDualLadder(m, box){
+  const isGCD = m.mode === 'gcd';
+  const isLCM = m.mode === 'lcm';
+  const tagTitle = isGCD ? '최대공약수 구하기' : isLCM ? '최소공배수 구하기' : 'G & L 듀얼 배틀';
+  box.innerHTML = `${mhead(m.type, `<button class="link" data-book="${isGCD?'dual_gcd':'dual_lcm'}">📖 사다리 비법</button>`)}
+    <div class="q">${bigN(m.a)}와 ${bigN2(m.b)}의 <span class="kk">${tagTitle}</span></div>
+    <div class="sub">두 수를 동시에 나눌 수 있는 공통 소수를 골라 몫이 <b>서로소</b>가 될 때까지 나누세요.</div>
+    <div class="dual-ladder-wrap">
+      <div class="dl-board"></div>
+      <div class="dl-ctrl">
+        <div class="dl-status" id="dlStatus">공통 소수를 선택하세요 👇</div>
+        <div class="pbtns">${PRIMES.map(p=>`<button class="pbtn" data-p="${p}">÷${p}</button>`).join('')}
+          <button class="pbtn done-btn" id="dlDoneBtn" disabled>더 이상 안 나눠짐 (서로소)</button>
+        </div>
+      </div>
+    </div>
+    <div class="calc-zone"></div>
+    <div class="fbwrap"></div>`;
+
+  const board = box.querySelector('.dl-board');
+  const status = box.querySelector('#dlStatus');
+  const doneBtn = box.querySelector('#dlDoneBtn');
+
+  function draw(){
+    let h = '';
+    let curA = m.a, curB = m.b;
+    m.steps.forEach(p=>{
+      h += `<div class="dl-row"><div class="dl-div ${m.done?'gcd-hit':''}">${p}</div><div class="dl-nums"><span>${curA}</span><span>${curB}</span></div></div>`;
+      curA /= p; curB /= p;
+    });
+    if(!m.done){
+      h += `<div class="dl-row curr"><div class="dl-div">?</div><div class="dl-nums"><span>${curA}</span><span>${curB}</span></div></div>`;
+    } else {
+      h += `<div class="dl-row last"><div class="dl-div"></div><div class="dl-nums ${m.done && (isLCM||m.mode==='dual')?'lcm-hit':''}"><span>${curA}</span><span>${curB}</span></div></div>`;
+    }
+    board.innerHTML = h;
+
+    const isCoprime = gcd(m.curA, m.curB) === 1;
+    doneBtn.disabled = !isCoprime;
+    if(isCoprime && !m.done){
+      status.className = 'dl-status done';
+      status.innerHTML = `✨ 몫 ${m.curA}와 ${m.curB}${jo(m.curB,'은','는')} <b>서로소</b>예요! 오른쪽 완료 버튼을 누르세요.`;
+    }
+  }
+  draw();
+
+  box.querySelectorAll('.pbtn[data-p]').forEach(b=>b.onclick=()=>{
+    if(m.done) return;
+    const p = +b.dataset.p;
+    if(m.curA % p === 0 && m.curB % p === 0){
+      m.steps.push(p);
+      m.curA /= p; m.curB /= p;
+      SFX.pop();
+      status.className = 'dl-status';
+      status.innerHTML = `${Y} 두 수를 모두 ${p}(으)로 나누었어요!`;
+      draw();
+    } else {
+      addMistake();
+      let why = '';
+      if(m.curA % p !== 0 && m.curB % p !== 0) why = `둘 다 ${p}(으)로 나누어떨어지지 않아요.`;
+      else if(m.curA % p !== 0) why = `${m.curA}${jo(m.curA,'은','는')} ${p}(으)로 나누어떨어지지 않아요.`;
+      else why = `${m.curB}${jo(m.curB,'은','는')} ${p}(으)로 나누어떨어지지 않아요.`;
+      status.className = 'dl-status';
+      status.innerHTML = `${N} 공약수가 아니에요: ${why}`;
+    }
+  });
+
+  doneBtn.onclick = () => {
+    if(m.done) return;
+    if(gcd(m.curA, m.curB) > 1){
+      addMistake();
+      status.innerHTML = `${N} 아직 두 수를 더 나눌 수 있는 공약수가 남아 있어요!`;
+      return;
+    }
+    m.done = true;
+    box.querySelectorAll('.pbtn').forEach(b=>b.disabled=true);
+    SFX.correct();
+    draw();
+
+    const gProd = m.steps.length ? m.steps.join(' × ') : '1';
+    const G = m.g;
+    const lProd = [...m.steps, m.curA, m.curB].join(' × ');
+    const L = m.l || lcm(m.a, m.b);
+
+    const cz = box.querySelector('.calc-zone');
+    if(isGCD){
+      cz.innerHTML = `<div class="res-banner">
+        <small>최대공약수(G) = 사다리 왼쪽 줄의 곱</small>
+        <div class="big">${m.steps.length>1 ? `${gProd} = ` : ''}<b>${G}</b></div>
+        <div class="mid">${m.a}와 ${m.b}의 최대공약수는 <b>${G}</b>입니다!</div>
+      </div>`;
+      feedback(box,'ok','🎉 완벽한 나눗셈 사다리!',['왼쪽에 나눈 수들의 곱이 바로 두 수의 공통된 최대 묶음이에요.']);
+      missionDone();
+    } else if(isLCM){
+      cz.innerHTML = `<div class="res-banner">
+        <small>최소공배수(L) = L자 전체의 곱 (왼쪽 줄 × 아래 몫)</small>
+        <div class="big">${lProd} = <b>${L}</b></div>
+        <div class="mid">${m.a}와 ${m.b}의 최소공배수는 <b>${L}</b>입니다!</div>
+      </div>`;
+      feedback(box,'ok','🎉 L자의 마법 완성!',['왼쪽 공약수들과 아래 남은 몫을 모두 곱하여 최소공배수를 완성했어요.']);
+      missionDone();
+    } else {
+      cz.innerHTML = `<div class="res-banner">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><small>최대공약수 (왼쪽)</small><div class="big" style="color:var(--primary)">G = ${G}</div></div>
+          <div><small>최소공배수 (L자 전체)</small><div class="big" style="color:var(--accent)">L = ${L}</div></div>
+        </div>
+        <div class="mid" style="margin-top:6px">${m.a} × ${m.b} = ${m.a*m.b} &nbsp; <b>=</b> &nbsp; ${G} × ${L} = ${G*L} (A×B = G×L 성립!)</div>
+      </div>`;
+      feedback(box,'ok','👑 듀얼 마스터 성공!',['한 번의 사다리 나눗셈으로 최대공약수와 최소공배수를 모두 정복했어요!']);
+      missionDone();
+    }
+  };
+}
+
+/* ============================================================
+   6. 공배수 판별 O/X & 공배수 찾기
+============================================================ */
+function rLcmOX(m, box){
+  box.innerHTML = `${mhead('lcm_ox',`<button class="link" data-book="lcm_rule">📖 공배수 비법</button>`)}
+    <div class="q">${bigN(m.n)}${jo(m.n,'은','는')} ${m.a}와 ${m.b}의 <span class="kk">공배수</span>일까요?</div>
+    <div class="sub">${m.n}이 ${m.a}의 배수이면서 동시에 ${m.b}의 배수인지 확인해 보세요.</div>
+    <div class="ox-row"><button class="ox o" data-a="1"><span>⭕</span>맞아요 (공배수)</button><button class="ox x" data-a="0"><span>❌</span>아니에요</button></div>
+    <div class="fbwrap"></div>`;
+  box.querySelectorAll('.ox').forEach(b=>b.onclick=()=>{
+    const a = b.dataset.a==='1', ok = a===m.ans;
+    box.querySelectorAll('.ox').forEach(x=>x.disabled=true); b.classList.add('chosen');
+    ok ? SFX.correct() : addMistake();
+    const L = lcm(m.a, m.b);
+    const exp = m.ans
+      ? `${m.n} ÷ ${m.a} = ${m.n/m.a}이고 ${m.n} ÷ ${m.b} = ${m.n/m.b}이므로 공배수예요! (최소공배수 ${L}의 배수)`
+      : `${m.n}은 ${m.a}와 ${m.b} 둘 중 적어도 하나로 나누어떨어지지 않아요. (최소공배수는 ${L})`;
+    feedback(box, ok?'ok':'bad', `${ok?'🎉 정답!':'😅 아쉬워요!'} ${m.n}${jo(m.n,'은','는')} 공배수${m.ans?'가 맞아요.':'가 아니에요.'}`, [exp]);
+    missionDone();
+  });
+}
+
+function rCommonMul(m, box){
+  box.innerHTML = `${mhead('common_mul',`<button class="link" data-book="lcm_rule">📖 공배수 비법</button>`)}
+    <div class="q">다음 중 ${bigN(m.a)}와 ${bigN2(m.b)}의 <span class="kk">공배수</span>를 모두 고르세요</div>
+    <div class="sub">두 수의 최소공배수는 <b>${m.L}</b>입니다. 공배수는 최소공배수의 배수예요!</div>
+    <div class="chips grid3">${m.nums.map(n=>`<button class="chip" data-n="${n}">${fmt(n)}</button>`).join('')}</div>
+    <div class="actions"><button class="btn primary" id="cmSubmit">선택 완료</button></div><div class="fbwrap"></div>`;
+  const chips = [...box.querySelectorAll('.chip')];
+  chips.forEach(c=>c.onclick=()=>{
+    if(m.done) return; SFX.click(); const n=+c.dataset.n;
+    c.classList.remove('bad');
+    m.sel.has(n)?m.sel.delete(n):m.sel.add(n);
+    c.classList.toggle('sel', m.sel.has(n));
+  });
+  box.querySelector('#cmSubmit').onclick=()=>{
+    if(m.sel.size===0){ toast('하나 이상 골라 주세요!'); return; }
+    const wrong = [...m.sel].filter(n=>n%m.L!==0);
+    const missed = m.nums.filter(n=>n%m.L===0 && !m.sel.has(n));
+    if(!wrong.length && !missed.length){
+      m.done=true; SFX.correct();
+      chips.forEach(c=>{ c.disabled=true; if(m.sel.has(+c.dataset.n)) c.className='chip ok'; });
+      feedback(box,'ok',`🎉 완벽해요! 공배수를 모두 찾았어요.`,
+        [`선택한 수들은 모두 최소공배수 <b>${m.L}</b>의 배수예요!`]);
+      box.querySelector('#cmSubmit').disabled=true; missionDone();
+    } else {
+      addMistake();
+      chips.forEach(c=>{ const n=+c.dataset.n; if(wrong.includes(n)){ c.classList.remove('sel'); void c.offsetWidth; c.classList.add('bad'); } });
+      wrong.forEach(n=>m.sel.delete(n));
+      const lines = wrong.map(n=>`${N} <b>${n}</b>은 최소공배수 ${m.L}의 배수가 아니에요.`);
+      if(missed.length) lines.push(`🔎 아직 찾지 못한 공배수가 <b>${missed.length}개</b> 더 있어요.`);
+      feedback(box,'bad','다시 살펴봐요!', lines);
+    }
+  };
+}
+
+/* ============================================================
+   7. A × B = G × L 관계식 계산 (Rel Calc)
+============================================================ */
+function rRelCalc(m, box){
+  const {a, b, G, L, blank} = m;
+  const prod = a * b;
+  let questionHTML = '';
+  let correctVal = 0;
+
+  if(blank === 'g'){
+    questionHTML = `두 수 ${bigN(a)}와 ${bigN2(b)}의 최소공배수가 <b>${L}</b>일 때, <span class="kk">최대공약수(G)</span>는?`;
+    correctVal = G;
+  } else if(blank === 'l'){
+    questionHTML = `두 수 ${bigN(a)}와 ${bigN2(b)}의 최대공약수가 <b>${G}</b>일 때, <span class="kk">최소공배수(L)</span>는?`;
+    correctVal = L;
+  } else {
+    questionHTML = `어떤 수 A와 <b>${b}</b>의 최대공약수가 <b>${G}</b>, 최소공배수가 <b>${L}</b>일 때, <span class="kk">A</span>의 값은?`;
+    correctVal = a;
+  }
+
+  box.innerHTML = `${mhead('rel_calc', `<button class="link" data-book="product_rel">📖 두 수의 곱 공식</button>`)}
+    <div class="q">${questionHTML}</div>
+    <div class="sub">💡 비법 공식: <b>A × B = G × L</b> (두 수의 곱 = 최대공약수 × 최소공배수)</div>
+    <div class="eq">${a} × ${b} = ${prod} &nbsp;=&nbsp; G × L</div>
+    <div class="chips grid3" id="relOpts"></div>
+    <div class="fbwrap"></div>`;
+
+  const decoys = [correctVal + rand(1,3), Math.max(1, correctVal - rand(1,3)), correctVal * 2, Math.floor(correctVal/2) || correctVal+4];
+  const opts = shuffle([correctVal, ...shuffle([...new Set(decoys)]).slice(0,3)]);
+
+  const optWrap = box.querySelector('#relOpts');
+  opts.forEach(v=>{
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = fmt(v);
+    btn.onclick = () => {
+      if(v === correctVal){
+        btn.classList.add('ok'); optWrap.querySelectorAll('.chip').forEach(b=>b.disabled=true);
+        SFX.correct();
+        feedback(box,'ok',`🎉 정답! 빈칸의 값은 ${fmt(correctVal)}입니다.`,
+          [`${a} × ${b} = ${prod}`, `${G} × ${L} = ${prod}`, `두 식의 값이 <b>${prod}</b>로 완전히 일치해요!`]);
+        missionDone();
+      } else {
+        addMistake(); btn.classList.add('bad'); btn.disabled=true;
+        feedback(box,'bad','다시 계산해 봐요!',
+          [`A × B = G × L 공식에 숫자를 대입해 보세요: ${a} × ${b} = ${G} × ${L}`]);
+      }
+    };
+    optWrap.appendChild(btn);
+  });
+}
+
+/* ============================================================
+   8. 실생활 문장제 탐정 (Real Case)
+============================================================ */
+function rRealCase(m, box){
+  box.innerHTML = `${mhead('real_case', `<button class="link" data-book="real_life">📖 실생활 판별법</button>`)}
+    <div class="q">문제를 읽고 <span class="kk">어떤 개념을 써야 할지</span> 판별하세요</div>
+    <div class="case-card">${m.story}</div>
+    <div class="type-select">
+      <button class="ts-btn" data-type="gcd"><span style="font-size:28px">쪼개기 ✂️</span><b>최대공약수 (G)</b><span style="font-size:13px;color:var(--muted)">나누어 담기, 타일 채우기</span></button>
+      <button class="ts-btn" data-type="lcm"><span style="font-size:28px">반복하기 🔁</span><b>최소공배수 (L)</b><span style="font-size:13px;color:var(--muted)">동시 출발, 블록 쌓기</span></button>
+    </div>
+    <div class="calc-step hidden" id="realCalcStep" style="margin-top:16px">
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px">정답 수치를 선택하세요:</div>
+      <div class="chips grid3" id="realOpts"></div>
+    </div>
+    <div class="fbwrap"></div>`;
+
+  const calcStep = box.querySelector('#realCalcStep');
+  const optWrap = box.querySelector('#realOpts');
+
+  box.querySelectorAll('.ts-btn').forEach(btn=>{
+    btn.onclick = () => {
+      const chosen = btn.dataset.type;
+      if(chosen === m.ans){
+        SFX.correct();
+        box.querySelectorAll('.ts-btn').forEach(b=>{ b.disabled=true; if(b!==btn) b.style.opacity=.4; else b.classList.add('sel'); });
+        feedback(box,'ok',`🎯 훌륭한 추리! ${m.ans==='gcd'?'최대공약수':'최소공배수'} 문제가 맞아요.`, [m.exp]);
+        showValueStep();
+      } else {
+        addMistake();
+        feedback(box,'bad','다시 생각해 봐요!',
+          [chosen==='gcd' ? '작은 것을 반복해서 쌓거나 동시에 만나는 문제는 <b>최소공배수</b>예요!' : '큰 것을 똑같이 나누거나 쪼개어 채우는 문제는 <b>최대공약수</b>예요!']);
+      }
+    };
+  });
+
+  function showValueStep(){
+    calcStep.classList.remove('hidden');
+    const correctVal = m.val;
+    const decoys = [correctVal + rand(1,4), Math.max(1, correctVal - rand(1,4)), correctVal * 2];
+    const opts = shuffle([correctVal, ...shuffle([...new Set(decoys)]).slice(0,3)]);
+
+    optWrap.innerHTML = '';
+    opts.forEach(v=>{
+      const c = document.createElement('button');
+      c.className = 'chip';
+      c.textContent = `${fmt(v)} ${m.unit}`;
+      c.onclick = () => {
+        if(v === correctVal){
+          c.classList.add('ok'); optWrap.querySelectorAll('.chip').forEach(b=>b.disabled=true);
+          SFX.correct();
+          feedback(box,'ok',`🎉 미션 해결! 정답은 ${fmt(correctVal)} ${m.unit}입니다.`,
+            [`상황 판별과 정확한 계산까지 완벽히 해냈어요!`]);
+          missionDone();
+        } else {
+          addMistake(); c.classList.add('bad'); c.disabled=true;
+          feedback(box,'bad','계산이 조금 빗나갔어요!',['차근차근 거꾸로 나눗셈이나 소인수분해를 이용해 구해 보세요.']);
+        }
+      };
+      optWrap.appendChild(c);
+    });
+  }
+}
+
+/* ============================================================
+   9. 간단 퀴즈 (Quick Quiz)
+============================================================ */
+function rQuickQuiz(m, box){
+  const isGCD = m.type === 'gcd_quiz';
+  const val = m.ans;
+  box.innerHTML = `${mhead(m.type)}
+    <div class="q">${bigN(m.a)}와 ${bigN2(m.b)}의 <span class="kk">${isGCD?'최대공약수':'최소공배수'}</span>는?</div>
+    <div class="sub">배운 비법(소인수분해 세로줄 정렬 또는 사다리 나눗셈)을 이용해 구해 보세요.</div>
+    <div class="chips grid3" id="qqOpts"></div>
+    <div class="fbwrap"></div>`;
+
+  const decoys = [val + rand(1,3), Math.max(1, val - rand(1,3)), val * 2, Math.floor(val/2)||val+5];
+  const opts = shuffle([val, ...shuffle([...new Set(decoys)]).slice(0,3)]);
+  const optWrap = box.querySelector('#qqOpts');
+
+  opts.forEach(v=>{
+    const c = document.createElement('button');
+    c.className = 'chip';
+    c.textContent = fmt(v);
+    c.onclick = () => {
+      if(v === val){
+        c.classList.add('ok'); optWrap.querySelectorAll('.chip').forEach(b=>b.disabled=true);
+        SFX.correct();
+        feedback(box,'ok',`🎉 정답! ${isGCD?'최대공약수':'최소공배수'}는 ${val}입니다.`,
+          [`${isGCD?`두 수의 공약수: ${commonDivisors(m.a,m.b).join(', ')}`:`${m.a}와 ${m.b}의 첫 번째 공통 배수: ${val}`}`]);
+        missionDone();
+      } else {
+        addMistake(); c.classList.add('bad'); c.disabled=true;
+        feedback(box,'bad','다시 계산해 봐요!',['소인수분해 거듭제곱에서 지수를 비교하거나 사다리 나눗셈을 이용해 보세요.']);
+      }
+    };
+    optWrap.appendChild(c);
+  });
+}
+
+/* ============ 스테이지 클리어 / 엔딩 ============ */
+function starsRow(n){ return `<div class="mstars">${[1,2,3].map(i=>`<span class="${i<=n?'on':''}" style="animation-delay:${i*.18}s">★</span>`).join('')}</div>`; }
+function stageClear(){
+  const s = calcStars(G.mistakes), i = G.si, wasLocked = !unlocked(i+1);
+  save.stars[i] = Math.max(save.stars[i], s); persist(); updateTop();
+  const last = i === STAGES_CH2.length-1;
+  if(last){ showEnding(s); return; }
+  SFX.clear(); confetti(60);
+  const msg = s===3 ? '완벽해요! 비법을 완벽히 마스터했어요.' : s===2 ? '잘했어요! 실수를 줄이면 ★3도 가능해요.' : '클리어! 도감을 복습하고 다시 도전해 봐요.';
+  openModal(`<div style="font-size:15px;font-weight:800;color:var(--accent-d)">Ch.2 STAGE ${i+1} 클리어!</div>
+    <h2>${STAGES_CH2[i].title} 정복 🎉</h2>${starsRow(s)}
+    <p>실수 ${G.mistakes}회 · ${msg}</p>
+    ${wasLocked?`<div class="unlock">🔓 새 스테이지 해금! STAGE ${i+2} · ${STAGES_CH2[i+1].title}</div>`:''}
+    <div class="mbtns">
+      <button class="btn primary big" id="mNext" style="background:var(--accent);box-shadow:0 6px 0 var(--accent-d)">다음 스테이지로 ▶</button>
+      <div class="mbtns two" style="margin-top:0"><button class="btn ghost" id="mMap">지도</button><button class="btn ghost" id="mRetry">↻ 다시 도전</button></div>
+    </div>`);
+  $('#mNext').onclick=()=>{ closeModal(); openIntro(i+1); };
+  $('#mMap').onclick=()=>{ closeModal(); show('map'); };
+  $('#mRetry').onclick=()=>{ closeModal(); startStage(i); };
+}
+
+function showEnding(s){
+  SFX.fanfare(); confetti(180);
+  const ts = totalStars(), max = STAGES_CH2.length*3;
+  openModal(`<div style="font-size:64px;line-height:1">👑</div>
+    <h2>소인수 원정대 2 완주!</h2>${starsRow(s)}
+    <p>최종 보스 ‘조화의 탑’을 정복하고 공약수와 공배수의 비밀을 풀었어요!<br>Ch.2 총 획득 별 <b style="color:var(--ink)">★ ${ts} / ${max}</b></p>
+    <div class="ex" style="text-align:left;margin-top:12px;background:#f7f8fc">
+      <div>✔ 서로소 판별 및 공약수·공배수 성질</div>
+      <div>✔ 소인수분해 세로줄 정렬 (작은 지수 G vs 큰 지수 L)</div>
+      <div>✔ 동시 거꾸로 나눗셈 (왼쪽 줄 G vs L자 전체 L)</div>
+      <div>✔ 두 수의 곱 공식 (A × B = G × L) 및 실생활 해결</div>
+    </div>
+    <div class="mbtns two">
+      <button class="btn ghost" id="mRetry">↻ 다시 도전</button>
+      <a href="factor-quest.html" class="btn primary" style="text-decoration:none;display:grid;place-items:center">Ch.1로 돌아가기</a>
+    </div>`);
+  $('#mRetry').onclick=()=>{ closeModal(); startStage(STAGES_CH2.length-1); };
+}
+
+function confetti(n){
+  const colors=['#5b5bd6','#ff8a4c','#12b76a','#ffc233','#e2468a','#22b8cf'];
+  for(let i=0;i<n;i++){
+    const c=document.createElement('div'); c.className='confetti';
+    c.style.left=Math.random()*100+'vw'; c.style.background=pick(colors);
+    c.style.animationDuration=(2+Math.random()*2)+'s'; c.style.animationDelay=(Math.random()*.6)+'s';
+    c.style.transform=`rotate(${rand(0,360)}deg)`; document.body.appendChild(c);
+    setTimeout(()=>c.remove(),5000);
+  }
+}
+
+/* ============ 상단 버튼 ============ */
+$('#bookBtn').onclick=()=>{ SFX.click(); openBook(); };
+$('#soundBtn').onclick=()=>{ SFX.on=!SFX.on; save.sound=SFX.on; persist(); updateTop(); SFX.click(); };
+$('#resetBtn').onclick=()=>{
+  openModal(`<div style="font-size:44px">🗑️</div><h2>Ch.2 기록을 초기화할까요?</h2><p>Ch.2의 모든 별과 해금 기록이 사라져요.</p>
+    <div class="mbtns two"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="mReset" style="background:var(--danger);box-shadow:0 6px 0 #b42318">초기화</button></div>`);
+  $('#mReset').onclick=()=>{ save={stars:STAGES_CH2.map(()=>0),sound:SFX.on}; persist(); closeModal(); show('map'); toast('Ch.2 기록을 초기화했어요.'); };
+};
+if(window.innerWidth<480) document.querySelectorAll('.hide-sm').forEach(e=>e.remove());
+
+show('map');
+if(TEACHER) toast('👩‍🏫 선생님 모드: Ch.2의 모든 스테이지가 열려 있어요');
+})();
+</script>
+</body>
+</html>

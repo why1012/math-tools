@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>소인수 원정대 · Factor Quest</title>
+<style>
+:root{
+  --primary:#5b5bd6; --primary-d:#4141b4; --primary-soft:#eef0ff;
+  --accent:#ff8a4c; --accent-soft:#fff2ea;
+  --success:#12b76a; --success-soft:#e8f8f0;
+  --warn:#f5a524; --warn-soft:#fff6e2;
+  --danger:#f04438; --danger-soft:#fdeceb;
+  --bg:#f4f6fb; --card:#fff; --ink:#1d2433; --muted:#667085; --line:#e4e7ef;
+  --star:#ffc233; --r:20px; --shadow:0 8px 28px rgba(29,36,51,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:disabled{cursor:default}
+.hidden{display:none!important}
+.app{max-width:960px;margin:0 auto;padding:16px 16px 48px;min-height:100vh}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.3px}
+.logo .mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#8b5cf6);display:grid;place-items:center;color:#fff;font-size:20px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:700;font-size:15px}
+.pill .s{color:var(--star)}
+.iconbtn{padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:700;font-size:15px;transition:transform .1s}
+.iconbtn:active{transform:scale(.95)}
+
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* buttons */
+.btn{padding:14px 22px;border-radius:14px;font-weight:800;font-size:17px;transition:transform .1s,filter .15s,background .15s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.primary{background:var(--primary);color:#fff;box-shadow:0 6px 0 var(--primary-d)}
+.btn.primary:active:not(:disabled){box-shadow:0 2px 0 var(--primary-d);transform:translateY(4px)}
+.btn.primary:disabled{background:#c7cbe0;box-shadow:0 6px 0 #aab0c8}
+.btn.ghost{background:#fff;border:2px solid var(--line);color:var(--ink)}
+.btn.accent{background:var(--accent);color:#fff;box-shadow:0 6px 0 #db6a2e}
+.btn.big{width:100%;font-size:19px;padding:17px}
+.link{color:var(--primary);font-weight:700;font-size:14px;padding:6px 10px;border-radius:10px;background:var(--primary-soft)}
+
+/* MAP */
+.hero{background:linear-gradient(135deg,#5b5bd6 0%,#7c5ce0 55%,#a35be0 100%);color:#fff;border-radius:26px;padding:26px 26px 22px;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(91,91,214,.3)}
+.hero h1{margin:0 0 4px;font-size:clamp(24px,4.5vw,34px);letter-spacing:-.5px}
+.hero p{margin:0;opacity:.9;font-size:15px}
+.hero .deco{position:absolute;right:-10px;top:-14px;font-size:120px;opacity:.15;font-weight:900;transform:rotate(-12deg)}
+.hero-prog{margin-top:16px;display:flex;align-items:center;gap:12px}
+.hero-prog .bar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.hero-prog .bar i{display:block;height:100%;background:var(--star);border-radius:99px;transition:width .6s}
+.hero-prog b{font-size:15px;white-space:nowrap}
+
+.path{position:relative;padding:34px 0 20px}
+.path svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.node-row{display:flex;justify-content:center;margin-bottom:26px;position:relative;z-index:1}
+.node-wrap{display:flex;flex-direction:column;align-items:center;transform:translateX(calc(var(--o) * min(24vw, 170px)));width:150px}
+.node{width:82px;height:82px;border-radius:50%;background:#fff;border:4px solid var(--line);display:grid;place-items:center;font-size:30px;font-weight:900;color:#b6bccb;box-shadow:0 6px 0 #d8dce7;transition:transform .12s}
+.node:active{transform:translateY(3px)}
+.node.open{background:var(--primary);border-color:#fff;color:#fff;box-shadow:0 6px 0 var(--primary-d),0 0 0 4px var(--primary-soft)}
+.node.cleared{background:var(--success);color:#fff;border-color:#fff;box-shadow:0 6px 0 #0c8a50,0 0 0 4px var(--success-soft)}
+.node.boss.open,.node.boss.cleared{background:linear-gradient(135deg,var(--accent),#e2468a);box-shadow:0 6px 0 #b8336a,0 0 0 4px var(--accent-soft)}
+.node.current{animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 var(--primary-d),0 0 0 4px var(--primary-soft)}50%{box-shadow:0 6px 0 var(--primary-d),0 0 0 14px rgba(91,91,214,.12)}}
+.node-label{margin-top:10px;text-align:center;font-weight:800;font-size:15px;line-height:1.3}
+.node-label small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.node-stars{font-size:18px;letter-spacing:2px;color:#d5d9e3;margin-top:2px}
+.node-stars .on{color:var(--star)}
+.map-foot{text-align:center;margin-top:10px}
+.map-foot button{color:var(--muted);font-size:13px;text-decoration:underline}
+
+/* INTRO */
+.intro-head{text-align:center;margin-bottom:16px}
+.intro-head small{display:inline-block;background:var(--primary-soft);color:var(--primary);font-weight:800;padding:4px 12px;border-radius:99px;font-size:13px;letter-spacing:.5px}
+.intro-head h2{margin:8px 0 2px;font-size:clamp(24px,4vw,30px);letter-spacing:-.4px}
+.intro-head p{margin:0;color:var(--muted)}
+.newbadge{display:inline-block;font-weight:800;color:var(--accent);background:var(--accent-soft);padding:4px 12px;border-radius:99px;font-size:13px;margin-bottom:10px}
+.kcard{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+.khead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.kicon{width:52px;height:52px;border-radius:16px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900;flex-shrink:0}
+.khead small{color:var(--muted);font-weight:700;font-size:13px}
+.khead h3{margin:0;font-size:22px;letter-spacing:-.3px}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.rule-grid{grid-template-columns:1fr}}
+.panel{border-radius:16px;padding:18px;font-size:16px}
+.panel h4{margin:0 0 10px;font-size:14px;letter-spacing:.3px;display:flex;align-items:center;gap:6px}
+.panel.easy{background:var(--primary-soft)}
+.panel.easy h4{color:var(--primary)}
+.panel.why{background:var(--accent-soft)}
+.panel.why h4{color:#d4621f}
+.panel p{margin:8px 0}
+.big-rule{font-size:19px;font-weight:700;line-height:1.5;margin-top:0!important}
+mark{background:linear-gradient(transparent 55%,#ffd76a 55%);color:inherit;padding:0 2px}
+.ex{background:#fff;border-radius:12px;padding:12px 14px;font-size:16px;display:grid;gap:4px}
+.ex u{text-decoration:none;background:#ffe39a;border-radius:4px;padding:0 2px;font-weight:800}
+.eq{background:#fff;border-radius:12px;padding:12px 14px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:15.5px;line-height:1.8;margin:8px 0;border:1.5px dashed #f3c4a6}
+.cc{font-weight:700}
+.warnbox{background:var(--warn-soft);border-left:4px solid var(--warn);padding:10px 12px;border-radius:10px;font-size:15px;margin-top:10px}
+.y{color:var(--success);font-weight:800}
+.n{color:var(--danger);font-weight:800}
+.intro-nav{display:flex;gap:10px;margin-top:18px;align-items:center}
+.intro-nav .btn{flex:1}
+.cdots{display:flex;gap:6px;justify-content:center;margin-top:14px}
+.cdots i{width:8px;height:8px;border-radius:99px;background:#d3d7e3;transition:all .2s}
+.cdots i.on{width:24px;background:var(--primary)}
+.brief-list{display:grid;gap:10px;margin:6px 0 16px;padding:0;list-style:none}
+.brief-list li{display:flex;gap:12px;align-items:center;background:#f7f8fc;border-radius:14px;padding:12px 14px;font-weight:700}
+.brief-list li span.i{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.brief-list li small{display:block;color:var(--muted);font-weight:600;font-size:13px}
+.star-rule{display:flex;gap:8px;flex-wrap:wrap}
+.star-rule span{background:#fffbea;border:1.5px solid #ffe7a3;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:700}
+
+/* PLAY */
+.playbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ptitle{flex:1;text-align:center;line-height:1.25}
+.ptitle small{display:block;color:var(--primary);font-weight:800;font-size:12px;letter-spacing:.5px}
+.ptitle b{font-size:18px}
+.meter{background:#fff;border-radius:14px;padding:6px 12px;box-shadow:var(--shadow);text-align:center;line-height:1.2}
+.meter .st{font-size:18px;letter-spacing:1px;color:#d5d9e3}
+.meter .st .on{color:var(--star)}
+.meter small{display:block;font-size:11px;color:var(--muted);font-weight:700}
+.meter.drop{animation:shake .45s}
+.mdots{display:flex;gap:6px;margin-bottom:14px}
+.mdots i{flex:1;height:8px;border-radius:99px;background:#dde1ec;transition:background .3s}
+.mdots i.done{background:var(--success)}
+.mdots i.cur{background:var(--primary)}
+.mission-card{background:#fff;border-radius:var(--r);padding:24px;box-shadow:var(--shadow);min-height:300px}
+@media (max-width:520px){.mission-card{padding:18px}}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.qtag{font-weight:800;font-size:13px;padding:5px 12px;border-radius:99px}
+.t-judge{background:#e8f0ff;color:#2f5fd0}
+.t-mul{background:#e6f7f5;color:#0e8c7e}
+.t-div{background:#fff1e3;color:#c45d12}
+.t-pri{background:#f6ebff;color:#8a3fd1}
+.t-fac{background:#ffe9f0;color:#c42a63}
+.q{font-size:clamp(21px,3.4vw,28px);font-weight:800;letter-spacing:-.4px;line-height:1.4;margin:4px 0 6px}
+.bn{color:var(--primary);background:var(--primary-soft);padding:0 8px;border-radius:10px;font-variant-numeric:tabular-nums}
+.kk{color:var(--accent)}
+.sub{color:var(--muted);font-size:15px;margin-bottom:16px}
+
+.ox-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.ox{min-height:110px;border-radius:18px;font-size:20px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:3px solid transparent;transition:transform .1s}
+.ox span{font-size:36px;line-height:1}
+.ox.o{background:var(--success-soft);color:#0c8a50}
+.ox.x{background:var(--danger-soft);color:#c4281c}
+.ox:active:not(:disabled){transform:scale(.97)}
+.ox:disabled{opacity:.45}
+.ox.chosen{opacity:1;border-color:currentColor}
+
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 16px}
+.chips.grid3{display:grid;grid-template-columns:repeat(3,1fr)}
+.chip{min-width:64px;padding:14px 10px;border-radius:14px;border:2.5px solid var(--line);background:#fff;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;transition:all .12s;box-shadow:0 3px 0 #e1e4ec}
+@media (max-width:420px){.chip{font-size:17px;padding:12px 6px}}
+.chip:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+.chip.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary-d);box-shadow:0 3px 0 #c7caf5}
+.chip.ok{border-color:var(--success);background:var(--success-soft);color:#0c8a50;box-shadow:none}
+.chip.bad{border-color:var(--danger);background:var(--danger-soft);color:#c4281c;animation:shake .4s}
+.chip.miss{border-style:dashed;border-color:var(--warn);background:var(--warn-soft)}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.actions{display:flex;gap:10px;justify-content:flex-end}
+
+.fb{margin-top:16px;padding:16px 18px;border-radius:16px;border-left:6px solid;font-size:16px;animation:fadeUp .3s}
+.fb.ok{background:var(--success-soft);border-color:var(--success)}
+.fb.bad{background:var(--danger-soft);border-color:var(--danger)}
+.fb.info{background:var(--warn-soft);border-color:var(--warn)}
+.fb .ttl{font-weight:800;font-size:18px;margin-bottom:4px}
+.fb .ln{margin:4px 0}
+.verify{margin-top:8px;font-size:14.5px;color:var(--muted);font-family:ui-monospace,"SF Mono",Menlo,monospace}
+
+/* divisors */
+.dprog{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.dprog .bar{flex:1;height:12px;border-radius:99px;background:#eef0f5;overflow:hidden}
+.dprog .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--warn));transition:width .4s}
+.dprog b{font-size:15px;white-space:nowrap}
+.tags{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:12px;border-radius:16px;background:#fafbfd;border:2px dashed var(--line);margin-bottom:14px}
+.tags .empty{color:#a3a9b8;font-size:15px;align-self:center}
+.tag{background:var(--accent);color:#fff;font-weight:800;font-size:18px;padding:6px 14px;border-radius:12px;animation:popIn .3s}
+@keyframes popIn{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.inrow{display:flex;gap:10px}
+.numin{flex:1;min-width:0;font:inherit;font-size:22px;font-weight:800;padding:12px 16px;border-radius:14px;border:2.5px solid var(--line);outline:none;transition:border .15s}
+.numin:focus{border-color:var(--primary)}
+.msg{min-height:26px;margin-top:10px;font-size:15.5px;font-weight:600}
+.msg.ok{color:#0c8a50}.msg.bad{color:#c4281c}.msg.info{color:#b26b00}
+.pairs{margin-top:12px;display:grid;gap:8px;background:#fafbfd;border-radius:16px;padding:14px}
+.pairs .pr{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;justify-content:center}
+.pairs .pb{min-width:56px;text-align:center;padding:4px 10px;border-radius:10px;background:#eceff5;color:#a3a9b8}
+.pairs .pb.f{background:var(--accent);color:#fff}
+
+/* factor */
+.fac-area{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;margin:10px 0 16px}
+@media (max-width:620px){.fac-area{grid-template-columns:1fr}}
+.ladder{font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;min-width:170px}
+.lrow{display:flex;align-items:stretch;animation:fadeUp .3s}
+.lp{width:46px;text-align:right;padding:6px 10px 6px 0;color:var(--accent)}
+.ln{padding:6px 14px;border-left:3px solid var(--ink);border-bottom:3px solid var(--ink);min-width:110px}
+.lrow.last .ln{border:0;padding-left:17px;color:var(--success)}
+.lrow.curr .ln{background:var(--primary-soft);color:var(--primary-d)}
+.steps{display:grid;gap:6px}
+.steps .s{background:#f7f8fc;border-radius:12px;padding:8px 14px;font-size:17px;font-weight:700;animation:fadeUp .3s;font-variant-numeric:tabular-nums}
+.steps .s b{color:var(--accent)}
+.steps .hint{color:var(--muted);font-size:14.5px;padding:6px 2px}
+.pbtns{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media (max-width:520px){.pbtns{grid-template-columns:repeat(3,1fr)}}
+.pbtn{padding:16px 0;border-radius:14px;background:var(--ink);color:#fff;font-size:20px;font-weight:800;box-shadow:0 5px 0 #000;transition:transform .08s}
+.pbtn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #000}
+.pbtn:disabled{background:#c9cdd8;box-shadow:0 5px 0 #aeb3c0}
+.summary{margin-top:16px;border-radius:18px;padding:20px;background:linear-gradient(135deg,#f1f0ff,#fff3ea);text-align:center;animation:popIn .4s}
+.summary small{color:var(--muted);font-weight:700}
+.summary .big{font-size:clamp(24px,4.5vw,34px);font-weight:900;letter-spacing:-.5px;margin:6px 0}
+.summary .big sup{font-size:.6em;color:var(--accent)}
+.summary .mid{font-size:17px;font-weight:700;color:#475067}
+.opts{display:grid;gap:10px;margin-top:10px}
+.opt{padding:16px;border-radius:14px;border:2.5px solid var(--line);background:#fff;font-size:22px;font-weight:800;box-shadow:0 3px 0 #e1e4ec}
+.opt sup{font-size:.62em}
+.opt.bad{border-color:var(--danger);background:var(--danger-soft);opacity:.6}
+.opt.ok{border-color:var(--success);background:var(--success-soft)}
+.ptitle2{font-weight:800;font-size:18px;margin-top:18px}
+
+.nextbar{margin-top:16px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(20,24,40,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.overlay.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:26px;padding:28px 24px 22px;width:100%;max-width:440px;max-height:92vh;overflow:auto;text-align:center;transform:scale(.9);transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+.overlay.show .modal{transform:scale(1)}
+.modal.wide{max-width:900px;text-align:left;padding:20px}
+.modal h2{margin:4px 0 6px;font-size:26px;letter-spacing:-.4px}
+.modal p{color:var(--muted);margin:6px 0}
+.mstars{font-size:58px;letter-spacing:6px;margin:6px 0 4px;color:#e1e4ec}
+.mstars span{display:inline-block}
+.mstars .on{color:var(--star);animation:starPop .5s both}
+@keyframes starPop{0%{transform:scale(0) rotate(-90deg)}70%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1)}}
+.mbtns{display:grid;gap:10px;margin-top:18px}
+.mbtns.two{grid-template-columns:1fr 1.4fr}
+.unlock{margin-top:12px;background:var(--primary-soft);color:var(--primary-d);border-radius:14px;padding:10px;font-weight:700}
+.book-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.book-top h2{margin:0;font-size:22px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:thin}
+.tab{flex-shrink:0;padding:8px 14px;border-radius:12px;background:#f1f3f8;font-weight:800;font-size:14px;color:#475067}
+.tab.on{background:var(--primary);color:#fff}
+.tab:disabled{opacity:.45}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;transition:all .25s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:70;pointer-events:none;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="logo"><div class="mark">🧭</div><span>소인수 원정대</span></div>
+    <div class="tb-right">
+      <span class="pill"><span class="s">★</span><span id="totalStars">0</span></span>
+      <button class="iconbtn" id="bookBtn" title="비법 도감">📖<span class="hide-sm"> 도감</span></button>
+      <button class="iconbtn" id="soundBtn" title="효과음">🔊</button>
+    </div>
+  </header>
+
+  <!-- MAP -->
+  <section class="screen" id="s-map">
+    <div class="hero">
+      <div class="deco">2³×3²</div>
+      <h1>소인수 원정대</h1>
+      <p>배수 판정 → 배수 찾기 → 약수 발굴 → 소인수 감별 → 소인수분해<br>스테이지마다 조금씩 더 큰 수, 새로운 비법에 도전해요!</p>
+      <div class="hero-prog"><div class="bar"><i id="heroBar"></i></div><b id="heroTxt">0 / 24</b></div>
+    </div>
+    <div class="path" id="path"><svg id="pathSvg"></svg></div>
+    <div class="map-foot"><button id="resetBtn">기록 초기화</button></div>
+  </section>
+
+  <!-- INTRO -->
+  <section class="screen" id="s-intro">
+    <div class="playbar">
+      <button class="iconbtn" id="introBack">← 지도</button>
+      <div class="ptitle"></div>
+      <button class="iconbtn hidden" id="introSkip">바로 시작 ▶</button>
+    </div>
+    <div class="intro-head" id="introHead"></div>
+    <div id="introBody"></div>
+    <div class="cdots" id="introDots"></div>
+    <div class="intro-nav">
+      <button class="btn ghost" id="introPrev">◀ 이전</button>
+      <button class="btn primary" id="introNext">다음 ▶</button>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="s-play">
+    <div class="playbar">
+      <button class="iconbtn" id="playBack">← 지도</button>
+      <div class="ptitle" id="playTitle"></div>
+      <div class="meter" id="meter"></div>
+    </div>
+    <div class="mdots" id="mdots"></div>
+    <div class="mission-card" id="mission"></div>
+    <div class="nextbar hidden" id="nextBar"><button class="btn primary big" id="nextBtn">다음 미션 ▶</button></div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+/* ============ 유틸 ============ */
+const $ = s => document.querySelector(s);
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const fmt = n => n.toLocaleString('ko-KR');
+const divisorsOf = n => { const r=[]; for(let i=1;i<=n;i++) if(n%i===0) r.push(i); return r; };
+const isPrime = n => { if(n<2) return false; for(let i=2;i*i<=n;i++) if(n%i===0) return false; return true; };
+const factorize = n => { const f=[]; let m=n; for(let p=2;m>1;p++){ while(m%p===0){f.push(p);m/=p;} } return f; };
+const groupF = f => { const g=new Map(); f.forEach(p=>g.set(p,(g.get(p)||0)+1)); return [...g.entries()]; };
+const powHTML = (g, sep=' × ') => g.map(([p,e]) => e>1 ? `${p}<sup>${e}</sup>` : `${p}`).join(sep);
+const digitSum = n => String(n).split('').reduce((a,c)=>a + +c, 0);
+// 숫자 뒤 조사 (받침 여부: 일의 자리 0,1,3,6,7,8 → 받침 있음)
+const hasB = n => [0,1,3,6,7,8].includes(n%10);
+const jo = (n,a,b) => hasB(n) ? a : b;
+const ro = n => [0,3,6].includes(n%10) ? '으로' : '로';
+const bigN = n => `<span class="bn">${fmt(n)}</span>`;
+const Y = '<span class="y">✔</span>', N = '<span class="n">✘</span>';
+
+/* ============ 사운드 (Web Audio) ============ */
+const SFX = {
+  ctx:null, on:true,
+  ensure(){ if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) this.ctx=new AC(); }
+            if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); return this.ctx; },
+  tone(f,d=.12,type='sine',delay=0,vol=.18){
+    if(!this.on) return; const c=this.ensure(); if(!c) return;
+    const t=c.currentTime+delay, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+.05);
+  },
+  click(){ this.tone(520,.06,'triangle',0,.08); },
+  pop(){ this.tone(700,.07,'triangle',0,.14); this.tone(1050,.08,'triangle',.05,.1); },
+  correct(){ this.tone(660,.13,'sine',0,.22); this.tone(990,.22,'sine',.1,.22); },
+  wrong(){ this.tone(200,.16,'square',0,.06); this.tone(150,.24,'square',.12,.06); },
+  clear(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,.25,'triangle',i*.12,.2)); this.tone(1319,.6,'sine',.5,.16); },
+  fanfare(){ [392,523,659,784,659,784,1047].forEach((f,i)=>this.tone(f,.28,'triangle',i*.14,.2)); this.tone(1568,.9,'sine',1.0,.14); }
+};
+
+/* ============ 학습 카드 (2분할: 직관 / 수학적 이유) ============ */
+const CARDS = {
+  r2:{kind:'rule',icon:'2',title:'2의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule">일의 자리 숫자가 <mark>0, 2, 4, 6, 8</mark>이면 2의 배수!</p>
+      <div class="ex"><div>3,45<u>6</u> → 6 ${Y} 2의 배수</div><div>1,23<u>7</u> → 7 ${N} 2의 배수 아님</div></div>`,
+    right:`<p>3456을 <b>10의 묶음</b>과 <b>일의 자리</b>로 나눠 봐요.</p>
+      <div class="eq">3456 = 345 × 10 + 6</div>
+      <p><b>10 = 2 × 5</b>이므로 345 × 10은 언제나 2로 나누어떨어져요.</p>
+      <p class="cc">👉 남은 <b>일의 자리 6</b>만 확인하면 끝!</p>`},
+  r5:{kind:'rule',icon:'5',title:'5의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule">일의 자리 숫자가 <mark>0 또는 5</mark>이면 5의 배수!</p>
+      <div class="ex"><div>2,04<u>5</u> → 5 ${Y} 5의 배수</div><div>7,31<u>0</u> → 0 ${Y} 5의 배수</div><div>1,23<u>4</u> → 4 ${N} 5의 배수 아님</div></div>`,
+    right:`<p>2의 배수와 같은 원리예요.</p>
+      <div class="eq">2045 = 204 × 10 + 5</div>
+      <p><b>10 = 2 × 5</b>라서 204 × 10은 항상 5의 배수예요.</p>
+      <p class="cc">👉 일의 자리 숫자가 5로 나누어떨어지는지(0 또는 5)만 보면 돼요!</p>`},
+  r3:{kind:'rule',icon:'3',title:'3의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule">각 자리 숫자의 <mark>합이 3의 배수</mark>이면 3의 배수!</p>
+      <div class="ex"><div>432 → 4+3+2 = 9 ${Y} 3의 배수</div><div>512 → 5+1+2 = 8 ${N} 3의 배수 아님</div></div>`,
+    right:`<p><b>10 = 9 + 1</b>, <b>100 = 99 + 1</b>을 이용해요.</p>
+      <div class="eq">432 = 4×100 + 3×10 + 2<br>&nbsp;&nbsp;&nbsp;&nbsp;= 4×(99+1) + 3×(9+1) + 2<br>&nbsp;&nbsp;&nbsp;&nbsp;= <b>(4×99 + 3×9)</b> + <b>(4+3+2)</b></div>
+      <p>앞 괄호는 99, 9가 3의 배수라서 항상 3으로 나누어떨어져요.</p>
+      <p class="cc">👉 남은 <b>4+3+2</b>, 즉 자릿수의 합만 확인하면 돼요!</p>`},
+  r9:{kind:'rule',icon:'9',title:'9의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule">각 자리 숫자의 <mark>합이 9의 배수</mark>이면 9의 배수!</p>
+      <div class="ex"><div>729 → 7+2+9 = 18 ${Y} 9의 배수</div><div>345 → 3+4+5 = 12 ${N} 9의 배수 아님</div></div>
+      <div class="warnbox">345는 3의 배수지만 9의 배수는 아니에요. 3의 배수와 헷갈리지 않기!</div>`,
+    right:`<p>3의 배수 판정법과 똑같은 전개식이에요.</p>
+      <div class="eq">729 = 7×(99+1) + 2×(9+1) + 9<br>&nbsp;&nbsp;&nbsp;&nbsp;= <b>(7×99 + 2×9)</b> + <b>(7+2+9)</b></div>
+      <p>9, 99, 999…는 모두 <b>9의 배수</b>이니 앞 괄호는 항상 9로 나누어떨어져요.</p>
+      <p class="cc">👉 자릿수의 합 7+2+9 = 18이 9의 배수이므로 729도 9의 배수!</p>`},
+  r4:{kind:'rule',icon:'4',title:'4의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule">끝의 <mark>두 자리 수</mark>가 00이거나 4의 배수이면 4의 배수!</p>
+      <div class="ex"><div>1,3<u>16</u> → 16 = 4 × 4 ${Y}</div><div>2,0<u>54</u> → 54 = 4 × 13 + 2 ${N}</div><div>7,9<u>00</u> → 00 ${Y}</div></div>`,
+    right:`<div class="eq">1316 = 13 × 100 + 16</div>
+      <p><b>100 = 4 × 25</b>이므로 13 × 100은 언제나 4의 배수예요.</p>
+      <p class="cc">👉 끝 두 자리 <b>16</b>만 보면 돼요!</p>
+      <div class="warnbox">왜 일의 자리만 보면 안 될까요? 10은 4로 나누어떨어지지 않기 때문이에요. 14는 일의 자리가 4지만 4의 배수가 아니죠.</div>`},
+  r6:{kind:'rule',icon:'6',title:'6의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule"><mark>2의 배수</mark>이면서 동시에 <mark>3의 배수</mark>이면 6의 배수!</p>
+      <div class="ex"><div>114 → 짝수 ${Y} · 1+1+4=6 ${Y} → 6의 배수</div><div>104 → 짝수 ${Y} · 1+0+4=5 ${N} → 아님</div><div>141 → 홀수 ${N} → 아님</div></div>`,
+    right:`<p><b>6 = 2 × 3</b>이에요. 2로도, 3으로도 나누어떨어지는 수는 2와 3의 공배수, 즉 6, 12, 18, … 바로 6의 배수예요.</p>
+      <div class="warnbox">⚠ 8 = 2 × 4라고 해서 ‘2의 배수이면서 4의 배수’로 판정하면 안 돼요! 12는 2와 4의 배수지만 8의 배수가 아니에요. 2와 3처럼 <b>공통인 약수가 1뿐</b>일 때만 이 방법이 통해요.</div>`},
+  r8:{kind:'rule',icon:'8',title:'8의 배수 판정법',lt:'💡 직관적 판정법',rt:'🔎 수학적 이유',
+    left:`<p class="big-rule">끝의 <mark>세 자리 수</mark>가 000이거나 8의 배수이면 8의 배수!</p>
+      <div class="ex"><div>5,<u>120</u> → 120 = 8 × 15 ${Y}</div><div>3,<u>500</u> → 500 = 8 × 62 + 4 ${N}</div></div>`,
+    right:`<div class="eq">5120 = 5 × 1000 + 120</div>
+      <p><b>1000 = 8 × 125</b>이므로 5 × 1000은 언제나 8의 배수예요.</p>
+      <p class="cc">👉 끝 세 자리 <b>120</b>만 확인하면 돼요!</p>
+      <div class="warnbox">100 = 8 × 12 + 4라서 100은 8로 나누어떨어지지 않아요. 그래서 4의 배수처럼 두 자리가 아니라 세 자리까지 봐야 해요.</div>`},
+  divisor:{kind:'concept',icon:'÷',title:'약수 = 인수',lt:'💡 개념 정리',rt:'🔎 약수는 짝꿍으로 찾자',
+    left:`<p class="big-rule">어떤 수를 <mark>나누어떨어지게 하는 수</mark>를 그 수의 <b>약수</b>라고 해요.</p>
+      <div class="ex"><div>12 ÷ 3 = 4 (나머지 0) → 3은 12의 약수 ${Y}</div><div>12 ÷ 5 = 2 … 2 → 5는 12의 약수 ${N}</div></div>
+      <p>12 = 3 × 4처럼 곱으로 나타낼 때 3과 4를 12의 <b>인수</b>라고도 해요.<br><b>약수와 인수는 같은 말!</b></p>`,
+    right:`<p>곱해서 12가 되는 두 수를 찾으면 약수가 <b>짝으로</b> 나와요.</p>
+      <div class="eq">1 × 12<br>2 × 6<br>3 × 4</div>
+      <p>→ 12의 약수: 1, 2, 3, 4, 6, 12</p>
+      <p class="cc">👉 1과 자기 자신은 언제나 약수! 작은 수부터 차례로 나눠 보면 빠뜨리지 않아요.</p>`},
+  prime:{kind:'concept',icon:'P',title:'소수와 합성수, 소인수',lt:'💡 개념 정리',rt:'🔎 왜 1은 소수가 아닐까?',
+    left:`<p class="big-rule"><b>소수</b>: 1보다 큰 자연수 중 약수가 <mark>1과 자기 자신뿐</mark>인 수</p>
+      <div class="ex"><div>2, 3, 5, 7, 11, 13, 17, 19, …</div></div>
+      <p><b>합성수</b>: 1보다 큰 자연수 중 소수가 아닌 수 (약수가 3개 이상)<br>예) 4, 6, 8, 9, 10, 12, …</p>
+      <div class="warnbox">⚠ <b>1은 소수도 합성수도 아니에요!</b></div>`,
+    right:`<p>소수는 약수가 <b>정확히 2개</b>(1과 자기 자신)인 수예요.</p>
+      <div class="eq">2의 약수: 1, 2 → 2개 → 소수<br>6의 약수: 1, 2, 3, 6 → 4개 → 합성수<br>1의 약수: 1 → 1개뿐!</div>
+      <p>1은 약수가 하나뿐이라 소수가 될 수 없어요.</p>
+      <p class="cc">👉 어떤 수의 인수 중 <b>소수인 것</b>을 <b>소인수</b>라고 해요. 12의 소인수는 2와 3!</p>`},
+  factor:{kind:'concept',icon:'🌳',title:'소인수분해',lt:'💡 개념 정리',rt:'🔎 배수 판정법이 왜 필요할까?',
+    left:`<p class="big-rule">자연수를 <mark>소인수만의 곱</mark>으로 나타내는 것을 <b>소인수분해</b>라고 해요.</p>
+      <div class="ex"><div>12 ÷ 2 = 6</div><div>6 ÷ 2 = 3</div><div>3 ÷ 3 = 1</div><div><b>→ 12 = 2 × 2 × 3</b></div></div>
+      <p>작은 소수부터, 몫이 <b>1</b>이 될 때까지 나눠요.</p>`,
+    right:`<p>큰 수를 어떤 소수로 나눌지 고를 때 배수 판정법이 <b>나침반</b>이 돼요.</p>
+      <div class="eq">일의 자리가 짝수 → ÷2<br>자릿수의 합이 3의 배수 → ÷3<br>일의 자리가 0 또는 5 → ÷5</div>
+      <p class="cc">👉 직접 나눠 보기 전에 판정법으로 먼저 확인하면 실수가 줄어요!</p>`},
+  power:{kind:'concept',icon:'xⁿ',title:'거듭제곱으로 나타내기',lt:'💡 개념 정리',rt:'🔎 소인수분해 결과 정리하기',
+    left:`<p class="big-rule">같은 수를 여러 번 곱한 것은 <mark>거듭제곱</mark>으로 짧게 써요.</p>
+      <div class="ex"><div>2 × 2 × 2 = 2<sup>3</sup> (2의 세제곱)</div><div>3 × 3 = 3<sup>2</sup> (3의 제곱)</div></div>
+      <p>큰 수 2를 <b>밑</b>, 오른쪽 위 작은 수 3을 <b>지수</b>라고 해요. <b>지수 = 곱한 횟수!</b></p>`,
+    right:`<div class="eq">72 = 2 × 2 × 2 × 3 × 3<br>&nbsp;&nbsp;&nbsp;= 2<sup>3</sup> × 3<sup>2</sup></div>
+      <p>같은 소인수끼리 묶어 거듭제곱으로 나타내고, 보통 <b>작은 소인수부터</b> 차례로 써요.</p>
+      <div class="warnbox">⚠ 2<sup>3</sup>은 2 × 3 = 6이 아니라 2 × 2 × 2 = 8!<br>⚠ 소인수끼리는 더하기(+)가 아니라 <b>곱하기(×)</b>로 연결해요.</div>`},
+  bigprime:{kind:'concept',icon:'🌋',title:'큰 소수 7, 11, 13 다루기',lt:'💡 공략 순서',rt:'🔎 언제 멈출까?',
+    left:`<p class="big-rule">2, 3, 5로 더 이상 나누어지지 않으면 <mark>7 → 11 → 13</mark> 순서로 시도해요.</p>
+      <div class="ex"><div>462 ÷ 2 = 231</div><div>231 ÷ 3 = 77</div><div>77 ÷ 7 = 11</div><div>11 ÷ 11 = 1</div><div><b>→ 462 = 2 × 3 × 7 × 11</b></div></div>`,
+    right:`<p>남은 몫이 <b>소수</b>가 되면 그 수로 한 번 더 나눠 1을 만들면 끝이에요.</p>
+      <div class="eq">77 = 7 × 11<br>91 = 7 × 13<br>143 = 11 × 13</div>
+      <p class="cc">👉 77, 91, 143처럼 소수처럼 보이지만 합성수인 수를 조심하세요!</p>
+      <div class="warnbox">💡 보너스: 자리 숫자를 번갈아 더하고 빼서 0 또는 11의 배수가 되면 11의 배수예요. 143 → 1 − 4 + 3 = 0</div>`}
+};
+const BOOK_ORDER = ['r2','r5','r3','r9','r4','r6','r8','divisor','prime','factor','power','bigprime'];
+const BOOK_LABEL = {r2:'2의 배수',r5:'5의 배수',r3:'3의 배수',r9:'9의 배수',r4:'4의 배수',r6:'6의 배수',r8:'8의 배수',divisor:'약수·인수',prime:'소수·소인수',factor:'소인수분해',power:'거듭제곱',bigprime:'큰 소수'};
+
+/* ============ 스테이지 설계 (나선형: 매 스테이지 5가지 활동, 난이도 상승) ============ */
+const STAGES = [
+  {title:'출발 캠프',  sub:'2와 5의 비밀 · 약수 · 소수 · 소인수분해 맛보기', cards:['r2','r5','divisor','prime','factor'],
+   pool:[2,5], focus:[2,5], digits:[2,3], div:[6,8,10,12,14], fac:[12,18,20,28,30], power:false},
+  {title:'숫자의 숲',  sub:'3의 비밀 · 거듭제곱', cards:['r3','power'],
+   pool:[2,3,5], focus:[3], digits:[3], div:[15,16,18,20,21], fac:[24,36,45,54,60], power:true},
+  {title:'메아리 계곡', sub:'9의 비밀', cards:['r9'],
+   pool:[2,3,5,9], focus:[9], digits:[3,4], div:[24,27,28,30], fac:[72,81,90,108,63], power:true},
+  {title:'끝자리 해변', sub:'4의 비밀', cards:['r4'],
+   pool:[2,3,4,5,9], focus:[4], digits:[3,4], div:[32,36,40,42], fac:[84,96,100,120,132], power:true},
+  {title:'쌍둥이 다리', sub:'6의 비밀', cards:['r6'],
+   pool:[2,3,4,5,6,9], focus:[6], digits:[3,4], div:[44,45,48,50,54], fac:[126,150,168,180,198], power:true},
+  {title:'천의 성벽',  sub:'8의 비밀', cards:['r8'],
+   pool:[2,3,4,5,6,8,9], focus:[8], digits:[4], div:[56,60,63,64,72], fac:[216,240,280,360,264], power:true},
+  {title:'소수 화산',  sub:'종합 훈련 · 큰 소수 7, 11, 13', cards:['bigprime'],
+   pool:[2,3,4,5,6,8,9], focus:[3,4,6,8,9], digits:[4,5], div:[80,84,90,96,98], fac:[420,462,504,540,588,686], power:true},
+  {title:'인수의 탑',  sub:'최종 보스 · 모든 비법 총동원', cards:[], boss:true,
+   pool:[2,3,4,5,6,8,9], focus:[4,6,8,9], digits:[5,6], div:[100,108,112,120,126], fac:[1001,780,936,1170,1260,1386], power:true}
+];
+const MAP_OFFSET = [0,.7,1,.4,-.4,-1,-.7,0];
+const MTYPE = {
+  judge:{icon:'⭕',name:'배수 판정',desc:'O/X로 배수인지 판정하기',cls:'t-judge'},
+  multiples:{icon:'🔍',name:'배수 찾기',desc:'여러 수 중 배수만 모두 고르기',cls:'t-mul'},
+  divisors:{icon:'⛏️',name:'약수 발굴',desc:'약수를 빠짐없이 모두 찾기',cls:'t-div'},
+  primes:{icon:'💎',name:'소인수 감별',desc:'약수 중 소수만 골라내기',cls:'t-pri'},
+  factor:{icon:'🌳',name:'소인수분해',desc:'몫이 1이 될 때까지 소수로 나누기',cls:'t-fac'}
+};
+const calcStars = m => m<=1 ? 3 : m<=4 ? 2 : 1;
+
+/* ============ 저장 ============ */
+const KEY = 'factorQuest_v2';
+const TEACHER = location.hash === '#teacher';
+let save = (() => {
+  try { const s = JSON.parse(localStorage.getItem(KEY));
+        if (s && Array.isArray(s.stars)) { while (s.stars.length < STAGES.length) s.stars.push(0); return s; } } catch(e){}
+  return { stars: STAGES.map(()=>0), sound: true };
+})();
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch(e){} };
+const unlocked = i => TEACHER || i===0 || save.stars[i-1] > 0;
+const totalStars = () => save.stars.reduce((a,b)=>a+b,0);
+SFX.on = save.sound !== false;
+
+/* ============ 배수 판정 설명 ============ */
+function shortWhy(n,k){
+  const s=String(n), last=n%10, ds=digitSum(n), yes=n%k===0;
+  switch(k){
+    case 2: return `일의 자리 ${last} → ${last%2===0?'짝수':'홀수'} ${yes?Y:N}`;
+    case 5: return `일의 자리 ${last} → ${yes?'0 또는 5':'0도 5도 아님'} ${yes?Y:N}`;
+    case 3: case 9:
+      return `${s.split('').join('+')} = ${ds} → ${ds}${jo(ds,'은','는')} ${k}의 배수${ds%k===0?'':'가 아님'} ${yes?Y:N}`;
+    case 4: { const t=n%100, ts=s.slice(-2);
+      return `끝 두 자리 ${ts} → ${t===0?'00이므로 4의 배수': t%4===0?`${t} = 4 × ${t/4}`:`${t} ÷ 4 = ${Math.floor(t/4)} … ${t%4}`} ${yes?Y:N}`; }
+    case 8: { const t=n%1000, ts=s.slice(-3);
+      return `끝 세 자리 ${ts} → ${t===0?'000이므로 8의 배수': t%8===0?`${t} = 8 × ${t/8}`:`${t} ÷ 8 = ${Math.floor(t/8)} … ${t%8}`} ${yes?Y:N}`; }
+    case 6:
+      return `2의 배수? 일의 자리 ${last} ${n%2===0?Y:N} · 3의 배수? 자릿수 합 ${ds} ${n%3===0?Y:N} → ${yes?'둘 다 만족':'둘 다 만족하지 않음'} ${yes?Y:N}`;
+  }
+  return '';
+}
+function verifyLine(n,k){
+  return n%k===0 ? `직접 나눠 보면: ${fmt(n)} ÷ ${k} = ${fmt(n/k)}`
+                 : `직접 나눠 보면: ${fmt(n)} ÷ ${k} = ${fmt(Math.floor(n/k))} … ${n%k}`;
+}
+
+/* ============ 문제 생성 ============ */
+const rangeOf = d => [10**(d-1), 10**d - 1];
+const DECOY = {4:[2], 8:[4], 9:[3], 6:[2,3]};   // 헷갈리게 만드는 함정 수
+function genMul(k,d){ const [lo,hi]=rangeOf(d); let n=rand(lo,hi); n-=n%k; if(n<lo) n+=k; return n; }
+function genNon(k,d){
+  const [lo,hi]=rangeOf(d); const tricky = DECOY[k] && Math.random()<.75;
+  for(let t=0;t<2000;t++){ const n=rand(lo,hi); if(n%k===0) continue;
+    if(tricky && !DECOY[k].some(x=>n%x===0)) continue; return n; }
+  return lo%k===0 ? lo+1 : lo;
+}
+const pickK = st => Math.random()<.65 ? pick(st.focus) : pick(st.pool);
+function genJudge(st, ans){ const k=pickK(st), d=pick(st.digits); return {type:'judge', k, ans, n: ans?genMul(k,d):genNon(k,d)}; }
+function genMultiples(st){
+  const k=pick(st.focus), cnt=rand(3,5), set=new Set(), nums=[];
+  while(nums.length<9){ const isM = nums.filter(x=>x%k===0).length < cnt;
+    const n = isM ? genMul(k,pick(st.digits)) : genNon(k,pick(st.digits));
+    if(!set.has(n) && (isM || n%k!==0)){ set.add(n); nums.push(n); } }
+  return {type:'multiples', k, nums:shuffle(nums), sel:new Set(), done:false};
+}
+
+/* ============ 화면 전환 ============ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='map') renderMap();
+  updateTop();
+}
+function updateTop(){ $('#totalStars').textContent = totalStars(); $('#soundBtn').textContent = SFX.on?'🔊':'🔇'; }
+let toastT;
+function toast(msg){ const t=$('#toast'); t.innerHTML=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+function openModal(html, wide=false){ const m=$('#modal'); m.className='modal'+(wide?' wide':''); m.innerHTML=html; $('#overlay').classList.add('show'); }
+function closeModal(){ $('#overlay').classList.remove('show'); }
+$('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay' && $('#modal').classList.contains('wide')) closeModal(); });
+
+/* ============ 지도 ============ */
+function renderMap(){
+  const path=$('#path'); path.querySelectorAll('.node-row').forEach(n=>n.remove());
+  const firstOpen = STAGES.findIndex((_,i)=>unlocked(i) && save.stars[i]===0);
+  STAGES.forEach((st,i)=>{
+    const open=unlocked(i), stars=save.stars[i];
+    const row=document.createElement('div'); row.className='node-row';
+    row.innerHTML = `<div class="node-wrap" style="--o:${MAP_OFFSET[i]}">
+      <button class="node ${open?(stars?'cleared':'open'):''} ${st.boss?'boss':''} ${i===firstOpen?'current':''}" aria-label="스테이지 ${i+1}">
+        ${open ? (st.boss?'👑':i+1) : '🔒'}</button>
+      <div class="node-label"><small>STAGE ${i+1}</small>${st.title}
+        <div class="node-stars">${[1,2,3].map(s=>`<span class="${s<=stars?'on':''}">★</span>`).join('')}</div></div></div>`;
+    row.querySelector('.node').onclick = () => {
+      SFX.click();
+      if(!open){ toast(`🔒 STAGE ${i}을(를) 먼저 클리어해야 열려요!`); return; }
+      openIntro(i);
+    };
+    path.appendChild(row);
+  });
+  const ts=totalStars(), max=STAGES.length*3;
+  $('#heroBar').style.width = (ts/max*100)+'%';
+  $('#heroTxt').textContent = `★ ${ts} / ${max}`;
+  requestAnimationFrame(drawPath);
+}
+function drawPath(){
+  const wrap=$('#path'), svg=$('#pathSvg'); if(!wrap.offsetParent) return;
+  const r=wrap.getBoundingClientRect();
+  const pts=[...wrap.querySelectorAll('.node')].map(n=>{const b=n.getBoundingClientRect(); return [b.left+b.width/2-r.left, b.top+b.height/2-r.top];});
+  svg.setAttribute('width',r.width); svg.setAttribute('height',r.height);
+  const seg=(a,b)=>{const my=(a[1]+b[1])/2; return ` C ${a[0]} ${my}, ${b[0]} ${my}, ${b[0]} ${b[1]}`;};
+  let dAll='', dDone='';
+  pts.forEach((p,i)=>{ if(i===0){dAll=`M ${p[0]} ${p[1]}`; dDone=dAll; return;}
+    const s=seg(pts[i-1],p); dAll+=s; if(unlocked(i)) dDone+=s; });
+  svg.innerHTML = `<path d="${dAll}" fill="none" stroke="#d8dce7" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 16"/>
+                   <path d="${dDone}" fill="none" stroke="#a5a7f0" stroke-width="8" stroke-linecap="round"/>`;
+}
+window.addEventListener('resize', ()=>{ if($('#s-map').classList.contains('active')) drawPath(); });
+
+/* ============ 비법 도감 ============ */
+function cardUnlocked(key){
+  if(TEACHER) return true;
+  const i=STAGES.findIndex(s=>s.cards.includes(key)); return i>=0 && unlocked(i);
+}
+function cardHTML(key){
+  const c=CARDS[key];
+  return `<div class="kcard"><div class="khead"><span class="kicon">${c.icon}</span><div><small>${c.kind==='rule'?'배수 판정 비법':'핵심 개념'}</small><h3>${c.title}</h3></div></div>
+    <div class="rule-grid"><div class="panel easy"><h4>${c.lt}</h4>${c.left}</div><div class="panel why"><h4>${c.rt}</h4>${c.right}</div></div></div>`;
+}
+function openBook(key){
+  if(!key || !cardUnlocked(key)) key = BOOK_ORDER.find(cardUnlocked) || 'r2';
+  const tabs = BOOK_ORDER.map(k=>{ const ok=cardUnlocked(k);
+    return `<button class="tab ${k===key?'on':''}" data-k="${k}" ${ok?'':'disabled'}>${ok?'':'🔒 '}${BOOK_LABEL[k]}</button>`; }).join('');
+  openModal(`<div class="book-top"><h2>📖 비법 도감</h2><button class="iconbtn" data-close>닫기 ✕</button></div>
+    <div class="tabs">${tabs}</div><div id="bookBody">${cardHTML(key)}</div>`, true);
+  $('#modal').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ SFX.click(); openBook(t.dataset.k); });
+  const on=$('#modal .tab.on'); if(on) on.scrollIntoView({inline:'center',block:'nearest'});
+}
+document.addEventListener('click', e=>{
+  const r=e.target.closest('[data-rule]'); if(r){ SFX.click(); openBook('r'+r.dataset.rule); return; }
+  const c=e.target.closest('[data-concept]'); if(c){ SFX.click(); openBook(c.dataset.concept); return; }
+  if(e.target.closest('[data-close]')){ SFX.click(); closeModal(); }
+});
+
+/* ============ 스테이지 인트로 ============ */
+const G = { si:0, cards:[], ci:0, missions:[], mi:0, mistakes:0 };
+function missionTypes(st){ return st.boss ? ['judge','multiples','divisors','primes','factor','factor'] : ['judge','judge','multiples','divisors','primes','factor']; }
+function openIntro(i){
+  G.si=i; G.cards=[...STAGES[i].cards.map(k=>({k})), {brief:true}]; G.ci=0;
+  $('#introSkip').classList.toggle('hidden', !(save.stars[i]>0));
+  show('intro'); renderIntro();
+}
+function briefHTML(st){
+  const counts={}; missionTypes(st).forEach(t=>counts[t]=(counts[t]||0)+1);
+  const items=Object.keys(counts).map(t=>{const m=MTYPE[t];
+    return `<li><span class="i ${m.cls}">${m.icon}</span><div>${m.name}${counts[t]>1?` × ${counts[t]}`:''}${t==='factor'&&st.power?' + 거듭제곱':''}<small>${m.desc}</small></div></li>`;}).join('');
+  return `<div class="kcard"><div class="khead"><span class="kicon" style="background:var(--accent)">🚩</span><div><small>미션 브리핑</small><h3>${st.boss?'최종 보스에 도전!':'이번 원정의 미션'}</h3></div></div>
+    <ul class="brief-list">${items}</ul>
+    <div class="star-rule"><span>실수 0~1회 ★★★</span><span>실수 2~4회 ★★</span><span>실수 5회 이상 ★</span></div>
+    <p style="color:var(--muted);font-size:14px;margin:12px 0 0">미션 중 막히면 📖 버튼으로 비법을 다시 볼 수 있어요.</p></div>`;
+}
+function renderIntro(){
+  const st=STAGES[G.si], c=G.cards[G.ci], last=G.ci===G.cards.length-1;
+  $('#introHead').innerHTML = `<small>STAGE ${G.si+1}${st.boss?' · BOSS':''}</small><h2>${st.title}</h2><p>${st.sub}</p>`;
+  $('#introBody').innerHTML = c.brief ? briefHTML(st)
+    : `<div class="newbadge">✨ 새로운 비법 ${G.ci+1} / ${G.cards.length-1}</div>${cardHTML(c.k)}`;
+  $('#introDots').innerHTML = G.cards.map((_,i)=>`<i class="${i===G.ci?'on':''}"></i>`).join('');
+  $('#introPrev').disabled = G.ci===0; $('#introPrev').style.visibility = G.ci===0?'hidden':'visible';
+  $('#introNext').textContent = last ? '🚩 원정 시작!' : '다음 ▶';
+  $('#introNext').className = 'btn ' + (last?'accent':'primary');
+}
+$('#introPrev').onclick=()=>{ SFX.click(); if(G.ci>0){G.ci--; renderIntro();} };
+$('#introNext').onclick=()=>{ SFX.click(); if(G.ci<G.cards.length-1){G.ci++; renderIntro(); window.scrollTo({top:0,behavior:'smooth'});} else startStage(G.si); };
+$('#introSkip').onclick=()=>{ SFX.click(); startStage(G.si); };
+$('#introBack').onclick=()=>{ SFX.click(); show('map'); };
+
+/* ============ 스테이지 진행 ============ */
+function startStage(i){
+  const st=STAGES[i]; G.si=i; G.mi=0; G.mistakes=0;
+  const divs=shuffle(st.div), facs=shuffle(st.fac), a1=Math.random()<.5; let ji=0, fi=0;
+  G.missions = missionTypes(st).map(t=>{
+    switch(t){
+      case 'judge': return genJudge(st, ji++===0 ? a1 : !a1);
+      case 'multiples': return genMultiples(st);
+      case 'divisors': return {type:t, n:divs[0], found:new Set(), done:false};
+      case 'primes': return {type:t, n:divs[1], sel:new Set(), done:false};
+      case 'factor': { const n=facs[fi++]; return {type:t, n, cur:n, steps:[], power:st.power, done:false}; }
+    }
+  });
+  show('play'); renderMission();
+}
+function renderHUD(drop=false){
+  const st=STAGES[G.si], s=calcStars(G.mistakes);
+  $('#playTitle').innerHTML = `<small>STAGE ${G.si+1} · 미션 ${G.mi+1}/${G.missions.length}</small><b>${st.title}</b>`;
+  const m=$('#meter');
+  m.innerHTML = `<div class="st">${[1,2,3].map(i=>`<span class="${i<=s?'on':''}">★</span>`).join('')}</div><small>실수 ${G.mistakes}</small>`;
+  if(drop){ m.classList.remove('drop'); void m.offsetWidth; m.classList.add('drop'); }
+  $('#mdots').innerHTML = G.missions.map((_,i)=>`<i class="${i<G.mi?'done':i===G.mi?'cur':''}"></i>`).join('');
+}
+function addMistake(){ const before=calcStars(G.mistakes); G.mistakes++; SFX.wrong(); renderHUD(calcStars(G.mistakes)<before); }
+function renderMission(){
+  const m=G.missions[G.mi], box=$('#mission');
+  $('#nextBar').classList.add('hidden'); renderHUD();
+  box.innerHTML=''; box.style.animation='none'; void box.offsetWidth; box.style.animation='fadeUp .35s ease';
+  ({judge:rJudge, multiples:rMultiples, divisors:rDivisors, primes:rPrimes, factor:rFactor})[m.type](m, box);
+}
+function missionDone(){
+  const last = G.mi===G.missions.length-1;
+  $('#nextBtn').textContent = last ? '🏁 스테이지 완료!' : '다음 미션 ▶';
+  $('#nextBar').classList.remove('hidden');
+  setTimeout(()=>$('#nextBar').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+$('#nextBtn').onclick=()=>{ SFX.click(); G.mi++; if(G.mi>=G.missions.length) stageClear(); else { renderMission(); window.scrollTo({top:0,behavior:'smooth'}); } };
+$('#playBack').onclick=()=>{
+  SFX.click();
+  openModal(`<div style="font-size:44px">🏕️</div><h2>원정을 멈출까요?</h2><p>지금 나가면 이번 스테이지는 처음부터 다시 해야 해요.</p>
+    <div class="mbtns two"><button class="btn ghost" id="mQuit">지도로</button><button class="btn primary" data-close>계속하기</button></div>`);
+  $('#mQuit').onclick=()=>{ closeModal(); show('map'); };
+};
+function feedback(box, kind, title, lines=[]){
+  const w=box.querySelector('.fbwrap');
+  w.innerHTML = `<div class="fb ${kind}"><div class="ttl">${title}</div>${lines.map(l=>`<div class="ln">${l}</div>`).join('')}</div>`;
+}
+const mhead = (t, extra='') => `<div class="mhead"><span class="qtag ${MTYPE[t].cls}">${MTYPE[t].icon} ${MTYPE[t].name}</span>${extra}</div>`;
+
+/* ---------- 1) 배수 판정 O/X ---------- */
+function rJudge(m, box){
+  box.innerHTML = `${mhead('judge',`<button class="link" data-rule="${m.k}">📖 ${m.k}의 배수 비법</button>`)}
+    <div class="q">${bigN(m.n)}${jo(m.n,'은','는')} <span class="kk">${m.k}의 배수</span>일까요?</div>
+    <div class="ox-row"><button class="ox o" data-a="1"><span>⭕</span>맞아요</button><button class="ox x" data-a="0"><span>❌</span>아니에요</button></div>
+    <div class="fbwrap"></div>`;
+  box.querySelectorAll('.ox').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.a==='1', ok=a===m.ans;
+    box.querySelectorAll('.ox').forEach(x=>x.disabled=true); b.classList.add('chosen');
+    ok ? SFX.correct() : addMistake();
+    feedback(box, ok?'ok':'bad', `${ok?'🎉 정답!':'😅 아쉬워요!'} ${fmt(m.n)}${jo(m.n,'은','는')} ${m.k}의 배수${m.ans?'예요.':'가 아니에요.'}`,
+      [shortWhy(m.n,m.k), `<div class="verify">${verifyLine(m.n,m.k)}</div>`]);
+    missionDone();
+  });
+}
+
+/* ---------- 2) 배수 찾기 ---------- */
+function rMultiples(m, box){
+  box.innerHTML = `${mhead('multiples',`<button class="link" data-rule="${m.k}">📖 ${m.k}의 배수 비법</button>`)}
+    <div class="q">다음 중 <span class="kk">${m.k}의 배수</span>를 모두 고르세요</div>
+    <div class="sub">배수 판정법으로 빠르게 골라 보세요. 직접 나눌 필요 없어요!</div>
+    <div class="chips grid3">${m.nums.map(n=>`<button class="chip" data-n="${n}">${fmt(n)}</button>`).join('')}</div>
+    <div class="actions"><button class="btn primary" id="mSubmit">선택 완료</button></div><div class="fbwrap"></div>`;
+  const chips=[...box.querySelectorAll('.chip')];
+  chips.forEach(c=>c.onclick=()=>{ if(m.done) return; SFX.click(); const n=+c.dataset.n;
+    c.classList.remove('bad','miss'); m.sel.has(n)?m.sel.delete(n):m.sel.add(n); c.classList.toggle('sel', m.sel.has(n)); });
+  box.querySelector('#mSubmit').onclick=()=>{
+    if(m.sel.size===0){ toast('하나 이상 골라 주세요!'); return; }
+    const wrong=[...m.sel].filter(n=>n%m.k!==0), missed=m.nums.filter(n=>n%m.k===0 && !m.sel.has(n));
+    if(!wrong.length && !missed.length){
+      m.done=true; SFX.correct();
+      chips.forEach(c=>{ c.disabled=true; if(m.sel.has(+c.dataset.n)) c.className='chip ok'; });
+      feedback(box,'ok',`🎉 완벽해요! ${m.k}의 배수를 모두 찾았어요.`, m.nums.filter(n=>n%m.k===0).map(n=>`<b>${fmt(n)}</b> : ${shortWhy(n,m.k)}`));
+      box.querySelector('#mSubmit').disabled=true; missionDone();
+    } else {
+      addMistake();
+      chips.forEach(c=>{ const n=+c.dataset.n; if(wrong.includes(n)){ c.classList.remove('sel'); void c.offsetWidth; c.classList.add('bad'); } });
+      wrong.forEach(n=>m.sel.delete(n));
+      const lines = wrong.map(n=>`${N} <b>${fmt(n)}</b> : ${shortWhy(n,m.k)}`);
+      if(missed.length) lines.push(`🔎 아직 찾지 못한 ${m.k}의 배수가 <b>${missed.length}개</b> 더 있어요.`);
+      feedback(box,'bad','다시 살펴봐요!', lines);
+    }
+  };
+}
+
+/* ---------- 3) 약수 발굴 ---------- */
+function rDivisors(m, box){
+  const all=divisorsOf(m.n);
+  box.innerHTML = `${mhead('divisors',`<button class="link" data-concept="divisor">📖 약수란?</button>`)}
+    <div class="q">${bigN(m.n)}의 약수를 모두 발굴하세요</div>
+    <div class="sub">${fmt(m.n)}${jo(m.n,'을','를')} 나누어떨어지게 하는 수를 하나씩 입력해 [추가]하세요.</div>
+    <div class="dprog"><div class="bar"><i></i></div><b class="cnt"></b></div>
+    <div class="tags"></div>
+    <div class="inrow"><input class="numin" type="number" inputmode="numeric" min="1" placeholder="숫자 입력" aria-label="약수 입력"><button class="btn primary" id="dAdd">추가</button></div>
+    <div class="msg"></div>
+    <button class="link" id="pairBtn" style="margin-top:6px">💡 짝꿍 힌트 보기</button>
+    <div class="pairs hidden"></div>
+    <div class="fbwrap"></div>`;
+  const input=box.querySelector('.numin'), msg=box.querySelector('.msg');
+  const setMsg=(k,t)=>{ msg.className='msg '+k; msg.innerHTML=t; };
+  let lastAdded=null;
+  const refresh=()=>{
+    const f=[...m.found].sort((a,b)=>a-b);
+    box.querySelector('.tags').innerHTML = f.length ? f.map(x=>`<span class="tag" style="${x===lastAdded?'':'animation:none'}">${x}</span>`).join('') : '<span class="empty">발굴한 약수가 여기에 차례대로 모여요</span>';
+    box.querySelector('.dprog i').style.width=(f.length/all.length*100)+'%';
+    box.querySelector('.cnt').textContent=`발굴 ${f.length} / ${all.length}`;
+    const pr=[]; all.forEach(a=>{ const b=m.n/a; if(a<=b) pr.push([a,b]); });
+    box.querySelector('.pairs').innerHTML = pr.map(([a,b])=>`<div class="pr"><span class="pb ${m.found.has(a)?'f':''}">${m.found.has(a)?a:'?'}</span>×<span class="pb ${m.found.has(b)?'f':''}">${m.found.has(b)?b:'?'}</span>= ${m.n}</div>`).join('');
+  };
+  refresh();
+  box.querySelector('#pairBtn').onclick=e=>{ SFX.click(); const p=box.querySelector('.pairs'); p.classList.toggle('hidden'); e.target.textContent = p.classList.contains('hidden')?'💡 짝꿍 힌트 보기':'🙈 힌트 숨기기'; };
+  const add=()=>{
+    if(m.done) return;
+    const raw=input.value.trim(); input.value=''; input.focus();
+    if(!raw) return;
+    const v=Number(raw);
+    if(!Number.isInteger(v) || v<1){ setMsg('info','1 이상의 자연수를 입력해 주세요.'); return; }
+    if(m.found.has(v)){ setMsg('info',`${v}${jo(v,'은','는')} 이미 발굴했어요!`); return; }
+    if(v>m.n){ setMsg('info',`약수는 ${fmt(m.n)}보다 클 수 없어요. (가장 큰 약수는 자기 자신!)`); return; }
+    if(m.n%v!==0){ addMistake(); setMsg('bad',`${N} ${m.n} ÷ ${v} = ${Math.floor(m.n/v)} … ${m.n%v} → 나누어떨어지지 않아요.`); input.classList.remove('bad'); return; }
+    m.found.add(v); lastAdded=v; SFX.pop(); setMsg('ok',`${Y} ${m.n} = ${v} × ${m.n/v} → ${v}${jo(v,'은','는')} ${m.n}의 약수!`); refresh();
+    if(m.found.size===all.length){
+      m.done=true; SFX.correct(); input.disabled=true; box.querySelector('#dAdd').disabled=true;
+      box.querySelector('.pairs').classList.remove('hidden'); box.querySelector('#pairBtn').classList.add('hidden');
+      feedback(box,'ok',`🎉 ${m.n}의 약수 ${all.length}개를 모두 발굴했어요!`,
+        [`${m.n}의 약수(= 인수): <b>${all.join(', ')}</b>`, '약수는 곱해서 그 수가 되는 <b>짝꿍</b>으로 나타나요.']);
+      missionDone();
+    }
+  };
+  box.querySelector('#dAdd').onclick=()=>{ SFX.click(); add(); };
+  input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); add(); } });
+  setTimeout(()=>{ if(window.matchMedia('(pointer:fine)').matches) input.focus({preventScroll:true}); },300);
+}
+
+/* ---------- 4) 소인수 감별 ---------- */
+function rPrimes(m, box){
+  const all=divisorsOf(m.n), primes=all.filter(isPrime);
+  box.innerHTML = `${mhead('primes',`<button class="link" data-concept="prime">📖 소수란?</button>`)}
+    <div class="q">${bigN(m.n)}의 인수 중 <span class="kk">소인수</span>를 모두 고르세요</div>
+    <div class="sub">아래는 ${m.n}의 약수(인수)예요. 이 중 <b>소수</b>인 것만 골라 [선택 완료]!</div>
+    <div class="chips">${all.map(n=>`<button class="chip" data-n="${n}">${n}</button>`).join('')}</div>
+    <div class="actions"><button class="btn primary" id="pSubmit">선택 완료</button></div><div class="fbwrap"></div>`;
+  const chips=[...box.querySelectorAll('.chip')];
+  chips.forEach(c=>c.onclick=()=>{ if(m.done) return; SFX.click(); const n=+c.dataset.n;
+    c.classList.remove('bad'); m.sel.has(n)?m.sel.delete(n):m.sel.add(n); c.classList.toggle('sel', m.sel.has(n)); });
+  box.querySelector('#pSubmit').onclick=()=>{
+    if(m.sel.size===0){ toast('하나 이상 골라 주세요!'); return; }
+    const wrong=[...m.sel].filter(n=>!isPrime(n)).sort((a,b)=>a-b), missed=primes.filter(p=>!m.sel.has(p));
+    if(!wrong.length && !missed.length){
+      m.done=true; SFX.correct();
+      chips.forEach(c=>{ c.disabled=true; if(m.sel.has(+c.dataset.n)) c.className='chip ok'; });
+      feedback(box,'ok',`🎉 정답! ${m.n}의 소인수는 ${primes.join(', ')}`,
+        [`${m.n}${jo(m.n,'을','를')} 이루는 ‘소수 벽돌’이에요. 다른 약수들은 이 벽돌들의 곱으로 만들어져요.`]);
+      box.querySelector('#pSubmit').disabled=true; missionDone();
+    } else {
+      addMistake();
+      const lines = wrong.map(n=>{
+        if(n===1) return `${N} <b>1</b> : 1은 약수가 1개뿐이라 소수가 아니에요.`;
+        const p=factorize(n)[0]; return `${N} <b>${n}</b> = ${p} × ${n/p} → 약수가 ${divisorsOf(n).join(', ')}로 3개 이상인 합성수예요.`;
+      });
+      chips.forEach(c=>{ const n=+c.dataset.n; if(wrong.includes(n)){ c.classList.remove('sel'); void c.offsetWidth; c.classList.add('bad'); } });
+      wrong.forEach(n=>m.sel.delete(n));
+      if(missed.length) lines.push(`🔎 놓친 소인수가 <b>${missed.length}개</b> 있어요. 약수가 1과 자기 자신뿐인 수를 다시 찾아보세요.`);
+      feedback(box,'bad','다시 감별해 봐요!', lines);
+    }
+  };
+}
+
+/* ---------- 5) 소인수분해 + 거듭제곱 ---------- */
+const PRIMES=[2,3,5,7,11,13];
+function powerOptions(g){
+  const correct=powHTML(g), c=[];
+  if(g.length>=2) c.push(powHTML(g,' + '));
+  g.forEach((_,i)=>{ const h=g.map(x=>x.slice()); h[i][1]+=1; c.push(powHTML(h));
+    if(g[i][1]>1){ const h2=g.map(x=>x.slice()); h2[i][1]-=1; c.push(powHTML(h2)); } });
+  if(g.length>=2 && g[0][1]!==g[1][1]){ const h=g.map(x=>x.slice()); [h[0][1],h[1][1]]=[h[1][1],h[0][1]]; c.push(powHTML(h)); }
+  const uniq=[...new Set(c)].filter(x=>x!==correct);
+  const wrong = (g.length>=2 ? [uniq[0], ...shuffle(uniq.slice(1)).slice(0,1)] : shuffle(uniq).slice(0,2));
+  return shuffle([correct,...wrong]);
+}
+function rFactor(m, box){
+  box.innerHTML = `${mhead('factor',`<button class="link" data-concept="${m.power?'power':'factor'}">📖 ${m.power?'거듭제곱':'소인수분해'}란?</button>`)}
+    <div class="q">${bigN(m.n)}${jo(m.n,'을','를')} 소인수분해하세요</div>
+    <div class="sub">몫이 <b>1</b>이 될 때까지 소수 버튼을 눌러 나눠요. 배수 판정법이 나침반!</div>
+    <div class="fac-area"><div class="ladder"></div><div class="steps"></div></div>
+    <div class="pbtns">${PRIMES.map(p=>`<button class="pbtn" data-p="${p}">÷${p}</button>`).join('')}</div>
+    <div class="msg"></div><div class="pzone"></div><div class="fbwrap"></div>`;
+  const msg=box.querySelector('.msg'), setMsg=(k,t)=>{ msg.className='msg '+k; msg.innerHTML=t; };
+  const drawLadder=()=>{
+    let html=''; let v=m.n;
+    m.steps.forEach(p=>{ html+=`<div class="lrow"><div class="lp">${p}</div><div class="ln">${fmt(v)}</div></div>`; v/=p; });
+    html+= m.cur===1 ? `<div class="lrow last"><div class="lp"></div><div class="ln">1</div></div>`
+                     : `<div class="lrow curr"><div class="lp">?</div><div class="ln">${fmt(v)}</div></div>`;
+    box.querySelector('.ladder').innerHTML=html;
+    let w=m.n;
+    box.querySelector('.steps').innerHTML = m.steps.length
+      ? m.steps.map(p=>{ const s=`<div class="s">${fmt(w)} ÷ <b>${p}</b> = ${fmt(w/p)}</div>`; w/=p; return s; }).join('')
+      : `<div class="hint">👈 현재 수 <b>${fmt(m.n)}</b>${jo(m.n,'을','를')} 나눌 수 있는 가장 작은 소수부터 시도해 보세요.</div>`;
+  };
+  drawLadder();
+  box.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>{
+    if(m.cur===1) return; const p=+b.dataset.p;
+    if(m.cur%p===0){
+      m.steps.push(p); const prev=m.cur; m.cur/=p; SFX.pop();
+      setMsg('ok',`${Y} ${fmt(prev)} ÷ ${p} = ${fmt(m.cur)}`); drawLadder();
+      if(m.cur===1) finishDivide();
+    } else {
+      addMistake();
+      const why = [2,3,5].includes(p) ? ` (${shortWhy(m.cur,p)})` : ` (${fmt(m.cur)} ÷ ${p} = ${fmt(Math.floor(m.cur/p))} … ${m.cur%p})`;
+      setMsg('bad',`${N} ${fmt(m.cur)}${jo(m.cur,'은','는')} ${p}${ro(p)} 나누어떨어지지 않아요${why}`);
+    }
+  });
+  function finishDivide(){
+    box.querySelectorAll('.pbtn').forEach(b=>b.disabled=true);
+    const f=factorize(m.n), g=groupF(f), prod=f.join(' × ');
+    setMsg('ok',`🎯 몫이 1이 되었어요! ${fmt(m.n)} = ${prod}`);
+    const summary = () => `<div class="summary"><small>소인수분해 완성</small>
+        <div class="big">${fmt(m.n)} = ${m.power?powHTML(g):prod}</div>
+        ${m.power?`<div class="mid">= ${prod}</div>`:''}
+        <div class="mid" style="margin-top:6px">소인수: ${g.map(x=>x[0]).join(', ')}</div></div>`;
+    const end = () => { m.done=true; SFX.correct(); missionDone(); };
+    if(!m.power){
+      box.querySelector('.pzone').innerHTML = summary();
+      feedback(box,'ok','🎉 소인수분해 성공!',['같은 수가 여러 번 곱해졌죠? 다음 스테이지에서 이것을 <b>더 짧게 쓰는 법(거듭제곱)</b>을 배워요!']);
+      end(); return;
+    }
+    const opts=powerOptions(g), correct=powHTML(g);
+    const pz=box.querySelector('.pzone');
+    pz.innerHTML = `<div class="ptitle2">✨ 마지막 단계: 같은 소인수끼리 묶어 거듭제곱으로 나타내면?</div>
+      <div class="sub" style="margin:4px 0 0">${fmt(m.n)} = ${prod}</div>
+      <div class="opts">${opts.map(o=>`<button class="opt">${o}</button>`).join('')}</div>`;
+    pz.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{
+      if(m.done || o.disabled) return;
+      if(o.innerHTML===correct){
+        o.classList.add('ok'); pz.querySelectorAll('.opt').forEach(x=>x.disabled=true);
+        pz.insertAdjacentHTML('beforeend', summary());
+        feedback(box,'ok','🎉 완벽한 소인수분해!', g.map(([p,e])=>`${p}${jo(p,'이','가')} ${e}번 곱해짐 → ${e>1?`${p}<sup>${e}</sup>`:p}`));
+        end();
+      } else {
+        addMistake(); o.classList.add('bad'); o.disabled=true;
+        const plus=o.innerHTML.includes('+');
+        feedback(box,'bad','다시 생각해 봐요!',[ plus ? '소인수끼리는 더하기(+)가 아니라 <b>곱하기(×)</b>로 연결해요.'
+          : '지수는 <b>같은 소인수를 곱한 횟수</b>예요. 위 곱셈식에서 각 소인수가 몇 번 나오는지 세어 보세요.' ]);
+      }
+    });
+  }
+}
+
+/* ============ 스테이지 클리어 / 엔딩 ============ */
+function starsRow(n){ return `<div class="mstars">${[1,2,3].map(i=>`<span class="${i<=n?'on':''}" style="animation-delay:${i*.18}s">★</span>`).join('')}</div>`; }
+function stageClear(){
+  const s=calcStars(G.mistakes), i=G.si, wasLocked=!unlocked(i+1);
+  save.stars[i]=Math.max(save.stars[i], s); persist(); updateTop();
+  const last = i===STAGES.length-1;
+  if(last){ showEnding(s); return; }
+  SFX.clear(); confetti(60);
+  const msg = s===3 ? '완벽해요! 비법을 확실히 익혔어요.' : s===2 ? '잘했어요! 실수를 줄이면 ★3도 가능해요.' : '클리어! 비법 도감을 복습하고 다시 도전해 봐요.';
+  openModal(`<div style="font-size:15px;font-weight:800;color:var(--primary)">STAGE ${i+1} 클리어!</div>
+    <h2>${STAGES[i].title} 정복 🎉</h2>${starsRow(s)}
+    <p>실수 ${G.mistakes}회 · ${msg}</p>
+    ${wasLocked?`<div class="unlock">🔓 새 스테이지 해금! STAGE ${i+2} · ${STAGES[i+1].title}</div>`:''}
+    <div class="mbtns">
+      <button class="btn primary big" id="mNext">다음 스테이지로 ▶</button>
+      <div class="mbtns two" style="margin-top:0"><button class="btn ghost" id="mMap">지도</button><button class="btn ghost" id="mRetry">↻ 다시 도전</button></div>
+    </div>`);
+  $('#mNext').onclick=()=>{ closeModal(); openIntro(i+1); };
+  $('#mMap').onclick=()=>{ closeModal(); show('map'); };
+  $('#mRetry').onclick=()=>{ closeModal(); startStage(i); };
+}
+function showEnding(s){
+  SFX.fanfare(); confetti(160);
+  const ts=totalStars(), max=STAGES.length*3;
+  openModal(`<div style="font-size:64px;line-height:1">🏆</div>
+    <h2>소인수 원정대 완주!</h2>${starsRow(s)}
+    <p>최종 보스 ‘인수의 탑’을 정복했어요!<br>총 획득 별 <b style="color:var(--ink)">★ ${ts} / ${max}</b></p>
+    <div class="ex" style="text-align:left;margin-top:12px;background:#f7f8fc">
+      <div>✔ 2, 3, 4, 5, 6, 8, 9의 배수 판정법</div><div>✔ 약수(인수) 빠짐없이 찾기</div>
+      <div>✔ 소수·합성수·소인수 구별</div><div>✔ 소인수분해와 거듭제곱 표현</div></div>
+    <div class="mbtns two"><button class="btn ghost" id="mRetry">↻ 다시 도전</button><button class="btn primary" id="mMap">지도로</button></div>`);
+  $('#mMap').onclick=()=>{ closeModal(); show('map'); };
+  $('#mRetry').onclick=()=>{ closeModal(); startStage(STAGES.length-1); };
+}
+function confetti(n){
+  const colors=['#5b5bd6','#ff8a4c','#12b76a','#ffc233','#e2468a','#22b8cf'];
+  for(let i=0;i<n;i++){
+    const c=document.createElement('div'); c.className='confetti';
+    c.style.left=Math.random()*100+'vw'; c.style.background=pick(colors);
+    c.style.animationDuration=(2+Math.random()*2)+'s'; c.style.animationDelay=(Math.random()*.6)+'s';
+    c.style.transform=`rotate(${rand(0,360)}deg)`; document.body.appendChild(c);
+    setTimeout(()=>c.remove(),5000);
+  }
+}
+
+/* ============ 상단 버튼 ============ */
+$('#bookBtn').onclick=()=>{ SFX.click(); openBook(); };
+$('#soundBtn').onclick=()=>{ SFX.on=!SFX.on; save.sound=SFX.on; persist(); updateTop(); SFX.click(); };
+$('#resetBtn').onclick=()=>{
+  openModal(`<div style="font-size:44px">🗑️</div><h2>기록을 초기화할까요?</h2><p>모든 별과 해금 기록이 사라져요.</p>
+    <div class="mbtns two"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="mReset" style="background:var(--danger);box-shadow:0 6px 0 #b42318">초기화</button></div>`);
+  $('#mReset').onclick=()=>{ save={stars:STAGES.map(()=>0),sound:SFX.on}; persist(); closeModal(); show('map'); toast('기록을 초기화했어요.'); };
+};
+if(window.innerWidth<480) document.querySelectorAll('.hide-sm').forEach(e=>e.remove());
+
+show('map');
+if(TEACHER) toast('👩‍🏫 선생님 모드: 모든 스테이지가 열려 있어요');
+})();
+</script>
+</body>
+</html>
