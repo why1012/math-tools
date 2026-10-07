@@ -557,6 +557,8 @@ let poly = {
   shrinkDone: false,
   carProgress: 0, // 0~n (자동차 주행)
   carRunning: false,
+  carGatherProgress: 0, // 0~1 (외각 모으기)
+  carLapFinished: false,
   dragIdx: -1
 };
 
@@ -756,7 +758,8 @@ function handleDiagClick(idx){
     poly.diags.add(idx);
     SFX.line();
   }
-  updateDiagCard();
+  const isExp = G.missions[G.mi] && G.missions[G.mi].type.startsWith('exp_');
+  if(isExp) updateDiagCard();
 }
 
 /* ---------- 2. 삼각형 분할 모드 렌더링 ---------- */
@@ -848,7 +851,8 @@ function handleTriClick(pos){
       } else {
         poly.triOrder.push(i);
       }
-      updateTriCard();
+      const isExp = G.missions[G.mi] && G.missions[G.mi].type.startsWith('exp_');
+      if(isExp) updateTriCard();
       break;
     }
   }
@@ -1079,88 +1083,189 @@ function renderSumInMode(){
   }
 }
 
+/* ---------- 외각 계산 공통 헬퍼 ---------- */
+function getPolyExteriorData(pts){
+  const n = pts.length;
+  const data = [];
+  for(let i=0; i<n; i++){
+    const pPrev = pts[(i - 1 + n) % n];
+    const pCur = pts[i];
+    const pNext = pts[(i + 1) % n];
+
+    const dx1 = pCur.x - pPrev.x, dy1 = pCur.y - pPrev.y;
+    const ang1 = Math.atan2(dy1, dx1); // 진행하던 원래 방향 (연장선 방향)
+
+    const dx2 = pNext.x - pCur.x, dy2 = pNext.y - pCur.y;
+    const ang2 = Math.atan2(dy2, dx2); // 꺾어서 나아가는 다음 변 방향
+
+    let diff = (ang2 - ang1) % (Math.PI * 2);
+    if(diff < 0) diff += Math.PI * 2;
+    let isCCW = false;
+    if(diff > Math.PI){
+      diff = 2 * Math.PI - diff;
+      isCCW = true;
+    }
+    const deg = Math.round(diff * 180 / Math.PI);
+
+    data.push({
+      p: pCur,
+      ang1,
+      ang2,
+      diff,
+      deg,
+      isCCW
+    });
+  }
+  return data;
+}
+
 /* ---------- 4-A. 자동차 주행 모드 렌더링 ---------- */
 function renderCarMode(){
   renderDefaultPoly();
   const n = poly.n;
   const pts = poly.pts;
+  const extData = getPolyExteriorData(pts);
 
   // 자동차 위치 계산 (carProgress: 0 ~ n)
-  const idx = Math.floor(poly.carProgress) % n;
-  const nextIdx = (idx + 1) % n;
+  const curSeg = Math.floor(poly.carProgress) % n;
+  const nextSeg = (curSeg + 1) % n;
   const frac = poly.carProgress - Math.floor(poly.carProgress);
 
-  const curPt = pts[idx];
-  const nextPt = pts[nextIdx];
+  const curPt = pts[curSeg];
+  const nextPt = pts[nextSeg];
   const carX = curPt.x + (nextPt.x - curPt.x) * frac;
   const carY = curPt.y + (nextPt.y - curPt.y) * frac;
 
-  // 변의 연장선 및 외각 부채꼴 표시
-  for(let i=0; i<n; i++){
-    const p1 = pts[i];
-    const p2 = pts[(i+1)%n];
-    const p3 = pts[(i+2)%n];
+  // 외각 모으기 애니메이션 진행도 (gp: 0 ~ 1)
+  const gp = poly.carGatherProgress || 0;
+  const gt = gp < 0.5 ? 2*gp*gp : -1 + (4 - 2*gp)*gp;
 
-    const dx1 = p2.x - p1.x, dy1 = p2.y - p1.y;
-    const len1 = Math.hypot(dx1, dy1);
-    const extX = p2.x + (dx1 / len1) * 45;
-    const extY = p2.y + (dy1 / len1) * 45;
+  // 변의 연장선 및 외각 부채꼴 렌더링
+  let accumDeg = 0;
+  extData.forEach((d, i) => {
+    const isPassed = (poly.carProgress >= (i === 0 ? n : i));
+    if(isPassed) accumDeg += d.deg;
 
-    // 연장 점선
+    // 1. 연장 점선 (원래 가던 방향)
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(p2.x, p2.y);
-    ctx.lineTo(extX, extY);
+    ctx.moveTo(d.p.x, d.p.y);
+    ctx.lineTo(d.p.x + Math.cos(d.ang1) * 44, d.p.y + Math.sin(d.ang1) * 44);
     ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.8;
     ctx.setLineDash([4, 4]);
     ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.restore();
 
-    // 외각 호
-    const ang1 = Math.atan2(dy1, dx1);
-    const dx2 = p3.x - p2.x, dy2 = p3.y - p2.y;
-    const ang2 = Math.atan2(dy2, dx2);
+    // 2. 외각 부채꼴 (연장선과 다음 변 사이 바깥 각)
+    const activeColor = isPassed ? '#ef4444' : 'rgba(239, 68, 68, 0.35)';
+    const fillColor = isPassed ? PASTEL_COLORS[i % PASTEL_COLORS.length] : 'rgba(239, 68, 68, 0.08)';
 
+    // gp > 0 이면 중심(poly.cx, poly.cy)으로 이동하여 모임
+    const curOx = (1 - gt) * d.p.x + gt * poly.cx;
+    const curOy = (1 - gt) * d.p.y + gt * poly.cy;
+    const curR = (1 - gt) * 26 + gt * 42;
+
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(p2.x, p2.y, 22, ang1, ang2, false);
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 3;
+    ctx.moveTo(curOx, curOy);
+    ctx.arc(curOx, curOy, curR, d.ang1, d.ang2, d.isCCW);
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = activeColor;
+    ctx.lineWidth = isPassed ? 2.5 : 1.5;
     ctx.stroke();
+    ctx.restore();
+
+    // 3. 꼭짓점 위의 회전 각도 배지
+    if(isPassed && gp < 0.5){
+      ctx.save();
+      const midAng = d.isCCW ? d.ang1 - d.diff/2 : d.ang1 + d.diff/2;
+      const bx = d.p.x + Math.cos(midAng) * 40;
+      const by = d.p.y + Math.sin(midAng) * 40;
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 12.5px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`+${d.deg}°`, bx, by);
+      ctx.restore();
+    }
+  });
+
+  // 상단 누적 회전각 배너
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+  const bW = Math.min(360, cvs.clientWidth - 40);
+  ctx.fillRect((cvs.clientWidth - bW)/2, 12, bW, 32);
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 1.8;
+  ctx.strokeRect((cvs.clientWidth - bW)/2, 12, bW, 32);
+
+  ctx.fillStyle = '#991b1b';
+  ctx.font = 'bold 13.5px Pretendard, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if(poly.carProgress >= n){
+    ctx.fillText(`🏁 1바퀴 완주! 총 회전각 = 360° (외각의 합)`, cvs.clientWidth / 2, 28);
+  } else {
+    ctx.fillText(`🚗 누적 회전각: ${accumDeg}° / 360°`, cvs.clientWidth / 2, 28);
+  }
+  ctx.restore();
+
+  // 외각 모으기 100% 완료 시 중심 360도 원 강조
+  if(gp >= 0.92){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(poly.cx, poly.cy, 44, 0, Math.PI * 2);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 14px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('완벽한 360° 원!', poly.cx, poly.cy - 56);
+    ctx.restore();
   }
 
   // 귀여운 자동차 그리기
-  const heading = Math.atan2(nextPt.y - curPt.y, nextPt.x - curPt.x);
-  ctx.save();
-  ctx.translate(carX, carY);
-  ctx.rotate(heading);
+  if(gp < 0.8){
+    const heading = Math.atan2(nextPt.y - curPt.y, nextPt.x - curPt.x);
+    ctx.save();
+    ctx.translate(carX, carY);
+    ctx.rotate(heading);
 
-  // 차체
-  ctx.fillStyle = '#ef4444';
-  ctx.fillRect(-12, -7, 24, 14);
-  // 바퀴
-  ctx.fillStyle = '#0f172a';
-  ctx.fillRect(-10, -9, 6, 2);
-  ctx.fillRect(4, -9, 6, 2);
-  ctx.fillRect(-10, 7, 6, 2);
-  ctx.fillRect(4, 7, 6, 2);
-  // 전조등
-  ctx.fillStyle = '#fef08a';
-  ctx.fillRect(10, -5, 3, 10);
-  ctx.restore();
+    // 차체
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(-12, -7, 24, 14);
+    // 바퀴
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-10, -9, 6, 2);
+    ctx.fillRect(4, -9, 6, 2);
+    ctx.fillRect(-10, 7, 6, 2);
+    ctx.fillRect(4, 7, 6, 2);
+    // 전조등
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(10, -5, 3, 10);
+    ctx.restore();
+  }
 
-  // 애니메이션 업데이트
+  // 주행 애니메이션 업데이트
   if(poly.carRunning){
     poly.carProgress += 0.015;
     if(poly.carProgress >= n){
       poly.carProgress = n;
       poly.carRunning = false;
+      poly.carLapFinished = true;
       SFX.correct();
-      updateCarCard(true);
+      if(window._polyCarLapDone) window._polyCarLapDone();
+      else updateCarCard(true, false);
     }
   }
 }
 
-/* ---------- 4-B. 외각 수축 모드 렌더링 ---------- */
+/* ---------- 4-B. 외각 수축 모드 렌더링 (진짜 외각 기반) ---------- */
 function renderShrinkMode(){
   const s = poly.shrinkProgress; // 1 -> 0
   const n = poly.n;
@@ -1173,31 +1278,54 @@ function renderShrinkMode(){
 
   renderDefaultPoly(scaledPts, 'rgba(37,99,235,0.4)', 'rgba(37,99,235,0.02)');
 
-  // 각 꼭짓점 외각 부채꼴들이 중심으로 모여 360도 원을 이룸
-  const extAngles = (2 * Math.PI) / n;
-  for(let i=0; i<n; i++){
-    const startAng = (i * 2 * Math.PI) / n;
-    const endAng = startAng + extAngles;
+  const extData = getPolyExteriorData(scaledPts);
 
-    // 각 외각 부채꼴의 중심 위치 (수축할수록 poly.cx, poly.cy로 합쳐짐)
-    const ox = scaledPts[i].x;
-    const oy = scaledPts[i].y;
-
+  // 각 꼭짓점마다 정확한 외각 부채꼴 렌더링 (다각형 바깥쪽!)
+  extData.forEach((d, i) => {
+    // 1. 연장 점선 (incoming edge 연장선)
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(ox, oy);
-    ctx.arc(ox, oy, 38, startAng, endAng);
+    ctx.moveTo(d.p.x, d.p.y);
+    ctx.lineTo(d.p.x + Math.cos(d.ang1) * 38, d.p.y + Math.sin(d.ang1) * 38);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. 외각 부채꼴 (연장선 ang1 에서 다음 변 ang2 사이의 바깥 각도)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(d.p.x, d.p.y);
+    ctx.arc(d.p.x, d.p.y, 34, d.ang1, d.ang2, d.isCCW);
     ctx.closePath();
     ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
     ctx.fill();
     ctx.strokeStyle = '#ef4444';
     ctx.lineWidth = 2;
     ctx.stroke();
-  }
+    ctx.restore();
+
+    // 3. 다각형이 아직 크기가 있을 때(s > 0.35) 외각 각도 표시
+    if(s > 0.35){
+      ctx.save();
+      const midAng = d.isCCW ? d.ang1 - d.diff/2 : d.ang1 + d.diff/2;
+      const lx = d.p.x + Math.cos(midAng) * 48;
+      const ly = d.p.y + Math.sin(midAng) * 48;
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 12px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${d.deg}°`, lx, ly);
+      ctx.restore();
+    }
+  });
 
   // 완벽 수축 도달 시 원 강조
   if(s <= 0.08){
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(poly.cx, poly.cy, 40, 0, Math.PI*2);
+    ctx.arc(poly.cx, poly.cy, 38, 0, Math.PI * 2);
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 4;
     ctx.stroke();
@@ -1206,6 +1334,7 @@ function renderShrinkMode(){
     ctx.font = 'bold 15px Pretendard, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('완벽한 360° 원!', poly.cx, poly.cy - 52);
+    ctx.restore();
   }
 }
 
@@ -1295,6 +1424,8 @@ function loadMission(){
   poly.shrinkDone = false;
   poly.carProgress = 0;
   poly.carRunning = false;
+  poly.carGatherProgress = 0;
+  poly.carLapFinished = false;
 
   if(m.n){
     poly.n = m.n;
@@ -1568,32 +1699,72 @@ function updateSumInCard(done){
    4-A. 실생활 외각 탐구: 자동차 주행
 ============================================================ */
 function rExpCar(m, card, ctrls){
-  $('#canvasGuideText').textContent = '💡 [주행 시작]을 누르고 자동차가 다각형 도로를 한 바퀴 도는 회전각을 관찰하세요';
+  $('#canvasGuideText').textContent = '💡 [주행 시작]을 누르고 자동차가 회전하는 외각을 관찰한 뒤, 외각을 모아보세요!';
   
   ctrls.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap">
       <button class="btn primary" id="btnStartCar">🚗 자동차 주행 시작</button>
+      <button class="btn accent" id="btnGatherCar" disabled>🌟 회전한 외각 모아보기</button>
     </div>
   `;
   const btnCar = ctrls.querySelector('#btnStartCar');
+  const btnGather = ctrls.querySelector('#btnGatherCar');
+
+  function triggerGather(){
+    if(!poly.carLapFinished) return;
+    SFX.click();
+    btnGather.disabled = true;
+    let start = null;
+    const dur = 1000;
+    function step(ts){
+      if(!start) start = ts;
+      const progress = Math.min(1, (ts - start) / dur);
+      poly.carGatherProgress = progress;
+      if(progress < 1){
+        requestAnimationFrame(step);
+      } else {
+        poly.carGatherProgress = 1;
+        SFX.fanfare();
+        updateCarCard(true, true);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
   btnCar.onclick = () => {
     SFX.click();
     poly.carProgress = 0;
     poly.carRunning = true;
+    poly.carLapFinished = false;
+    poly.carGatherProgress = 0;
     btnCar.disabled = true;
+    btnGather.disabled = true;
+    updateCarCard(false, false);
   };
+
+  btnGather.onclick = triggerGather;
+
+  window._polyCarLapDone = () => {
+    btnCar.disabled = false;
+    btnGather.disabled = false;
+    updateCarCard(true, false);
+  };
+  window._polyCarTriggerGather = triggerGather;
 
   renderPolyStepCtrls(ctrls, () => {
     poly.carProgress = 0;
     poly.carRunning = false;
+    poly.carLapFinished = false;
+    poly.carGatherProgress = 0;
     btnCar.disabled = false;
-    updateCarCard(false);
+    btnGather.disabled = true;
+    updateCarCard(false, false);
   });
 
-  updateCarCard(false);
+  updateCarCard(false, false);
 }
 
-function updateCarCard(done){
+function updateCarCard(done, gathered){
   const card = $('#rightCard');
   const n = poly.n;
   const extAngle = (360 / n).toFixed(1).replace(/\.0$/, '');
@@ -1609,11 +1780,17 @@ function updateCarCard(done){
       <div class="stat-row"><span>총 회전 각도</span><b style="color:var(--accent);font-size:20px">${extAngle}° × ${n} = 360°</b></div>
     </div>
 
-    ${done ? `
+    ${gathered ? `
       <div class="fb ok" style="animation:fadeUp .3s">
-        <div class="ttl">🏁 제자리 360° 한 바퀴 완주!</div>
-        <div>자동차가 다각형 둘레를 한 바퀴 돌아 제자리로 돌아오면, <b>무조건 정확히 360° 제자리 회전</b>을 하게 돼요. 다각형 모양에 상관없이 외각의 합이 360°인 이유입니다!</div>
+        <div class="ttl">🏁 제자리 360° 완벽한 원 완성!</div>
+        <div>각 꼭짓점에서 회전했던 외각들을 한 점에 모으니 <b>빈틈없이 정확히 360°의 원</b>이 되었습니다! 다각형의 변의 개수와 상관없이 모든 다각형의 외각의 크기의 합은 항상 360°입니다.</div>
         <button class="btn primary big" id="btnCarNext" style="margin-top:14px">다음 미션 진행하기 ▶</button>
+      </div>
+    ` : done ? `
+      <div class="fb ok" style="animation:fadeUp .3s">
+        <div class="ttl">🚗 완주 성공! 꼭짓점마다 회전 완료</div>
+        <div>자동차가 각 꼭짓점에서 외각만큼 방향을 꺾으며 한 바퀴를 완주했습니다! 이제 <b>[🌟 회전한 외각 모아보기]</b> 버튼을 눌러 회전한 외각들을 한곳으로 모아보세요!</div>
+        <button class="btn accent big" id="btnGatherInCard" style="margin-top:14px">🌟 회전한 외각 모아보기 ▶</button>
       </div>
     ` : `
       <div class="ex" style="background:#f8fafc">
@@ -1622,7 +1799,14 @@ function updateCarCard(done){
     `}
   `;
 
-  if(done){
+  if(done && !gathered){
+    const btnGatherInCard = card.querySelector('#btnGatherInCard');
+    if(btnGatherInCard && window._polyCarTriggerGather){
+      btnGatherInCard.onclick = () => window._polyCarTriggerGather();
+    }
+  }
+
+  if(gathered){
     const btnNext = card.querySelector('#btnCarNext');
     if(btnNext) btnNext.onclick = () => $('#nextBtn').click();
     missionDone();
