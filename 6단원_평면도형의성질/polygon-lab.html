@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>다각형 내각과 외각의 비밀 연구소 · Polygon Lab</title>
+<style>
+:root{
+  --primary:#2563eb; --primary-d:#1d4ed8; --primary-soft:#eff6ff;
+  --accent:#f59e0b; --accent-d:#d97706; --accent-soft:#fef3c7;
+  --success:#10b981; --success-soft:#ecfdf5;
+  --danger:#ef4444; --danger-soft:#fef2f2;
+  --bg:#f8fafc; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --star:#ffc233; --r:20px; --shadow:0 8px 28px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:disabled{cursor:default}
+.hidden{display:none!important}
+.app{max-width:1120px;margin:0 auto;padding:16px 16px 48px;min-height:100vh}
+
+/* Top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:-.3px}
+.logo .mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#3b82f6);display:grid;place-items:center;color:#fff;font-size:20px}
+.badge-sub{font-size:12px;background:var(--primary-soft);color:var(--primary-d);font-weight:800;padding:3px 8px;border-radius:99px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:700;font-size:15px}
+.pill .s{color:var(--star)}
+.iconbtn{padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:700;font-size:15px;transition:transform .1s}
+.iconbtn:active{transform:scale(.95)}
+
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .32s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Common Buttons */
+.btn{padding:13px 20px;border-radius:14px;font-weight:800;font-size:16.5px;transition:transform .1s,background .15s,box-shadow .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.primary{background:var(--primary);color:#fff;box-shadow:0 5px 0 var(--primary-d)}
+.btn.primary:active:not(:disabled){box-shadow:0 2px 0 var(--primary-d);transform:translateY(3px)}
+.btn.primary:disabled{background:#cbd5e1;box-shadow:0 5px 0 #94a3b8;color:#64748b}
+.btn.accent{background:var(--accent);color:#fff;box-shadow:0 5px 0 var(--accent-d)}
+.btn.accent:active:not(:disabled){box-shadow:0 2px 0 var(--accent-d);transform:translateY(3px)}
+.btn.ghost{background:#fff;border:2px solid var(--line);color:var(--ink)}
+.btn.big{width:100%;font-size:18px;padding:16px}
+.link{color:var(--primary);font-weight:700;font-size:14px;padding:6px 10px;border-radius:10px;background:var(--primary-soft)}
+
+/* MAP VIEW */
+.hero{background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0ea5e9 100%);color:#fff;border-radius:26px;padding:26px 26px 22px;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(37,99,235,.28)}
+.hero h1{margin:0 0 4px;font-size:clamp(24px,4.5vw,34px);letter-spacing:-.5px}
+.hero p{margin:0;opacity:.95;font-size:15px}
+.hero .deco{position:absolute;right:-10px;top:-10px;font-size:110px;opacity:.15;font-weight:900;transform:rotate(12deg)}
+.hero-prog{margin-top:16px;display:flex;align-items:center;gap:12px}
+.hero-prog .bar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.28);overflow:hidden}
+.hero-prog .bar i{display:block;height:100%;background:var(--star);border-radius:99px;transition:width .6s}
+.hero-prog b{font-size:15px;white-space:nowrap}
+
+.path{position:relative;padding:34px 0 20px}
+.path svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.node-row{display:flex;justify-content:center;margin-bottom:26px;position:relative;z-index:1}
+.node-wrap{display:flex;flex-direction:column;align-items:center;transform:translateX(calc(var(--o) * min(24vw, 170px)));width:150px}
+.node{width:82px;height:82px;border-radius:50%;background:#fff;border:4px solid var(--line);display:grid;place-items:center;font-size:30px;font-weight:900;color:#94a3b8;box-shadow:0 6px 0 #cbd5e1;transition:transform .12s}
+.node:active{transform:translateY(3px)}
+.node.open{background:var(--primary);border-color:#fff;color:#fff;box-shadow:0 6px 0 var(--primary-d),0 0 0 4px var(--primary-soft)}
+.node.cleared{background:var(--success);color:#fff;border-color:#fff;box-shadow:0 6px 0 #059669,0 0 0 4px var(--success-soft)}
+.node.boss.open,.node.boss.cleared{background:linear-gradient(135deg,var(--accent),#ef4444);box-shadow:0 6px 0 #b45309,0 0 0 4px var(--accent-soft)}
+.node.current{animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 6px 0 var(--primary-d),0 0 0 4px var(--primary-soft)}50%{box-shadow:0 6px 0 var(--primary-d),0 0 0 14px rgba(37,99,235,.15)}}
+.node-label{margin-top:10px;text-align:center;font-weight:800;font-size:15px;line-height:1.3}
+.node-label small{display:block;font-weight:600;color:var(--muted);font-size:12px}
+.node-stars{font-size:18px;letter-spacing:2px;color:#cbd5e1;margin-top:2px}
+.node-stars .on{color:var(--star)}
+.map-foot{text-align:center;margin-top:10px}
+.map-foot button{color:var(--muted);font-size:13px;text-decoration:underline}
+
+/* INTRO */
+.intro-head{text-align:center;margin-bottom:16px}
+.intro-head small{display:inline-block;background:var(--primary-soft);color:var(--primary-d);font-weight:800;padding:4px 12px;border-radius:99px;font-size:13px}
+.intro-head h2{margin:8px 0 2px;font-size:clamp(24px,4vw,30px);letter-spacing:-.4px}
+.intro-head p{margin:0;color:var(--muted)}
+.kcard{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+.khead{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.kicon{width:52px;height:52px;border-radius:16px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900;flex-shrink:0}
+.khead small{color:var(--muted);font-weight:700;font-size:13px}
+.khead h3{margin:0;font-size:22px;letter-spacing:-.3px}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.rule-grid{grid-template-columns:1fr}}
+.panel{border-radius:16px;padding:18px;font-size:16px}
+.panel h4{margin:0 0 10px;font-size:14px;letter-spacing:.3px;display:flex;align-items:center;gap:6px}
+.panel.easy{background:var(--primary-soft)}
+.panel.easy h4{color:var(--primary)}
+.panel.why{background:var(--accent-soft)}
+.panel.why h4{color:var(--accent-d)}
+.panel p{margin:8px 0}
+.big-rule{font-size:19px;font-weight:700;line-height:1.5;margin-top:0!important}
+mark{background:linear-gradient(transparent 55%,#ffd76a 55%);color:inherit;padding:0 2px}
+.ex{background:#fff;border-radius:12px;padding:12px 14px;font-size:16px;display:grid;gap:4px}
+.eq{background:#fff;border-radius:12px;padding:12px 14px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:15.5px;line-height:1.8;margin:8px 0;border:1.5px dashed #cbd5e1}
+.cc{font-weight:700}
+.warnbox{background:var(--accent-soft);border-left:4px solid var(--accent);padding:10px 12px;border-radius:10px;font-size:15px;margin-top:10px}
+.intro-nav{display:flex;gap:10px;margin-top:18px;align-items:center}
+.intro-nav .btn{flex:1}
+.brief-list{display:grid;gap:10px;margin:6px 0 16px;padding:0;list-style:none}
+.brief-list li{display:flex;gap:12px;align-items:center;background:#f8fafc;border-radius:14px;padding:12px 14px;font-weight:700}
+.brief-list li span.i{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.brief-list li small{display:block;color:var(--muted);font-weight:600;font-size:13px}
+.star-rule{display:flex;gap:8px;flex-wrap:wrap}
+.star-rule span{background:#fffbea;border:1.5px solid #ffe7a3;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:700}
+
+/* PLAY SCREEN (Two-Column Layout) */
+.playbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ptitle{flex:1;text-align:center;line-height:1.25}
+.ptitle small{display:block;color:var(--primary);font-weight:800;font-size:12px;letter-spacing:.5px}
+.ptitle b{font-size:18px}
+.meter{background:#fff;border-radius:14px;padding:6px 12px;box-shadow:var(--shadow);text-align:center;line-height:1.2}
+.meter .st{font-size:18px;letter-spacing:1px;color:#cbd5e1}
+.meter .st .on{color:var(--star)}
+.meter small{display:block;font-size:11px;color:var(--muted);font-weight:700}
+.meter.drop{animation:shake .45s}
+.mdots{display:flex;gap:6px;margin-bottom:14px}
+.mdots i{flex:1;height:8px;border-radius:99px;background:#e2e8f0;transition:background .3s}
+.mdots i.done{background:var(--success)}
+.mdots i.cur{background:var(--primary)}
+
+.lab-grid{display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;align-items:start}
+@media (max-width:880px){.lab-grid{grid-template-columns:1fr}}
+
+.canvas-panel{background:#fff;border-radius:var(--r);padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.canvas-wrap{position:relative;width:100%;height:380px;background:#f8fafc;border:2px solid var(--line);border-radius:16px;overflow:hidden;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+.canvas-tip{font-size:13.5px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.canvas-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.ctrl-btn{padding:8px 14px;border-radius:12px;background:#f1f5f9;font-weight:800;font-size:14px;border:2px solid transparent;transition:all .12s}
+.ctrl-btn:hover{background:#e2e8f0}
+.ctrl-btn.active{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
+
+.right-panel{display:flex;flex-direction:column;gap:14px}
+.info-card{background:#fff;border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.qtag{font-weight:800;font-size:13px;padding:5px 12px;border-radius:99px;display:inline-block;margin-bottom:8px}
+.t-exp{background:var(--primary-soft);color:var(--primary-d)}
+.t-quiz{background:var(--accent-soft);color:var(--accent-d)}
+
+.qtitle{font-size:22px;font-weight:900;letter-spacing:-.4px;line-height:1.4;margin:4px 0 8px}
+.qdesc{font-size:15px;color:var(--muted);margin-bottom:14px}
+
+.stat-box{background:#f8fafc;border-radius:14px;padding:14px;border:2px dashed var(--line);margin:10px 0}
+.stat-row{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;margin:4px 0}
+.stat-row b{color:var(--primary);font-size:18px}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chips.grid2{display:grid;grid-template-columns:1fr 1fr}
+.chip{padding:14px 10px;border-radius:14px;border:2.5px solid var(--line);background:#fff;font-size:18px;font-weight:800;transition:all .12s;box-shadow:0 3px 0 #e2e8f0;text-align:center}
+.chip:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+.chip.ok{border-color:var(--success);background:var(--success-soft);color:#065f46;box-shadow:none}
+.chip.bad{border-color:var(--danger);background:var(--danger-soft);color:#991b1b;animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.ox-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.ox{min-height:90px;border-radius:16px;font-size:18px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:3px solid transparent}
+.ox span{font-size:32px;line-height:1}
+.ox.o{background:var(--success-soft);color:#065f46}
+.ox.x{background:var(--danger-soft);color:#991b1b}
+.ox:active:not(:disabled){transform:scale(.97)}
+.ox.chosen{border-color:currentColor}
+
+.fb{margin-top:14px;padding:14px 16px;border-radius:14px;border-left:5px solid;font-size:15.5px;animation:fadeUp .3s}
+.fb.ok{background:var(--success-soft);border-color:var(--success)}
+.fb.bad{background:var(--danger-soft);border-color:var(--danger)}
+.fb .ttl{font-weight:800;font-size:17px;margin-bottom:3px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(3px)}
+.overlay.show{opacity:1;pointer-events:auto}
+.modal{background:#fff;border-radius:26px;padding:28px 24px 22px;width:100%;max-width:440px;max-height:92vh;overflow:auto;text-align:center;transform:scale(.9);transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
+.overlay.show .modal{transform:scale(1)}
+.modal.wide{max-width:900px;text-align:left;padding:22px}
+.modal h2{margin:4px 0 6px;font-size:26px;letter-spacing:-.4px}
+.modal p{color:var(--muted);margin:6px 0}
+.mstars{font-size:58px;letter-spacing:6px;margin:6px 0 4px;color:#e2e8f0}
+.mstars span{display:inline-block}
+.mstars .on{color:var(--star);animation:starPop .5s both}
+@keyframes starPop{0%{transform:scale(0) rotate(-90deg)}70%{transform:scale(1.3) rotate(10deg)}100%{transform:scale(1)}}
+.mbtns{display:grid;gap:10px;margin-top:18px}
+.mbtns.two{grid-template-columns:1fr 1.4fr}
+.unlock{margin-top:12px;background:var(--primary-soft);color:var(--primary-d);border-radius:14px;padding:10px;font-weight:700}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:thin}
+.tab{flex-shrink:0;padding:8px 14px;border-radius:12px;background:#f1f5f9;font-weight:800;font-size:14px;color:#475569}
+.tab.on{background:var(--primary);color:#fff}
+.tab:disabled{opacity:.45}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;transition:all .25s;z-index:60;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:70;pointer-events:none;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="logo">
+      <div class="mark">⬡</div>
+      <div>
+        <span>다각형 비밀 연구소</span>
+        <span class="badge-sub">중1 수학 · 내각과 외각</span>
+      </div>
+    </div>
+    <div class="tb-right">
+      <span class="pill"><span class="s">★</span><span id="totalStars">0</span></span>
+      <button class="iconbtn" id="bookBtn" title="비법 도감">📖<span class="hide-sm"> 도감</span></button>
+      <button class="iconbtn" id="soundBtn" title="효과음">🔊</button>
+    </div>
+  </header>
+
+  <!-- MAP -->
+  <section class="screen" id="s-map">
+    <div class="hero">
+      <div class="deco">180°(n-2)</div>
+      <h1>다각형 내각과 외각의 비밀 연구소</h1>
+      <p>대각선 긋기 ➔ 삼각형 피자 조각 ➔ 180° 각 모으기 ➔ 외각 자동차 주행 & 수축 마술!<br>공식을 외우지 않고 직접 만지며 원리를 깨치는 탐험을 떠나요.</p>
+      <div class="hero-prog"><div class="bar"><i id="heroBar"></i></div><b id="heroTxt">0 / 15</b></div>
+    </div>
+    <div class="path" id="path"><svg id="pathSvg"></svg></div>
+    <div class="map-foot"><button id="resetBtn">기록 초기화</button></div>
+  </section>
+
+  <!-- INTRO -->
+  <section class="screen" id="s-intro">
+    <div class="playbar">
+      <button class="iconbtn" id="introBack">← 지도</button>
+      <div class="ptitle"></div>
+      <button class="iconbtn hidden" id="introSkip">바로 시작 ▶</button>
+    </div>
+    <div class="intro-head" id="introHead"></div>
+    <div id="introBody"></div>
+    <div class="intro-nav">
+      <button class="btn primary big" id="introStart">🚩 연구 시작하기!</button>
+    </div>
+  </section>
+
+  <!-- PLAY (Two-column) -->
+  <section class="screen" id="s-play">
+    <div class="playbar">
+      <button class="iconbtn" id="playBack">← 지도</button>
+      <div class="ptitle" id="playTitle"></div>
+      <div class="meter" id="meter"></div>
+    </div>
+    <div class="mdots" id="mdots"></div>
+    
+    <div class="lab-grid">
+      <!-- 좌측 캔버스 (60%) -->
+      <div class="canvas-panel">
+        <div class="canvas-tip">
+          <span id="canvasGuideText">💡 꼭짓점을 터치해 대각선을 그어보세요</span>
+          <span style="font-size:12px;color:var(--primary);font-weight:800">🖐 꼭짓점 드래그 가능</span>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="mainCanvas"></canvas>
+        </div>
+        <div class="canvas-ctrls" id="canvasCtrls">
+          <!-- 동적 컨트롤 버튼들 -->
+        </div>
+      </div>
+
+      <!-- 우측 가이드 & 인터랙션/퀴즈 카드 (40%) -->
+      <div class="right-panel">
+        <div class="info-card" id="rightCard">
+          <!-- 동적 퀴즈/유도 카드 렌더링 -->
+        </div>
+        <div class="nextbar hidden" id="nextBar">
+          <button class="btn primary big" id="nextBtn">다음 미션 ▶</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ============ 유틸 ============ */
+const $ = s => document.querySelector(s);
+const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const fmt = n => n.toLocaleString('ko-KR');
+
+/* ============ 사운드 (Web Audio API) ============ */
+const SFX = {
+  ctx:null, on:true,
+  ensure(){ if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(AC) this.ctx=new AC(); }
+            if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); return this.ctx; },
+  tone(f,d=.12,type='sine',delay=0,vol=.18){
+    if(!this.on) return; const c=this.ensure(); if(!c) return;
+    const t=c.currentTime+delay, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+.05);
+  },
+  click(){ this.tone(520,.06,'triangle',0,.08); },
+  pop(){ this.tone(600,.08,'sine',0,.18); this.tone(900,.08,'sine',.04,.14); },
+  line(){ this.tone(440,.1,'triangle',0,.15); this.tone(880,.14,'sine',.06,.2); },
+  car(){ this.tone(300,.05,'sawtooth',0,.04); },
+  correct(){ this.tone(660,.12,'sine',0,.22); this.tone(990,.22,'sine',.1,.22); },
+  wrong(){ this.tone(200,.16,'square',0,.06); this.tone(150,.24,'square',.12,.06); },
+  clear(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,.25,'triangle',i*.12,.2)); this.tone(1319,.6,'sine',.5,.16); },
+  fanfare(){ [392,523,659,784,659,784,1047].forEach((f,i)=>this.tone(f,.28,'triangle',i*.14,.2)); this.tone(1568,.9,'sine',1.0,.14); }
+};
+
+/* ============ 비법 도감 카드 (2분할: 직관 vs 수학적 이유) ============ */
+const CARDS = {
+  diag:{kind:'rule',icon:'📐',title:'한 꼭짓점의 대각선과 총 개수',lt:'💡 직관적 규칙',rt:'🔎 수학적 증명',
+    left:`<p class="big-rule">n각형의 한 꼭짓점에서 그을 수 있는 대각선은 <mark>n - 3</mark>개!</p>
+      <div class="ex"><div>• 자기 자신(1개) ➔ 선을 그을 수 없음 ✘</div>
+      <div>• 양옆 이웃 꼭짓점(2개) ➔ 대각선이 아니라 다각형의 변! ✘</div>
+      <div><b>👉 나(1) + 양옆(2) = 3개 제외!</b></div></div>`,
+    right:`<p class="big-rule">다각형의 대각선의 총 개수는 <mark>n(n - 3) ÷ 2</mark></p>
+      <div class="eq">한 점당 (n-3)개씩 n개 꼭짓점 = n(n-3)개<br>A ➔ B와 B ➔ A는 같은 선이므로 <b>2로 나눔!</b></div>
+      <p class="cc">예) 오각형의 대각선 총 개수: 5 × (5-3) ÷ 2 = <b>5개</b> (별 모양 ⭐)</p>`},
+  tri:{kind:'rule',icon:'🍕',title:'피자 조각내기 (삼각형 개수)',lt:'💡 직관적 규칙',rt:'🔎 대수적 이유',
+    left:`<p class="big-rule">한 꼭짓점에서 대각선을 모두 그으면 삼각형은 <mark>n - 2</mark>개!</p>
+      <div class="ex"><div>• 피자에 칼질(대각선) 1번 ➔ 2조각</div>
+      <div>• 칼질(대각선) 2번 ➔ 3조각</div>
+      <div><b>👉 삼각형 조각 수는 대각선 수(n-3)보다 항상 1개 더 많아요!</b></div></div>`,
+    right:`<div class="eq">대각선의 개수 = n - 3<br>만들어지는 삼각형의 개수 = (n - 3) + 1 = <b>n - 2</b></div>
+      <p class="cc">삼각형(n=3)은 1개, 사각형(n=4)은 2개, 오각형(n=5)은 3개... 변이 하나 늘어날 때마다 삼각형도 1개씩 늘어나요!</p>`},
+  sum_in:{kind:'rule',icon:'🌈',title:'다각형 내각의 크기의 합',lt:'💡 직관적 규칙',rt:'🔎 수학적 증명',
+    left:`<p class="big-rule">n각형의 내각의 크기의 합은 <mark>180° × (n - 2)</mark></p>
+      <div class="ex"><div>• 사각형: 180° × 2 = <b>360°</b></div>
+      <div>• 오각형: 180° × 3 = <b>540°</b></div>
+      <div>• 육각형: 180° × 4 = <b>720°</b></div></div>`,
+    right:`<p>다각형의 모든 내각은 쪼개진 <b>삼각형들의 내각을 모두 합친 것</b>과 완벽히 같아요.</p>
+      <div class="eq">삼각형 1개의 내각의 합 = 180°<br>삼각형이 (n-2)개 모임<br>➔ <b>총합 = 180° × (n - 2)</b></div>
+      <p class="cc">👉 다각형이 찌그러지든 볼록하든 삼각형 조각 수는 같으므로 내각의 합은 항상 일정해요!</p>`},
+  sum_out:{kind:'rule',icon:'🚗',title:'다각형 외각의 크기의 합',lt:'💡 자동차 주행 & 수축 직관',rt:'🔎 대수적 증명',
+    left:`<p class="big-rule">다각형 모양과 변의 수에 관계없이<br>외각의 크기의 합은 <mark>언제나 360°</mark>!</p>
+      <div class="ex"><div>• 자동차를 타고 다각형 둘레를 한 바퀴 돌면? 제자리에서 <b>정확히 360° 회전!</b></div>
+      <div>• 다각형을 한 점으로 쪼그라뜨리면? 외각 부채꼴들이 모여 <b>완벽한 360° 원 완성!</b></div></div>`,
+    right:`<p>모든 꼭짓점에서 (한 내각 + 한 외각) = 180° (평각)</p>
+      <div class="eq">(내각의 합) + (외각의 합) = 180° × n<br>(외각의 합) = 180°n - 180°(n - 2)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 180°n - 180°n + 360° = <b>360°</b></div>
+      <p class="cc">👉 n이 완전히 사라져서 몇 각형이든 무조건 360°예요!</p>`},
+  regular:{kind:'rule',icon:'👑',title:'정다각형과 외각 암산 꿀팁',lt:'💡 3초 암산 꿀팁',rt:'🔎 공식 비교',
+    left:`<p class="big-rule">정다각형의 한 내각을 구할 땐<br><mark>외각을 먼저 구해서 180°에서 빼기!</mark></p>
+      <div class="ex"><div>예) 정십각형의 한 내각은?</div>
+      <div>1) 한 외각 = 360° ÷ 10 = <b>36°</b></div>
+      <div>2) 한 내각 = 180° - 36° = <b>144°</b> (암산 끝!)</div></div>`,
+    right:`<div class="eq">[정석 공식]<br>한 내각 = 180° × (n - 2) ÷ n<br>[꿀팁 공식]<br><b>한 내각 = 180° - (360° ÷ n)</b></div>
+      <p class="cc">외각은 항상 총합이 360°로 고정되어 있어 n으로 나누기가 훨씬 간단해요!</p>`}
+};
+const BOOK_ORDER = ['diag','tri','sum_in','sum_out','regular'];
+const BOOK_LABEL = {diag:'대각선의 개수',tri:'삼각형 분할',sum_in:'내각의 합',sum_out:'외각의 합',regular:'정다각형 암산팁'};
+
+/* ============ 스테이지 정의 (5개 스테이지 나선형 루프) ============ */
+const STAGES = [
+  {title:'한 꼭짓점의 딜레마', sub:'대각선 개수 (n-3)과 총 개수 도출', card:'diag', n:5, mode:'diag'},
+  {title:'피자 조각내기', sub:'대각선이 만드는 (n-2)개의 삼각형 분할', card:'tri', n:6, mode:'tri'},
+  {title:'각 모으기 축제', sub:'내각의 합 180° × (n-2) 유도와 각도 찾기', card:'sum_in', n:5, mode:'sum_in'},
+  {title:'외각 수축 마술', sub:'자동차 주행과 도형 수축으로 외각의 합 360° 체감', card:'sum_out', n:5, mode:'sum_out'},
+  {title:'정다각형 연구실 & 보스전', sub:'외각 꿀팁 암산과 종합 마스터 챌린지', card:'regular', n:6, boss:true, mode:'regular'}
+];
+const MAP_OFFSET = [0, .7, 1, .3, 0];
+const calcStars = m => m<=1 ? 3 : m<=4 ? 2 : 1;
+
+/* ============ 저장 ============ */
+const KEY = 'polygonLab_v1';
+const TEACHER = location.hash === '#teacher';
+let save = (() => {
+  try { const s = JSON.parse(localStorage.getItem(KEY));
+        if (s && Array.isArray(s.stars)) { while (s.stars.length < STAGES.length) s.stars.push(0); return s; } } catch(e){}
+  return { stars: STAGES.map(()=>0), sound: true };
+})();
+const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch(e){} };
+const unlocked = i => TEACHER || i===0 || save.stars[i-1] > 0;
+const totalStars = () => save.stars.reduce((a,b)=>a+b,0);
+SFX.on = save.sound !== false;
+
+/* ============ 화면 전환 ============ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id==='s-'+id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='map') renderMap();
+  updateTop();
+}
+function updateTop(){ $('#totalStars').textContent = totalStars(); $('#soundBtn').textContent = SFX.on?'🔊':'🔇'; }
+let toastT;
+function toast(msg){ const t=$('#toast'); t.innerHTML=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2400); }
+function openModal(html, wide=false){ const m=$('#modal'); m.className='modal'+(wide?' wide':''); m.innerHTML=html; $('#overlay').classList.add('show'); }
+function closeModal(){ $('#overlay').classList.remove('show'); }
+$('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay' && $('#modal').classList.contains('wide')) closeModal(); });
+
+/* ============ 지도 ============ */
+function renderMap(){
+  const path=$('#path'); path.querySelectorAll('.node-row').forEach(n=>n.remove());
+  const firstOpen = STAGES.findIndex((_,i)=>unlocked(i) && save.stars[i]===0);
+  STAGES.forEach((st,i)=>{
+    const open=unlocked(i), stars=save.stars[i];
+    const row=document.createElement('div'); row.className='node-row';
+    row.innerHTML = `<div class="node-wrap" style="--o:${MAP_OFFSET[i]}">
+      <button class="node ${open?(stars?'cleared':'open'):''} ${st.boss?'boss':''} ${i===firstOpen?'current':''}" aria-label="스테이지 ${i+1}">
+        ${open ? (st.boss?'👑':i+1) : '🔒'}</button>
+      <div class="node-label"><small>STAGE ${i+1}</small>${st.title}
+        <div class="node-stars">${[1,2,3].map(s=>`<span class="${s<=stars?'on':''}">★</span>`).join('')}</div></div></div>`;
+    row.querySelector('.node').onclick = () => {
+      SFX.click();
+      if(!open){ toast(`🔒 STAGE ${i}을(를) 먼저 클리어해야 열려요!`); return; }
+      openIntro(i);
+    };
+    path.appendChild(row);
+  });
+  const ts=totalStars(), max=STAGES.length*3;
+  $('#heroBar').style.width = (ts/max*100)+'%';
+  $('#heroTxt').textContent = `★ ${ts} / ${max}`;
+  requestAnimationFrame(drawPath);
+}
+function drawPath(){
+  const wrap=$('#path'), svg=$('#pathSvg'); if(!wrap.offsetParent) return;
+  const r=wrap.getBoundingClientRect();
+  const pts=[...wrap.querySelectorAll('.node')].map(n=>{const b=n.getBoundingClientRect(); return [b.left+b.width/2-r.left, b.top+b.height/2-r.top];});
+  svg.setAttribute('width',r.width); svg.setAttribute('height',r.height);
+  const seg=(a,b)=>{const my=(a[1]+b[1])/2; return ` C ${a[0]} ${my}, ${b[0]} ${my}, ${b[0]} ${b[1]}`;};
+  let dAll='', dDone='';
+  pts.forEach((p,i)=>{ if(i===0){dAll=`M ${p[0]} ${p[1]}`; dDone=dAll; return;}
+    const s=seg(pts[i-1],p); dAll+=s; if(unlocked(i)) dDone+=s; });
+  svg.innerHTML = `<path d="${dAll}" fill="none" stroke="#e2e8f0" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 16"/>
+                   <path d="${dDone}" fill="none" stroke="#93c5fd" stroke-width="8" stroke-linecap="round"/>`;
+}
+window.addEventListener('resize', ()=>{ if($('#s-map').classList.contains('active')) drawPath(); });
+
+/* ============ 비법 도감 ============ */
+function cardHTML(key){
+  const c=CARDS[key];
+  return `<div class="kcard"><div class="khead"><span class="kicon">${c.icon}</span><div><small>${c.kind==='rule'?'다각형 핵심 비법':'발견 원리'}</small><h3>${c.title}</h3></div></div>
+    <div class="rule-grid"><div class="panel easy"><h4>${c.lt}</h4>${c.left}</div><div class="panel why"><h4>${c.rt}</h4>${c.right}</div></div></div>`;
+}
+function openBook(key='diag'){
+  const tabs = BOOK_ORDER.map(k=>`<button class="tab ${k===key?'on':''}" data-k="${k}">${BOOK_LABEL[k]}</button>`).join('');
+  openModal(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2>📖 다각형 비법 도감</h2><button class="iconbtn" data-close>닫기 ✕</button></div>
+    <div class="tabs">${tabs}</div><div id="bookBody">${cardHTML(key)}</div>`, true);
+  $('#modal').querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ SFX.click(); openBook(t.dataset.k); });
+}
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-book]'); if(b){ SFX.click(); openBook(b.dataset.book); }
+  if(e.target.closest('[data-close]')){ SFX.click(); closeModal(); }
+});
+
+/* ============ 인트로 ============ */
+const G = { si:0, missions:[], mi:0, mistakes:0, n:5, points:[], mode:'', subStep:0 };
+function openIntro(i){
+  G.si=i;
+  const st=STAGES[i];
+  $('#introHead').innerHTML = `<small>STAGE ${i+1}${st.boss?' · FINAL BOSS':''}</small><h2>${st.title}</h2><p>${st.sub}</p>`;
+  $('#introBody').innerHTML = cardHTML(st.card);
+  show('intro');
+}
+$('#introBack').onclick=()=>{ SFX.click(); show('map'); };
+$('#introStart').onclick=()=>{ SFX.click(); startStage(G.si); };
+
+/* ============ 문제 생성 로직 ============ */
+function createMissions(si){
+  switch(si){
+    case 0: // 대각선
+      return [
+        {type:'exp_diag', title:'한 꼭짓점에서 대각선 긋기 탐구', n:5},
+        {type:'quiz_diag1', title:'대각선 개수 계산', n:10, ans:7, q:'십각형(n=10)의 한 꼭짓점에서 그을 수 있는 대각선의 개수는?'},
+        {type:'quiz_diag2', title:'역산 퀴즈', ans:12, q:'한 꼭짓점에서 대각선을 9개 그을 수 있는 다각형은 몇 각형일까요?'},
+        {type:'quiz_diag_all', title:'대각선의 총 개수', n:8, ans:20, q:'팔각형(n=8)의 대각선의 총 개수는 모두 몇 개일까요?'}
+      ];
+    case 1: // 삼각형 분할
+      return [
+        {type:'exp_tri', title:'삼각형 피자 조각 분할 탐구', n:6},
+        {type:'quiz_tri1', title:'삼각형 개수 계산', n:9, ans:7, q:'구각형(n=9)의 한 꼭짓점에서 대각선을 모두 그었을 때 생기는 삼각형의 개수는?'},
+        {type:'quiz_tri2', title:'역산 퀴즈', ans:12, q:'한 꼭짓점에서 대각선을 그어 10개의 삼각형으로 나누어지는 다각형은 몇 각형일까요?'},
+        {type:'quiz_tri_diff', title:'대각선과 삼각형의 관계', ans:1, q:'n각형에서 만들어지는 삼각형의 개수(n-2)는 대각선의 개수(n-3)보다 항상 몇 개 더 많을까요?'}
+      ];
+    case 2: // 내각의 합
+      return [
+        {type:'exp_sum_in', title:'180° 반원 각 모으기 탐구', n:5},
+        {type:'quiz_sum1', title:'내각의 합 계산', n:7, ans:900, q:'칠각형(n=7)의 내각의 크기의 합은 얼마일까요?'},
+        {type:'quiz_sum2', title:'내각의 합 역산', ans:8, q:'내각의 크기의 합이 1080°인 다각형은 몇 각형일까요?'},
+        {type:'quiz_angle_x', title:'미지의 각 x 찾기', ans:130, q:'오각형의 네 내각이 100°, 110°, 120°, 80°일 때, 나머지 한 각 x의 크기는?'}
+      ];
+    case 3: // 외각의 합
+      return [
+        {type:'exp_car', title:'실생활 탐구: 자동차의 다각형 도로 주행', n:5},
+        {type:'exp_shrink', title:'수학적 탐구: 다각형 외각 수축 마술', n:5},
+        {type:'quiz_out1', title:'외각의 합의 불변성', ans:360, q:'백각형(n=100)의 외각의 크기의 합은 얼마일까요?'},
+        {type:'quiz_out2', title:'외각 계산 퀴즈', ans:75, q:'사각형의 세 외각의 크기가 80°, 95°, 110°일 때, 나머지 한 외각의 크기는?'}
+      ];
+    case 4: // 보스전 (정다각형)
+      return [
+        {type:'exp_regular', title:'정다각형 외각 꿀팁 암산 연구', n:6},
+        {type:'quiz_reg1', title:'정육각형의 한 외각', ans:60, q:'정육각형의 한 외각의 크기는 얼마일까요?'},
+        {type:'quiz_reg2', title:'정팔각형의 한 내각 (꿀팁 활용)', ans:135, q:'정팔각형의 한 내각의 크기는 얼마일까요? (180° - 한 외각)'},
+        {type:'quiz_reg3', title:'한 내각으로 정다각형 찾기', ans:10, q:'한 내각의 크기가 144°인 정다각형은 몇 각형일까요?'},
+        {type:'quiz_reg4', title:'내각과 외각의 비', ans:8, q:'한 내각과 한 외각의 크기의 비가 3 : 1인 정다각형은 몇 각형일까요?'}
+      ];
+  }
+}
+
+/* ============ 스테이지 시작 ============ */
+function startStage(si){
+  G.si=si; G.mi=0; G.mistakes=0;
+  G.missions = createMissions(si);
+  show('play'); renderHUD(); loadMission();
+}
+function renderHUD(drop=false){
+  const st=STAGES[G.si], s=calcStars(G.mistakes);
+  $('#playTitle').innerHTML = `<small>STAGE ${G.si+1} · 미션 ${G.mi+1}/${G.missions.length}</small><b>${st.title}</b>`;
+  const m=$('#meter');
+  m.innerHTML = `<div class="st">${[1,2,3].map(i=>`<span class="${i<=s?'on':''}">★</span>`).join('')}</div><small>실수 ${G.mistakes}</small>`;
+  if(drop){ m.classList.remove('drop'); void m.offsetWidth; m.classList.add('drop'); }
+  $('#mdots').innerHTML = G.missions.map((_,i)=>`<i class="${i<G.mi?'done':i===G.mi?'cur':''}"></i>`).join('');
+}
+function addMistake(){ const before=calcStars(G.mistakes); G.mistakes++; SFX.wrong(); renderHUD(calcStars(G.mistakes)<before); }
+function missionDone(){
+  const last = G.mi===G.missions.length-1;
+  $('#nextBtn').textContent = last ? '🏁 스테이지 완료!' : '다음 미션 ▶';
+  $('#nextBar').classList.remove('hidden');
+  setTimeout(()=>$('#nextBar').scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+$('#nextBtn').onclick=()=>{ SFX.click(); G.mi++; if(G.mi>=G.missions.length) stageClear(); else { renderHUD(); loadMission(); } };
+$('#playBack').onclick=()=>{
+  SFX.click();
+  openModal(`<div style="font-size:44px">🏕️</div><h2>연구를 중단할까요?</h2><p>지금 나가면 이번 스테이지는 처음부터 다시 해야 해요.</p>
+    <div class="mbtns two"><button class="btn ghost" id="mQuit">지도로</button><button class="btn primary" data-close>계속하기</button></div>`);
+  $('#mQuit').onclick=()=>{ closeModal(); show('map'); };
+};
+
+/* ============================================================
+   CANVAS 2D 인터랙티브 그래픽스 엔진
+============================================================ */
+const cvs = $('#mainCanvas');
+const ctx = cvs.getContext('2d');
+let animId = null;
+
+// 다각형 기하 상태
+let poly = {
+  n: 5,
+  cx: 0, cy: 0, r: 130,
+  pts: [],
+  baseIdx: 0,
+  diags: new Set(), // target idx
+  showAllDiags: false,
+  triClicked: new Set(),
+  gatherProgress: 0, // 0~1 (각 모으기)
+  shrinkProgress: 1, // 1~0 (외각 수축)
+  carProgress: 0, // 0~n (자동차 주행)
+  carRunning: false,
+  dragIdx: -1
+};
+
+function resizeCanvas(){
+  const wrap = $('#canvasWrap');
+  const dpr = window.devicePixelRatio || 1;
+  cvs.width = wrap.clientWidth * dpr;
+  cvs.height = wrap.clientHeight * dpr;
+  ctx.scale(dpr, dpr);
+  poly.cx = wrap.clientWidth / 2;
+  poly.cy = wrap.clientHeight / 2;
+  poly.r = Math.min(wrap.clientWidth, wrap.clientHeight) * 0.38;
+  initPoints(poly.n);
+}
+window.addEventListener('resize', resizeCanvas);
+
+function initPoints(n){
+  poly.n = n;
+  poly.pts = [];
+  const startAng = -Math.PI / 2;
+  for(let i=0; i<n; i++){
+    const ang = startAng + (i * 2 * Math.PI / n);
+    poly.pts.push({
+      x: poly.cx + poly.r * Math.cos(ang),
+      y: poly.cy + poly.r * Math.sin(ang),
+      baseX: poly.cx + poly.r * Math.cos(ang),
+      baseY: poly.cy + poly.r * Math.sin(ang)
+    });
+  }
+}
+
+// 마우스/터치 드래그 상호작용
+let isPointerDown = false;
+function getPointerPos(e){
+  const r = cvs.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - r.left, y: clientY - r.top };
+}
+
+cvs.addEventListener('pointerdown', e => {
+  const pos = getPointerPos(e);
+  // 꼭짓점 히트 체크
+  let hit = -1;
+  poly.pts.forEach((p, i) => {
+    if(Math.hypot(p.x - pos.x, p.y - pos.y) < 26) hit = i;
+  });
+
+  if(hit !== -1){
+    // 드래그 시작 또는 대각선 클릭 처리
+    if(G.mode === 'diag' && hit !== poly.baseIdx){
+      handleDiagClick(hit);
+    } else {
+      poly.dragIdx = hit;
+      isPointerDown = true;
+      cvs.setPointerCapture(e.pointerId);
+    }
+  } else if(G.mode === 'tri'){
+    // 삼각형 영역 클릭 감지
+    handleTriClick(pos);
+  }
+});
+
+cvs.addEventListener('pointermove', e => {
+  if(!isPointerDown || poly.dragIdx === -1) return;
+  const pos = getPointerPos(e);
+  poly.pts[poly.dragIdx].x = Math.max(20, Math.min(cvs.clientWidth - 20, pos.x));
+  poly.pts[poly.dragIdx].y = Math.max(20, Math.min(cvs.clientHeight - 20, pos.y));
+});
+
+const endPointer = () => { isPointerDown = false; poly.dragIdx = -1; };
+cvs.addEventListener('pointerup', endPointer);
+cvs.addEventListener('pointercancel', endPointer);
+
+/* ============ 메인 루프 (렌더링) ============ */
+function loop(){
+  ctx.clearRect(0, 0, cvs.clientWidth, cvs.clientHeight);
+  
+  if(G.mode === 'diag'){
+    renderDiagMode();
+  } else if(G.mode === 'tri'){
+    renderTriMode();
+  } else if(G.mode === 'sum_in'){
+    renderSumInMode();
+  } else if(G.mode === 'sum_out_car'){
+    renderCarMode();
+  } else if(G.mode === 'sum_out_shrink'){
+    renderShrinkMode();
+  } else if(G.mode === 'regular'){
+    renderRegularMode();
+  } else {
+    renderDefaultPoly();
+  }
+
+  animId = requestAnimationFrame(loop);
+}
+
+// 기본 다각형 외곽선 드로잉
+function renderDefaultPoly(pts = poly.pts, color = '#2563eb', fill = 'rgba(37,99,235,0.06)'){
+  if(!pts.length) return;
+  ctx.beginPath();
+  pts.forEach((p, i) => { i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); });
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
+
+  // 꼭짓점 점 찍기
+  pts.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI*2);
+    ctx.fillStyle = i === poly.baseIdx ? '#f59e0b' : '#2563eb';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // 라벨
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 14px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const dx = p.x - poly.cx, dy = p.y - poly.cy;
+    const dist = Math.hypot(dx, dy) || 1;
+    ctx.fillText(String.fromCharCode(65 + i), p.x + (dx/dist)*20, p.y + (dy/dist)*20);
+  });
+}
+
+/* ---------- 1. 대각선 모드 렌더링 ---------- */
+function renderDiagMode(){
+  renderDefaultPoly();
+  const A = poly.pts[poly.baseIdx];
+
+  // 그어진 대각선들
+  poly.diags.forEach(idx => {
+    const B = poly.pts[idx];
+    ctx.beginPath();
+    ctx.moveTo(A.x, A.y);
+    ctx.lineTo(B.x, B.y);
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([]);
+    ctx.stroke();
+  });
+
+  // 모든 꼭짓점 대각선 펼치기 연출
+  if(poly.showAllDiags){
+    for(let i=0; i<poly.n; i++){
+      for(let j=i+2; j<poly.n; j++){
+        if(i===0 && j===poly.n-1) continue;
+        ctx.beginPath();
+        ctx.moveTo(poly.pts[i].x, poly.pts[i].y);
+        ctx.lineTo(poly.pts[j].x, poly.pts[j].y);
+        ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // 기준 꼭짓점 A 강조 링
+  ctx.beginPath();
+  ctx.arc(A.x, A.y, 14, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(245,158,11,0.6)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function handleDiagClick(idx){
+  const A = poly.baseIdx;
+  const n = poly.n;
+  const prevNeighbor = (A - 1 + n) % n;
+  const nextNeighbor = (A + 1) % n;
+
+  if(idx === A){
+    toast('⚠️ 자기 자신에게는 대각선을 그을 수 없어요! (1개 제외)');
+    SFX.wrong();
+    return;
+  }
+  if(idx === prevNeighbor || idx === nextNeighbor){
+    toast('⚠️ 이건 대각선이 아니라 다각형의 변(둘레)이에요! (2개 제외)');
+    SFX.wrong();
+    return;
+  }
+
+  if(poly.diags.has(idx)){
+    poly.diags.delete(idx);
+    SFX.pop();
+  } else {
+    poly.diags.add(idx);
+    SFX.line();
+  }
+  updateDiagCard();
+}
+
+/* ---------- 2. 삼각형 분할 모드 렌더링 ---------- */
+const PASTEL_COLORS = [
+  'rgba(239, 68, 68, 0.25)',
+  'rgba(245, 158, 11, 0.25)',
+  'rgba(16, 185, 129, 0.25)',
+  'rgba(59, 130, 246, 0.25)',
+  'rgba(139, 92, 246, 0.25)',
+  'rgba(236, 72, 153, 0.25)',
+  'rgba(20, 184, 166, 0.25)'
+];
+
+function renderTriMode(){
+  const A = poly.pts[0];
+  const numTri = poly.n - 2;
+
+  // 삼각형 조각별 칠하기
+  for(let i=0; i<numTri; i++){
+    const B = poly.pts[i+1];
+    const C = poly.pts[i+2];
+
+    ctx.beginPath();
+    ctx.moveTo(A.x, A.y);
+    ctx.lineTo(B.x, B.y);
+    ctx.lineTo(C.x, C.y);
+    ctx.closePath();
+    ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // 무게중심 위치에 번호 뱃지
+    const gx = (A.x + B.x + C.x) / 3;
+    const gy = (A.y + B.y + C.y) / 3;
+    const clicked = poly.triClicked.has(i);
+
+    ctx.beginPath();
+    ctx.arc(gx, gy, 14, 0, Math.PI*2);
+    ctx.fillStyle = clicked ? '#10b981' : '#fff';
+    ctx.fill();
+    ctx.strokeStyle = clicked ? '#059669' : '#cbd5e1';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = clicked ? '#fff' : '#0f172a';
+    ctx.font = 'bold 13px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${i+1}`, gx, gy);
+  }
+
+  // 꼭짓점 렌더링
+  poly.pts.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
+    ctx.fillStyle = '#2563eb';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function handleTriClick(pos){
+  const A = poly.pts[0];
+  const numTri = poly.n - 2;
+  for(let i=0; i<numTri; i++){
+    const B = poly.pts[i+1], C = poly.pts[i+2];
+    if(ptInTri(pos, A, B, C)){
+      SFX.pop();
+      if(poly.triClicked.has(i)) poly.triClicked.delete(i);
+      else poly.triClicked.add(i);
+      updateTriCard();
+      break;
+    }
+  }
+}
+function ptInTri(p, a, b, c){
+  const v0 = [c.x-a.x, c.y-a.y], v1 = [b.x-a.x, b.y-a.y], v2 = [p.x-a.x, p.y-a.y];
+  const dot00 = v0[0]*v0[0] + v0[1]*v0[1];
+  const dot01 = v0[0]*v1[0] + v0[1]*v1[1];
+  const dot02 = v0[0]*v2[0] + v0[1]*v2[1];
+  const dot11 = v1[0]*v1[0] + v1[1]*v1[1];
+  const dot12 = v1[0]*v2[0] + v1[1]*v2[1];
+  const inv = 1 / (dot00 * dot11 - dot01 * dot01);
+  const u = (dot11 * dot02 - dot01 * dot12) * inv;
+  const v = (dot00 * dot12 - dot01 * dot02) * inv;
+  return (u >= 0) && (v >= 0) && (u + v < 1);
+}
+
+/* ---------- 3. 내각의 합 180° 모으기 모드 렌더링 ---------- */
+function renderSumInMode(){
+  renderTriMode();
+  const numTri = poly.n - 2;
+
+  // 슬라이더 진행도에 따라 하단에 180도 반원들이 모여 진열되는 연출
+  const p = poly.gatherProgress;
+  if(p > 0.05){
+    const startY = cvs.clientHeight - 40;
+    const spacing = cvs.clientWidth / (numTri + 1);
+
+    for(let i=0; i<numTri; i++){
+      const arcX = spacing * (i + 1);
+      const arcR = 32 * p;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(arcX, startY, arcR, Math.PI, 0); // 180도 반원
+      ctx.closePath();
+      ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
+      ctx.fill();
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 라벨
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 12px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`조각${i+1} : 180°`, arcX, startY + 16);
+      ctx.restore();
+    }
+  }
+}
+
+/* ---------- 4-A. 자동차 주행 모드 렌더링 ---------- */
+function renderCarMode(){
+  renderDefaultPoly();
+  const n = poly.n;
+  const pts = poly.pts;
+
+  // 자동차 위치 계산 (carProgress: 0 ~ n)
+  const idx = Math.floor(poly.carProgress) % n;
+  const nextIdx = (idx + 1) % n;
+  const frac = poly.carProgress - Math.floor(poly.carProgress);
+
+  const curPt = pts[idx];
+  const nextPt = pts[nextIdx];
+  const carX = curPt.x + (nextPt.x - curPt.x) * frac;
+  const carY = curPt.y + (nextPt.y - curPt.y) * frac;
+
+  // 변의 연장선 및 외각 부채꼴 표시
+  for(let i=0; i<n; i++){
+    const p1 = pts[i];
+    const p2 = pts[(i+1)%n];
+    const p3 = pts[(i+2)%n];
+
+    const dx1 = p2.x - p1.x, dy1 = p2.y - p1.y;
+    const len1 = Math.hypot(dx1, dy1);
+    const extX = p2.x + (dx1 / len1) * 45;
+    const extY = p2.y + (dy1 / len1) * 45;
+
+    // 연장 점선
+    ctx.beginPath();
+    ctx.moveTo(p2.x, p2.y);
+    ctx.lineTo(extX, extY);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 외각 호
+    const ang1 = Math.atan2(dy1, dx1);
+    const dx2 = p3.x - p2.x, dy2 = p3.y - p2.y;
+    const ang2 = Math.atan2(dy2, dx2);
+
+    ctx.beginPath();
+    ctx.arc(p2.x, p2.y, 22, ang1, ang2, false);
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  // 귀여운 자동차 그리기
+  const heading = Math.atan2(nextPt.y - curPt.y, nextPt.x - curPt.x);
+  ctx.save();
+  ctx.translate(carX, carY);
+  ctx.rotate(heading);
+
+  // 차체
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(-12, -7, 24, 14);
+  // 바퀴
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(-10, -9, 6, 2);
+  ctx.fillRect(4, -9, 6, 2);
+  ctx.fillRect(-10, 7, 6, 2);
+  ctx.fillRect(4, 7, 6, 2);
+  // 전조등
+  ctx.fillStyle = '#fef08a';
+  ctx.fillRect(10, -5, 3, 10);
+  ctx.restore();
+
+  // 애니메이션 업데이트
+  if(poly.carRunning){
+    poly.carProgress += 0.015;
+    if(poly.carProgress >= n){
+      poly.carProgress = n;
+      poly.carRunning = false;
+      SFX.correct();
+      updateCarCard(true);
+    }
+  }
+}
+
+/* ---------- 4-B. 외각 수축 모드 렌더링 ---------- */
+function renderShrinkMode(){
+  const s = poly.shrinkProgress; // 1 -> 0
+  const n = poly.n;
+
+  // 축소된 꼭짓점 좌표들
+  const scaledPts = poly.pts.map(p => ({
+    x: poly.cx + (p.x - poly.cx) * s,
+    y: poly.cy + (p.y - poly.cy) * s
+  }));
+
+  renderDefaultPoly(scaledPts, 'rgba(37,99,235,0.4)', 'rgba(37,99,235,0.02)');
+
+  // 각 꼭짓점 외각 부채꼴들이 중심으로 모여 360도 원을 이룸
+  const extAngles = (2 * Math.PI) / n;
+  for(let i=0; i<n; i++){
+    const startAng = (i * 2 * Math.PI) / n;
+    const endAng = startAng + extAngles;
+
+    // 각 외각 부채꼴의 중심 위치 (수축할수록 poly.cx, poly.cy로 합쳐짐)
+    const ox = scaledPts[i].x;
+    const oy = scaledPts[i].y;
+
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.arc(ox, oy, 38, startAng, endAng);
+    ctx.closePath();
+    ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 완벽 수축 도달 시 원 강조
+  if(s <= 0.08){
+    ctx.beginPath();
+    ctx.arc(poly.cx, poly.cy, 40, 0, Math.PI*2);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 15px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('완벽한 360° 원!', poly.cx, poly.cy - 52);
+  }
+}
+
+/* ---------- 5. 정다각형 모드 렌더링 ---------- */
+function renderRegularMode(){
+  renderDefaultPoly(poly.pts, '#2563eb', 'rgba(37,99,235,0.08)');
+  const n = poly.n;
+  const inAngle = ((n - 2) * 180) / n;
+  const outAngle = 360 / n;
+
+  // 꼭짓점마다 내각과 외각 표기
+  poly.pts.forEach((p, i) => {
+    ctx.fillStyle = '#1d4ed8';
+    ctx.font = 'bold 13px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    const dx = p.x - poly.cx, dy = p.y - poly.cy;
+    const dist = Math.hypot(dx, dy) || 1;
+    ctx.fillText(`${inAngle}°`, p.x - (dx/dist)*22, p.y - (dy/dist)*22);
+  });
+}
+
+/* ============================================================
+   우측 패널 및 컨트롤 바 로더
+============================================================ */
+function loadMission(){
+  $('#nextBar').classList.add('hidden');
+  const m = G.missions[G.mi];
+  const rCard = $('#rightCard');
+  const ctrls = $('#canvasCtrls');
+  ctrls.innerHTML = '';
+
+  // 캔버스 초기화
+  poly.diags.clear();
+  poly.triClicked.clear();
+  poly.showAllDiags = false;
+  poly.gatherProgress = 0;
+  poly.shrinkProgress = 1;
+  poly.carProgress = 0;
+  poly.carRunning = false;
+
+  if(m.type.startsWith('exp_')){
+    G.mode = m.type.replace('exp_', '');
+    if(G.mode === 'sum_in') G.mode = 'sum_in';
+    if(G.mode === 'car') G.mode = 'sum_out_car';
+    if(G.mode === 'shrink') G.mode = 'sum_out_shrink';
+    if(G.mode === 'diag') G.mode = 'diag';
+    if(G.mode === 'tri') G.mode = 'tri';
+    if(G.mode === 'regular') G.mode = 'regular';
+  } else {
+    G.mode = 'default';
+  }
+
+  resizeCanvas();
+
+  // 미션 타입별 우측 UI 및 캔버스 컨트롤 렌더링
+  switch(m.type){
+    case 'exp_diag':
+      rExpDiag(m, rCard, ctrls);
+      break;
+    case 'exp_tri':
+      rExpTri(m, rCard, ctrls);
+      break;
+    case 'exp_sum_in':
+      rExpSumIn(m, rCard, ctrls);
+      break;
+    case 'exp_car':
+      rExpCar(m, rCard, ctrls);
+      break;
+    case 'exp_shrink':
+      rExpShrink(m, rCard, ctrls);
+      break;
+    case 'exp_regular':
+      rExpRegular(m, rCard, ctrls);
+      break;
+    default:
+      rQuiz(m, rCard);
+      break;
+  }
+}
+
+/* ============================================================
+   1. 대각선 탐구 인터랙션
+============================================================ */
+function rExpDiag(m, card, ctrls){
+  $('#canvasGuideText').textContent = '💡 기준점 A(노란점)를 제외한 다른 꼭짓점을 터치해 대각선을 그어보세요';
+  
+  ctrls.innerHTML = `
+    <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 변경:</span>
+    ${[4,5,6,7,8].map(n=>`<button class="ctrl-btn ${n===poly.n?'active':''}" data-n="${n}">${n}각형</button>`).join('')}
+  `;
+  ctrls.querySelectorAll('.ctrl-btn').forEach(btn=>{
+    btn.onclick = () => {
+      SFX.click();
+      ctrls.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      initPoints(+btn.dataset.n);
+      poly.diags.clear();
+      poly.showAllDiags = false;
+      updateDiagCard();
+    };
+  });
+
+  updateDiagCard();
+}
+
+function updateDiagCard(){
+  const card = $('#rightCard');
+  const n = poly.n;
+  const target = n - 3;
+  const cur = poly.diags.size;
+  const isDone = cur === target;
+
+  card.innerHTML = `
+    <span class="qtag t-exp">🔬 시각 탐구 1단계</span>
+    <div class="qtitle">한 꼭짓점의 딜레마</div>
+    <div class="qdesc">기준 꼭짓점 <b>A</b>에서 그을 수 있는 모든 대각선을 찾아보세요!</div>
+    
+    <div class="stat-box">
+      <div class="stat-row"><span>다각형</span><b>${n}각형</b></div>
+      <div class="stat-row"><span>그은 대각선</span><b>${cur} / ${target}개</b></div>
+    </div>
+
+    <div class="ex" style="background:#f8fafc;margin:12px 0">
+      <div>• 자기 자신 A ➔ 선을 그을 수 없음 ✘</div>
+      <div>• 양옆 이웃 꼭짓점 2개 ➔ 대각선이 아니라 변! ✘</div>
+      <div style="margin-top:4px"><b>👉 전체 ${n}개 중 3개를 제외하므로: <span style="color:var(--primary)">${n} - 3 = ${target}개</span></b></div>
+    </div>
+
+    ${isDone ? `
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <button class="btn accent" id="btnSpreadAll">🌟 모든 꼭짓점 대각선 펼치기</button>
+      </div>
+    ` : ''}
+    <div id="spreadInfo"></div>
+  `;
+
+  if(isDone){
+    const btn = card.querySelector('#btnSpreadAll');
+    if(btn){
+      btn.onclick = () => {
+        SFX.fanfare();
+        poly.showAllDiags = true;
+        btn.disabled = true;
+        const total = (n * (n - 3)) / 2;
+        card.querySelector('#spreadInfo').innerHTML = `
+          <div class="fb ok" style="animation:fadeUp .3s">
+            <div class="ttl">🎉 모든 대각선 마법진 완성!</div>
+            <div>꼭짓점 ${n}개마다 각각 ${target}개씩 그으면 ${n}×${target}개지만, 양방향 중복이므로 2로 나누어:</div>
+            <div style="font-size:17px;font-weight:900;color:var(--primary);margin-top:4px">총 대각선의 개수 = ${n}(${n}-3) ÷ 2 = <b>${total}개</b>!</div>
+          </div>
+        `;
+        missionDone();
+      };
+    }
+  }
+}
+
+/* ============================================================
+   2. 삼각형 피자 조각 분할 인터랙션
+============================================================ */
+function rExpTri(m, card, ctrls){
+  $('#canvasGuideText').textContent = '💡 대각선으로 쪼개진 삼각형 조각들을 하나씩 터치해 번호표를 붙여보세요';
+  
+  ctrls.innerHTML = `
+    <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 변경:</span>
+    ${[4,5,6,7,8].map(n=>`<button class="ctrl-btn ${n===poly.n?'active':''}" data-n="${n}">${n}각형</button>`).join('')}
+  `;
+  ctrls.querySelectorAll('.ctrl-btn').forEach(btn=>{
+    btn.onclick = () => {
+      SFX.click();
+      ctrls.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      initPoints(+btn.dataset.n);
+      poly.triClicked.clear();
+      updateTriCard();
+    };
+  });
+
+  updateTriCard();
+}
+
+function updateTriCard(){
+  const card = $('#rightCard');
+  const n = poly.n;
+  const target = n - 2;
+  const cur = poly.triClicked.size;
+  const isDone = cur === target;
+
+  card.innerHTML = `
+    <span class="qtag t-exp">🔬 시각 탐구 2단계</span>
+    <div class="qtitle">피자 조각내기</div>
+    <div class="qdesc">한 꼭짓점에서 대각선을 그으면 다각형이 몇 개의 삼각형으로 쪼개질까요?</div>
+    
+    <div class="stat-box">
+      <div class="stat-row"><span>다각형</span><b>${n}각형</b></div>
+      <div class="stat-row"><span>확인한 삼각형</span><b>${cur} / ${target}개</b></div>
+    </div>
+
+    <div class="ex" style="background:#f8fafc;margin:12px 0">
+      <div>• 피자에 칼질(대각선) 1번 ➔ 2조각</div>
+      <div>• 칼질(대각선)을 <b>${n-3}번</b> 그었으므로 조각은 항상 1개 더 많음!</div>
+      <div style="margin-top:4px"><b>👉 만들어지는 삼각형의 개수: <span style="color:var(--primary)">n - 2 = ${target}개</span></b></div>
+    </div>
+
+    <div id="triDoneMsg"></div>
+  `;
+
+  if(isDone){
+    SFX.correct();
+    card.querySelector('#triDoneMsg').innerHTML = `
+      <div class="fb ok" style="animation:fadeUp .3s">
+        <div class="ttl">🎉 모든 삼각형 조각 확인 완료!</div>
+        <div>꼭짓점을 드래그해서 다각형을 찌그러뜨려도 삼각형 조각 수는 항상 <b>${target}개</b>로 변하지 않아요!</div>
+      </div>
+    `;
+    missionDone();
+  }
+}
+
+/* ============================================================
+   3. 내각의 합 180° 반원 각 모으기
+============================================================ */
+function rExpSumIn(m, card, ctrls){
+  $('#canvasGuideText').textContent = '💡 아래 [각 모으기] 슬라이더를 오른쪽으로 당겨 삼각형들의 각을 모아보세요';
+  
+  ctrls.innerHTML = `
+    <span style="font-size:13px;font-weight:800;color:var(--muted)">각 모으기:</span>
+    <input type="range" id="gatherSlider" min="0" max="100" value="0" style="flex:1;cursor:pointer">
+  `;
+  const slider = ctrls.querySelector('#gatherSlider');
+  slider.oninput = () => {
+    poly.gatherProgress = slider.value / 100;
+    if(slider.value >= 95 && !poly.gatherDone){
+      poly.gatherDone = true;
+      SFX.correct();
+      updateSumInCard(true);
+    }
+  };
+
+  updateSumInCard(false);
+}
+
+function updateSumInCard(done){
+  const card = $('#rightCard');
+  const n = poly.n;
+  const numTri = n - 2;
+  const total = 180 * numTri;
+
+  card.innerHTML = `
+    <span class="qtag t-exp">🔬 시각 탐구 3단계</span>
+    <div class="qtitle">각 모으기 축제</div>
+    <div class="qdesc">다각형의 모든 내각을 모으면 몇 도가 될까요? 삼각형들의 내각을 뜯어 모아봐요!</div>
+    
+    <div class="stat-box">
+      <div class="stat-row"><span>다각형</span><b>${n}각형</b></div>
+      <div class="stat-row"><span>삼각형 개수</span><b>${numTri}개</b></div>
+      <div class="stat-row"><span>내각의 합 공식</span><b>180° × (${n} - 2)</b></div>
+      <div class="stat-row"><span>총 내각의 합</span><b style="color:var(--primary);font-size:20px">${total}°</b></div>
+    </div>
+
+    ${done ? `
+      <div class="fb ok" style="animation:fadeUp .3s">
+        <div class="ttl">🎉 180° 반원 ${numTri}개 정렬 완료!</div>
+        <div>삼각형 1개의 내각은 180°이므로, ${numTri}개의 삼각형이 모인 <b>${n}각형의 내각의 총합은 180° × ${numTri} = ${total}°</b>입니다!</div>
+      </div>
+    ` : `
+      <div class="ex" style="background:#f8fafc">
+        슬라이더를 끝까지 당겨 캔버스 아래에 180° 반원들이 완성되는지 확인하세요!
+      </div>
+    `}
+  `;
+
+  if(done) missionDone();
+}
+
+/* ============================================================
+   4-A. 실생활 외각 탐구: 자동차 주행
+============================================================ */
+function rExpCar(m, card, ctrls){
+  $('#canvasGuideText').textContent = '💡 [주행 시작]을 누르고 자동차가 다각형 도로를 한 바퀴 도는 회전각을 관찰하세요';
+  
+  ctrls.innerHTML = `
+    <button class="btn primary" id="btnStartCar">🚗 자동차 주행 시작</button>
+  `;
+  ctrls.querySelector('#btnStartCar').onclick = () => {
+    SFX.click();
+    poly.carProgress = 0;
+    poly.carRunning = true;
+    ctrls.querySelector('#btnStartCar').disabled = true;
+  };
+
+  updateCarCard(false);
+}
+
+function updateCarCard(done){
+  const card = $('#rightCard');
+  const n = poly.n;
+  const extAngle = 360 / n;
+
+  card.innerHTML = `
+    <span class="qtag t-exp">🚗 실생활 탐구 4단계-A</span>
+    <div class="qtitle">자동차의 다각형 주행</div>
+    <div class="qdesc">자동차가 꼭짓점에 도착할 때마다 원래 가던 길에서 꺾는 각도가 바로 <b>외각(Exterior Angle)</b>이에요!</div>
+    
+    <div class="stat-box">
+      <div class="stat-row"><span>꼭짓점마다 꺾는 외각</span><b>${extAngle}°</b></div>
+      <div class="stat-row"><span>회전하는 꼭짓점 수</span><b>${n}번</b></div>
+      <div class="stat-row"><span>총 회전 각도</span><b style="color:var(--accent);font-size:20px">${extAngle}° × ${n} = 360°</b></div>
+    </div>
+
+    ${done ? `
+      <div class="fb ok" style="animation:fadeUp .3s">
+        <div class="ttl">🏁 제자리 360° 한 바퀴 완주!</div>
+        <div>자동차가 다각형 둘레를 한 바퀴 돌아 제자리로 돌아오면, <b>무조건 정확히 360° 제자리 회전</b>을 하게 돼요. 다각형 모양에 상관없이 외각의 합이 360°인 이유입니다!</div>
+      </div>
+    ` : `
+      <div class="ex" style="background:#f8fafc">
+        [자동차 주행 시작] 버튼을 누르면 차가 달리면서 꼭짓점마다 외각만큼 방향을 꺾어요.
+      </div>
+    `}
+  `;
+
+  if(done) missionDone();
+}
+
+/* ============================================================
+   4-B. 수학적 탐구: 외각 수축 마술
+============================================================ */
+function rExpShrink(m, card, ctrls){
+  $('#canvasGuideText').textContent = '💡 [다각형 축소] 슬라이더를 오른쪽으로 당겨 다각형을 한 점으로 쪼그라뜨려 보세요';
+  
+  ctrls.innerHTML = `
+    <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 축소:</span>
+    <input type="range" id="shrinkSlider" min="0" max="100" value="0" style="flex:1;cursor:pointer">
+  `;
+  const slider = ctrls.querySelector('#shrinkSlider');
+  slider.oninput = () => {
+    poly.shrinkProgress = 1 - (slider.value / 100);
+    if(slider.value >= 92 && !poly.shrinkDone){
+      poly.shrinkDone = true;
+      SFX.correct();
+      updateShrinkCard(true);
+    }
+  };
+
+  updateShrinkCard(false);
+}
+
+function updateShrinkCard(done){
+  const card = $('#rightCard');
+  const n = poly.n;
+
+  card.innerHTML = `
+    <span class="qtag t-exp">🔬 수학적 탐구 4단계-B</span>
+    <div class="qtitle">외각 수축 마술</div>
+    <div class="qdesc">다각형의 변의 길이를 줄여 한 점으로 모으면, 각 꼭짓점의 외각 부채꼴들이 어떻게 될까요?</div>
+    
+    <div class="stat-box">
+      <div class="stat-row"><span>다각형</span><b>${n}각형</b></div>
+      <div class="stat-row"><span>외각의 합</span><b style="color:var(--primary);font-size:20px">언제나 360°</b></div>
+    </div>
+
+    ${done ? `
+      <div class="fb ok" style="animation:fadeUp .3s">
+        <div class="ttl">🎉 빈틈없는 완벽한 360° 원 완성!</div>
+        <div>다각형을 점으로 수축하면 외각들이 한 점 주위에 모여 <b>정확히 360° 피자 한 판</b>을 만들어요. 삼각형이든 십각형이든 언제나 똑같습니다!</div>
+      </div>
+    ` : `
+      <div class="ex" style="background:#f8fafc">
+        슬라이더를 당겨 다각형이 점으로 모이는 순간 외각들이 하나의 원을 이루는지 확인하세요!
+      </div>
+    `}
+  `;
+
+  if(done) missionDone();
+}
+
+/* ============================================================
+   5. 정다각형 외각 꿀팁 연구
+============================================================ */
+function rExpRegular(m, card, ctrls){
+  $('#canvasGuideText').textContent = '💡 다각형 버튼을 눌러 정다각형의 외각과 내각의 관계를 탐구하세요';
+  
+  ctrls.innerHTML = `
+    <span style="font-size:13px;font-weight:800;color:var(--muted)">정다각형:</span>
+    ${[3,4,5,6,8,10].map(n=>`<button class="ctrl-btn ${n===poly.n?'active':''}" data-n="${n}">정${n}각형</button>`).join('')}
+  `;
+  ctrls.querySelectorAll('.ctrl-btn').forEach(btn=>{
+    btn.onclick = () => {
+      SFX.click();
+      ctrls.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      initPoints(+btn.dataset.n);
+      updateRegCard();
+    };
+  });
+
+  updateRegCard();
+}
+
+function updateRegCard(){
+  const card = $('#rightCard');
+  const n = poly.n;
+  const outAng = 360 / n;
+  const inAng = 180 - outAng;
+
+  card.innerHTML = `
+    <span class="qtag t-exp">👑 보스 연구 5단계</span>
+    <div class="qtitle">정다각형 3초 암산 비법</div>
+    <div class="qdesc">정다각형의 한 내각은 공식 180°×(n-2)÷n 대신 <b>외각을 먼저 구하면 3초 만에 암산</b>돼요!</div>
+    
+    <div class="stat-box">
+      <div class="stat-row"><span>정다각형</span><b>정${n}각형</b></div>
+      <div class="stat-row"><span>1단계: 한 외각</span><b style="color:var(--accent)">360° ÷ ${n} = ${outAng}°</b></div>
+      <div class="stat-row"><span>2단계: 한 내각</span><b style="color:var(--primary)">180° - ${outAng}° = ${inAng}°</b></div>
+    </div>
+
+    <div class="ex" style="background:#f8fafc;margin:12px 0">
+      <div>내각과 외각을 더하면 언제나 <b>180°(일직선)</b>이므로, 외각을 먼저 구해서 180°에서 빼는 게 훨씬 빠르고 실수가 없어요!</div>
+    </div>
+
+    <button class="btn primary big" id="btnReadyBoss">⚔️ 최종 보스 퀴즈 도전하기!</button>
+  `;
+
+  card.querySelector('#btnReadyBoss').onclick = () => {
+    SFX.fanfare();
+    missionDone();
+  };
+}
+
+/* ============================================================
+   공통 퀴즈 엔진
+============================================================ */
+function rQuiz(m, card){
+  $('#canvasGuideText').textContent = '💡 캔버스의 다각형을 참고해 질문에 답해 보세요';
+  
+  const correctVal = m.ans;
+  const decoys = [correctVal + 1, Math.max(1, correctVal - 1), correctVal + 2, correctVal - 2, correctVal + 10].filter(x=>x!==correctVal);
+  const opts = shuffle([correctVal, ...shuffle([...new Set(decoys)]).slice(0,3)]);
+
+  card.innerHTML = `
+    <span class="qtag t-quiz">❓ 확인 퀴즈</span>
+    <div class="qtitle">${m.title}</div>
+    <div class="qdesc" style="font-size:17px;font-weight:800;color:var(--ink)">${m.q}</div>
+    
+    <div class="chips grid2" id="quizOpts">
+      ${opts.map(v=>`<button class="chip" data-v="${v}">${fmt(v)}${typeof correctVal==='number' && correctVal>=60?'°':''}</button>`).join('')}
+    </div>
+    <div id="quizFb"></div>
+  `;
+
+  const optWrap = card.querySelector('#quizOpts');
+  optWrap.querySelectorAll('.chip').forEach(btn=>{
+    btn.onclick = () => {
+      const v = +btn.dataset.v;
+      if(v === correctVal){
+        btn.classList.add('ok');
+        optWrap.querySelectorAll('.chip').forEach(b=>b.disabled=true);
+        SFX.correct();
+        card.querySelector('#quizFb').innerHTML = `
+          <div class="fb ok">
+            <div class="ttl">🎉 정답입니다!</div>
+            <div>정확한 원리를 적용해 올바른 답을 도출했어요!</div>
+          </div>
+        `;
+        missionDone();
+      } else {
+        addMistake();
+        btn.classList.add('bad');
+        btn.disabled = true;
+        card.querySelector('#quizFb').innerHTML = `
+          <div class="fb bad">
+            <div class="ttl">다시 계산해 봐요!</div>
+            <div>배운 비법 공식(또는 외각 꿀팁)을 차근차근 적용해 보세요.</div>
+          </div>
+        `;
+      }
+    };
+  });
+}
+
+/* ============================================================
+   스테이지 클리어 / 엔딩 모달
+============================================================ */
+function starsRow(n){ return `<div class="mstars">${[1,2,3].map(i=>`<span class="${i<=n?'on':''}" style="animation-delay:${i*.18}s">★</span>`).join('')}</div>`; }
+
+function stageClear(){
+  const s = calcStars(G.mistakes), i = G.si, wasLocked = !unlocked(i+1);
+  save.stars[i] = Math.max(save.stars[i], s); persist(); updateTop();
+  const last = i === STAGES.length-1;
+  if(last){ showEnding(s); return; }
+
+  SFX.clear(); confetti(60);
+  const msg = s===3 ? '완벽해요! 비법을 확실히 마스터했어요.' : s===2 ? '잘했어요! 실수를 줄이면 ★3도 가능해요.' : '클리어! 비법 도감을 복습하고 다시 도전해 봐요.';
+  
+  openModal(`<div style="font-size:15px;font-weight:800;color:var(--primary)">STAGE ${i+1} 클리어!</div>
+    <h2>${STAGES[i].title} 정복 🎉</h2>${starsRow(s)}
+    <p>실수 ${G.mistakes}회 · ${msg}</p>
+    ${wasLocked?`<div class="unlock">🔓 새 스테이지 해금! STAGE ${i+2} · ${STAGES[i+1].title}</div>`:''}
+    <div class="mbtns">
+      <button class="btn primary big" id="mNext">다음 스테이지로 ▶</button>
+      <div class="mbtns two" style="margin-top:0"><button class="btn ghost" id="mMap">지도</button><button class="btn ghost" id="mRetry">↻ 다시 도전</button></div>
+    </div>`);
+  $('#mNext').onclick=()=>{ closeModal(); openIntro(i+1); };
+  $('#mMap').onclick=()=>{ closeModal(); show('map'); };
+  $('#mRetry').onclick=()=>{ closeModal(); startStage(i); };
+}
+
+function showEnding(s){
+  SFX.fanfare(); confetti(180);
+  const ts = totalStars(), max = STAGES.length*3;
+  openModal(`<div style="font-size:64px;line-height:1">👑</div>
+    <h2>다각형 비밀 연구소 완주!</h2>${starsRow(s)}
+    <p>모든 다각형의 내각과 외각의 비밀을 완벽하게 정복했어요!<br>총 획득 별 <b style="color:var(--ink)">★ ${ts} / ${max}</b></p>
+    <div class="ex" style="text-align:left;margin-top:12px;background:#f8fafc">
+      <div>✔ 한 꼭짓점 대각선 수 (n-3)과 총 개수 n(n-3)/2</div>
+      <div>✔ 피자 조각 삼각형 분할 (n-2)개</div>
+      <div>✔ 다각형 내각의 크기의 합 180° × (n-2)</div>
+      <div>✔ 다각형 외각의 합은 언제나 360° (자동차 주행 & 수축)</div>
+      <div>✔ 정다각형 외각 꿀팁 암산법 (180° - 360°/n)</div>
+    </div>
+    <div class="mbtns two">
+      <button class="btn ghost" id="mRetry">↻ 다시 도전</button>
+      <button class="btn primary" id="mMap">지도로</button>
+    </div>`);
+  $('#mMap').onclick=()=>{ closeModal(); show('map'); };
+  $('#mRetry').onclick=()=>{ closeModal(); startStage(STAGES.length-1); };
+}
+
+function confetti(n){
+  const colors=['#2563eb','#f59e0b','#10b981','#ec4899','#8b5cf6','#06b6d4'];
+  for(let i=0;i<n;i++){
+    const c=document.createElement('div'); c.className='confetti';
+    c.style.left=Math.random()*100+'vw'; c.style.background=pick(colors);
+    c.style.animationDuration=(2+Math.random()*2)+'s'; c.style.animationDelay=(Math.random()*.6)+'s';
+    c.style.transform=`rotate(${rand(0,360)}deg)`; document.body.appendChild(c);
+    setTimeout(()=>c.remove(),5000);
+  }
+}
+
+/* ============ 상단 버튼 ============ */
+$('#bookBtn').onclick=()=>{ SFX.click(); openBook(); };
+$('#soundBtn').onclick=()=>{ SFX.on=!SFX.on; save.sound=SFX.on; persist(); updateTop(); SFX.click(); };
+$('#resetBtn').onclick=()=>{
+  openModal(`<div style="font-size:44px">🗑️</div><h2>기록을 초기화할까요?</h2><p>모든 별과 해금 기록이 사라져요.</p>
+    <div class="mbtns two"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="mReset" style="background:var(--danger);box-shadow:0 5px 0 #b91c1c">초기화</button></div>`);
+  $('#mReset').onclick=()=>{ save={stars:STAGES.map(()=>0),sound:SFX.on}; persist(); closeModal(); show('map'); toast('기록을 초기화했어요.'); };
+};
+if(window.innerWidth<480) document.querySelectorAll('.hide-sm').forEach(e=>e.remove());
+
+// 초기 구동
+show('map');
+resizeCanvas();
+loop();
+if(TEACHER) toast('👩‍🏫 선생님 모드: 모든 스테이지가 열려 있어요');
+})();
+</script>
+</body>
+</html>

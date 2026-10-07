@@ -114,11 +114,16 @@
                 <div class="menu-item" onclick="switchTool('maze-frame', this)">🧩 미로 찾기</div>
             </div>
 
-            <div class="folder-title collapsed" onclick="toggleFolder('folder5', this)">📁 5단원.기본 도형과 작도</div>
+            <div class="folder-title collapsed" onclick="toggleFolder('folder5', this)">📁 5단원. 기본 도형과 작도</div>
             <div id="folder5" class="folder-content hidden">
                 <div class="menu-item" onclick="switchTool('angle-frame', this)">📐 동위각 크기 비교</div>
                 <div class="menu-item" onclick="switchTool('skew-frame', this)">🔎 꼬인 위치 서바이벌</div>
                 <div class="menu-item" onclick="switchTool('treasure-frame', this)">🗺️ 보물찾기 작도 대모험</div>
+            </div>
+
+            <div class="folder-title collapsed" onclick="toggleFolder('folder6', this)">📁 6단원. 평면도형의 성질</div>
+            <div id="folder6" class="folder-content hidden">
+                <div class="menu-item" onclick="switchTool('polygon-frame', this)">🔬 다각형 비밀 연구소</div>
             </div>
 
         </div>
@@ -146,6 +151,7 @@
         <iframe id="angle-frame" data-src="./5단원_기본도형과작도/vertical_angles.html"></iframe>
         <iframe id="skew-frame" data-src="./5단원_기본도형과작도/skew_lines.html"></iframe>
         <iframe id="treasure-frame" data-src="./5단원_기본도형과작도/treasure_construction/treasure_construction.html"></iframe>
+        <iframe id="polygon-frame" data-src="./6단원_평면도형의성질/polygon-lab.html"></iframe>
     </main>
 </div>
 
