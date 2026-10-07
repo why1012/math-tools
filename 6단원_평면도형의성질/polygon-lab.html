@@ -221,7 +221,7 @@ canvas{display:block;width:100%;height:100%}
     <div class="hero">
       <div class="deco">180°(n-2)</div>
       <h1>다각형 내각과 외각의 비밀 연구소</h1>
-      <p>대각선 긋기 ➔ 삼각형 피자 조각 ➔ 180° 각 모으기 ➔ 외각 자동차 주행 & 수축 마술!<br>공식을 외우지 않고 직접 만지며 원리를 깨치는 탐험을 떠나요.</p>
+      <p>대각선 긋기 ➔ 삼각형으로 쪼개기 ➔ 180° 각 모으기 ➔ 외각 자동차 주행 & 수축 마술!<br>공식을 외우지 않고 직접 만지며 원리를 깨치는 탐험을 떠나요.</p>
       <div class="hero-prog"><div class="bar"><i id="heroBar"></i></div><b id="heroTxt">0 / 15</b></div>
     </div>
     <div class="path" id="path"><svg id="pathSvg"></svg></div>
@@ -325,10 +325,10 @@ const CARDS = {
     right:`<p class="big-rule">다각형의 대각선의 총 개수는 <mark>n(n - 3) ÷ 2</mark></p>
       <div class="eq">한 점당 (n-3)개씩 n개 꼭짓점 = n(n-3)개<br>A ➔ B와 B ➔ A는 같은 선이므로 <b>2로 나눔!</b></div>
       <p class="cc">예) 오각형의 대각선 총 개수: 5 × (5-3) ÷ 2 = <b>5개</b> (별 모양 ⭐)</p>`},
-  tri:{kind:'rule',icon:'🍕',title:'피자 조각내기 (삼각형 개수)',lt:'💡 직관적 규칙',rt:'🔎 대수적 이유',
+  tri:{kind:'rule',icon:'🔺',title:'삼각형으로 쪼개기 (삼각형 개수)',lt:'💡 직관적 규칙',rt:'🔎 대수적 이유',
     left:`<p class="big-rule">한 꼭짓점에서 대각선을 모두 그으면 삼각형은 <mark>n - 2</mark>개!</p>
-      <div class="ex"><div>• 피자에 칼질(대각선) 1번 ➔ 2조각</div>
-      <div>• 칼질(대각선) 2번 ➔ 3조각</div>
+      <div class="ex"><div>• 대각선으로 1번 자르면 ➔ 2조각</div>
+      <div>• 대각선으로 2번 자르면 ➔ 3조각</div>
       <div><b>👉 삼각형 조각 수는 대각선 수(n-3)보다 항상 1개 더 많아요!</b></div></div>`,
     right:`<div class="eq">대각선의 개수 = n - 3<br>만들어지는 삼각형의 개수 = (n - 3) + 1 = <b>n - 2</b></div>
       <p class="cc">삼각형(n=3)은 1개, 사각형(n=4)은 2개, 오각형(n=5)은 3개... 변이 하나 늘어날 때마다 삼각형도 1개씩 늘어나요!</p>`},
@@ -356,12 +356,12 @@ const CARDS = {
       <p class="cc">외각은 항상 총합이 360°로 고정되어 있어 n으로 나누기가 훨씬 간단해요!</p>`}
 };
 const BOOK_ORDER = ['diag','tri','sum_in','sum_out','regular'];
-const BOOK_LABEL = {diag:'대각선의 개수',tri:'삼각형 분할',sum_in:'내각의 합',sum_out:'외각의 합',regular:'정다각형 암산팁'};
+const BOOK_LABEL = {diag:'대각선의 개수',tri:'삼각형 쪼개기',sum_in:'내각의 합',sum_out:'외각의 합',regular:'정다각형 암산팁'};
 
 /* ============ 스테이지 정의 (5개 스테이지 나선형 루프) ============ */
 const STAGES = [
   {title:'한 꼭짓점의 딜레마', sub:'대각선 개수 (n-3)과 총 개수 도출', card:'diag', n:5, mode:'diag'},
-  {title:'피자 조각내기', sub:'대각선이 만드는 (n-2)개의 삼각형 분할', card:'tri', n:6, mode:'tri'},
+  {title:'삼각형으로 쪼개기', sub:'대각선이 만드는 (n-2)개의 삼각형 분할', card:'tri', n:6, mode:'tri'},
   {title:'각 모으기 축제', sub:'내각의 합 180° × (n-2) 유도와 각도 찾기', card:'sum_in', n:5, mode:'sum_in'},
   {title:'외각 수축 마술', sub:'자동차 주행과 도형 수축으로 외각의 합 360° 체감', card:'sum_out', n:5, mode:'sum_out'},
   {title:'정다각형 연구실 & 보스전', sub:'외각 꿀팁 암산과 종합 마스터 챌린지', card:'regular', n:6, boss:true, mode:'regular'}
@@ -469,21 +469,21 @@ function createMissions(si){
     case 0: // 대각선
       return [
         {type:'exp_diag', title:'한 꼭짓점에서 대각선 긋기 탐구', n:5},
-        {type:'quiz_diag1', title:'대각선 개수 계산', n:10, ans:7, q:'십각형(n=10)의 한 꼭짓점에서 그을 수 있는 대각선의 개수는?'},
+        {type:'quiz_diag1', title:'대각선 개수 계산', n:10, ans:7, q:'십각형의 한 꼭짓점에서 그을 수 있는 대각선의 개수는 몇 개일까요?'},
         {type:'quiz_diag2', title:'역산 퀴즈', ans:12, q:'한 꼭짓점에서 대각선을 9개 그을 수 있는 다각형은 몇 각형일까요?'},
-        {type:'quiz_diag_all', title:'대각선의 총 개수', n:8, ans:20, q:'팔각형(n=8)의 대각선의 총 개수는 모두 몇 개일까요?'}
+        {type:'quiz_diag_all', title:'대각선의 총 개수', n:8, ans:20, q:'팔각형의 대각선의 총 개수는 모두 몇 개일까요?'}
       ];
     case 1: // 삼각형 분할
       return [
-        {type:'exp_tri', title:'삼각형 피자 조각 분할 탐구', n:6},
-        {type:'quiz_tri1', title:'삼각형 개수 계산', n:9, ans:7, q:'구각형(n=9)의 한 꼭짓점에서 대각선을 모두 그었을 때 생기는 삼각형의 개수는?'},
+        {type:'exp_tri', title:'삼각형으로 쪼개기 탐구', n:6},
+        {type:'quiz_tri1', title:'삼각형 개수 계산', n:9, ans:7, q:'구각형의 한 꼭짓점에서 대각선을 모두 그었을 때 생기는 삼각형의 개수는 몇 개일까요?'},
         {type:'quiz_tri2', title:'역산 퀴즈', ans:12, q:'한 꼭짓점에서 대각선을 그어 10개의 삼각형으로 나누어지는 다각형은 몇 각형일까요?'},
-        {type:'quiz_tri_diff', title:'대각선과 삼각형의 관계', ans:1, q:'n각형에서 만들어지는 삼각형의 개수(n-2)는 대각선의 개수(n-3)보다 항상 몇 개 더 많을까요?'}
+        {type:'quiz_tri_diff', title:'대각선과 삼각형의 관계', ans:1, q:'n각형의 한 꼭짓점에서 대각선을 그어 만들 수 있는 삼각형의 개수는 대각선의 개수보다 항상 몇 개 더 많을까요?'}
       ];
     case 2: // 내각의 합
       return [
         {type:'exp_sum_in', title:'180° 반원 각 모으기 탐구', n:5},
-        {type:'quiz_sum1', title:'내각의 합 계산', n:7, ans:900, q:'칠각형(n=7)의 내각의 크기의 합은 얼마일까요?'},
+        {type:'quiz_sum1', title:'내각의 합 계산', n:7, ans:900, q:'칠각형의 내각의 크기의 합은 얼마일까요?'},
         {type:'quiz_sum2', title:'내각의 합 역산', ans:8, q:'내각의 크기의 합이 1080°인 다각형은 몇 각형일까요?'},
         {type:'quiz_angle_x', title:'미지의 각 x 찾기', ans:130, q:'오각형의 네 내각이 100°, 110°, 120°, 80°일 때, 나머지 한 각 x의 크기는?'}
       ];
@@ -491,14 +491,14 @@ function createMissions(si){
       return [
         {type:'exp_car', title:'실생활 탐구: 자동차의 다각형 도로 주행', n:5},
         {type:'exp_shrink', title:'수학적 탐구: 다각형 외각 수축 마술', n:5},
-        {type:'quiz_out1', title:'외각의 합의 불변성', ans:360, q:'백각형(n=100)의 외각의 크기의 합은 얼마일까요?'},
+        {type:'quiz_out1', title:'외각의 합의 불변성', ans:360, q:'100각형(백각형)의 외각의 크기의 합은 얼마일까요?'},
         {type:'quiz_out2', title:'외각 계산 퀴즈', ans:75, q:'사각형의 세 외각의 크기가 80°, 95°, 110°일 때, 나머지 한 외각의 크기는?'}
       ];
     case 4: // 보스전 (정다각형)
       return [
         {type:'exp_regular', title:'정다각형 외각 꿀팁 암산 연구', n:6},
         {type:'quiz_reg1', title:'정육각형의 한 외각', ans:60, q:'정육각형의 한 외각의 크기는 얼마일까요?'},
-        {type:'quiz_reg2', title:'정팔각형의 한 내각 (꿀팁 활용)', ans:135, q:'정팔각형의 한 내각의 크기는 얼마일까요? (180° - 한 외각)'},
+        {type:'quiz_reg2', title:'정팔각형의 한 내각', ans:135, q:'정팔각형의 한 내각의 크기는 얼마일까요?'},
         {type:'quiz_reg3', title:'한 내각으로 정다각형 찾기', ans:10, q:'한 내각의 크기가 144°인 정다각형은 몇 각형일까요?'},
         {type:'quiz_reg4', title:'내각과 외각의 비', ans:8, q:'한 내각과 한 외각의 크기의 비가 3 : 1인 정다각형은 몇 각형일까요?'}
       ];
@@ -550,8 +550,11 @@ let poly = {
   diags: new Set(), // target idx
   showAllDiags: false,
   triClicked: new Set(),
+  triOrder: [], // 삼각형 클릭 순서 기록
   gatherProgress: 0, // 0~1 (각 모으기)
+  gatherDone: false,
   shrinkProgress: 1, // 1~0 (외각 수축)
+  shrinkDone: false,
   carProgress: 0, // 0~n (자동차 주행)
   carRunning: false,
   dragIdx: -1
@@ -564,8 +567,13 @@ function resizeCanvas(){
   cvs.height = wrap.clientHeight * dpr;
   ctx.scale(dpr, dpr);
   poly.cx = wrap.clientWidth / 2;
-  poly.cy = wrap.clientHeight / 2;
-  poly.r = Math.min(wrap.clientWidth, wrap.clientHeight) * 0.38;
+  if(G.mode === 'sum_in'){
+    poly.cy = wrap.clientHeight * 0.40;
+    poly.r = Math.min(wrap.clientWidth, wrap.clientHeight) * 0.28;
+  } else {
+    poly.cy = wrap.clientHeight / 2;
+    poly.r = Math.min(wrap.clientWidth, wrap.clientHeight) * 0.38;
+  }
   initPoints(poly.n);
 }
 window.addEventListener('resize', resizeCanvas);
@@ -785,28 +793,40 @@ function renderTriMode(){
     // 무게중심 위치에 번호 뱃지
     const gx = (A.x + B.x + C.x) / 3;
     const gy = (A.y + B.y + C.y) / 3;
-    const clicked = poly.triClicked.has(i);
+    const orderIdx = poly.triOrder ? poly.triOrder.indexOf(i) : -1;
+    const clicked = orderIdx !== -1;
 
     ctx.beginPath();
-    ctx.arc(gx, gy, 14, 0, Math.PI*2);
-    ctx.fillStyle = clicked ? '#10b981' : '#fff';
-    ctx.fill();
-    ctx.strokeStyle = clicked ? '#059669' : '#cbd5e1';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.arc(gx, gy, 15, 0, Math.PI*2);
+    if(clicked){
+      ctx.fillStyle = '#10b981';
+      ctx.fill();
+      ctx.strokeStyle = '#059669';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
 
-    ctx.fillStyle = clicked ? '#fff' : '#0f172a';
-    ctx.font = 'bold 13px Pretendard, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${i+1}`, gx, gy);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px Pretendard, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${orderIdx + 1}`, gx, gy);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([3, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 비어있는 상태! 숫자 없음!
+    }
   }
 
   // 꼭짓점 렌더링
   poly.pts.forEach((p, i) => {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
-    ctx.fillStyle = '#2563eb';
+    ctx.fillStyle = i === 0 ? '#f59e0b' : '#2563eb';
     ctx.fill();
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
@@ -817,12 +837,17 @@ function renderTriMode(){
 function handleTriClick(pos){
   const A = poly.pts[0];
   const numTri = poly.n - 2;
+  if(!poly.triOrder) poly.triOrder = [];
+
   for(let i=0; i<numTri; i++){
     const B = poly.pts[i+1], C = poly.pts[i+2];
     if(ptInTri(pos, A, B, C)){
       SFX.pop();
-      if(poly.triClicked.has(i)) poly.triClicked.delete(i);
-      else poly.triClicked.add(i);
+      if(poly.triOrder.includes(i)){
+        poly.triOrder = poly.triOrder.filter(idx => idx !== i);
+      } else {
+        poly.triOrder.push(i);
+      }
       updateTriCard();
       break;
     }
@@ -842,27 +867,62 @@ function ptInTri(p, a, b, c){
 }
 
 /* ---------- 3. 내각의 합 180° 모으기 모드 렌더링 ---------- */
+function angleDiffCW(from, to){
+  let d = (to - from) % (Math.PI * 2);
+  if(d < 0) d += Math.PI * 2;
+  return d;
+}
+
 function renderSumInMode(){
-  renderTriMode();
+  const A = poly.pts[0];
   const numTri = poly.n - 2;
-
-  // 슬라이더 진행도에 따라 하단에 180도 반원들이 모여 진열되는 연출
   const p = poly.gatherProgress;
-  if(p > 0.05){
-    const startY = cvs.clientHeight - 40;
-    const spacing = cvs.clientWidth / (numTri + 1);
+  const t = p < 0.5 ? 2*p*p : -1 + (4 - 2*p)*p; // smooth easeInOut
 
+  // 1. 삼각형 영역들 배경 칠하기 및 대각선 외곽선 그리기
+  for(let i=0; i<numTri; i++){
+    const B = poly.pts[i+1];
+    const C = poly.pts[i+2];
+
+    ctx.beginPath();
+    ctx.moveTo(A.x, A.y);
+    ctx.lineTo(B.x, B.y);
+    ctx.lineTo(C.x, C.y);
+    ctx.closePath();
+    ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 꼭짓점 렌더링
+  poly.pts.forEach((pt, i) => {
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 6, 0, Math.PI*2);
+    ctx.fillStyle = i === 0 ? '#f59e0b' : '#2563eb';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // 2. 하단 조립 스테이션 정보
+  const startY = cvs.clientHeight - 48;
+  const spacing = cvs.clientWidth / (numTri + 1);
+  const R_st = Math.max(16, Math.min(28, cvs.clientWidth / ((numTri + 1) * 2.8)));
+
+  // 하단 베이스라인 및 스테이션 틀 (p > 0.05 일 때 서서히 표시)
+  if(p > 0.05){
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, p * 2);
     for(let i=0; i<numTri; i++){
       const arcX = spacing * (i + 1);
-      const arcR = 32 * p;
-
-      ctx.save();
+      // 수평 기준선
       ctx.beginPath();
-      ctx.arc(arcX, startY, arcR, Math.PI, 0); // 180도 반원
-      ctx.closePath();
-      ctx.fillStyle = PASTEL_COLORS[i % PASTEL_COLORS.length];
-      ctx.fill();
-      ctx.strokeStyle = '#2563eb';
+      ctx.moveTo(arcX - R_st - 6, startY);
+      ctx.lineTo(arcX + R_st + 6, startY);
+      ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
@@ -870,9 +930,152 @@ function renderSumInMode(){
       ctx.fillStyle = '#0f172a';
       ctx.font = 'bold 12px Pretendard, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`조각${i+1} : 180°`, arcX, startY + 16);
+      ctx.textBaseline = 'top';
+      ctx.fillText(`조각${i+1} : 180°`, arcX, startY + 8);
+    }
+    ctx.restore();
+  }
+
+  // 3. 각 삼각형마다 세 내각(부채꼴) 계산 및 이동 연출
+  const CORNER_COLORS = ['#f59e0b', '#10b981', '#3b82f6']; // 주황, 초록, 파랑
+  const CORNER_STROKES = ['#d97706', '#059669', '#1d4ed8'];
+
+  for(let i=0; i<numTri; i++){
+    const B = poly.pts[i+1];
+    const C = poly.pts[i+2];
+    const targetX = spacing * (i + 1);
+    const targetY = startY;
+
+    // A, B, C에서 각도 계산
+    const dirAB = Math.atan2(B.y - A.y, B.x - A.x);
+    const dirAC = Math.atan2(C.y - A.y, C.x - A.x);
+    let thA = angleDiffCW(dirAB, dirAC);
+
+    const dirBC = Math.atan2(C.y - B.y, C.x - B.x);
+    const dirBA = Math.atan2(A.y - B.y, A.x - B.x);
+    let thB = angleDiffCW(dirBC, dirBA);
+
+    const dirCA = Math.atan2(A.y - C.y, A.x - C.x);
+    const dirCB = Math.atan2(B.y - C.y, B.x - C.x);
+    let thC = angleDiffCW(dirCA, dirCB);
+
+    // 반시계 방향일 경우 보정
+    let isCCW = false;
+    if(thA + thB + thC > Math.PI * 1.5){
+      thA = 2 * Math.PI - thA;
+      thB = 2 * Math.PI - thB;
+      thC = 2 * Math.PI - thC;
+      isCCW = true;
+    }
+
+    // 세 꼭짓점 부채꼴 데이터 정의
+    const corners = [
+      {
+        origPt: A,
+        startAng: isCCW ? dirAC : dirAB,
+        th: thA,
+        tgtStart: Math.PI,
+        tgtEnd: Math.PI - thA,
+        color: CORNER_COLORS[0],
+        stroke: CORNER_STROKES[0]
+      },
+      {
+        origPt: B,
+        startAng: isCCW ? dirBA : dirBC,
+        th: thB,
+        tgtStart: Math.PI - thA,
+        tgtEnd: Math.PI - thA - thB,
+        color: CORNER_COLORS[1],
+        stroke: CORNER_STROKES[1]
+      },
+      {
+        origPt: C,
+        startAng: isCCW ? dirCB : dirCA,
+        th: thC,
+        tgtStart: Math.PI - thA - thB,
+        tgtEnd: 0,
+        color: CORNER_COLORS[2],
+        stroke: CORNER_STROKES[2]
+      }
+    ];
+
+    // 원래 위치에 남아있는 고스트 점선 호 (p > 0.05일 때)
+    if(p > 0.05){
+      corners.forEach(cn => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cn.origPt.x, cn.origPt.y);
+        ctx.arc(cn.origPt.x, cn.origPt.y, 20, cn.startAng, cn.startAng + cn.th, false);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fill();
+        ctx.strokeStyle = cn.color;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    // 이동하는 세 부채꼴 그리기
+    corners.forEach(cn => {
+      const curX = (1 - t) * cn.origPt.x + t * targetX;
+      const curY = (1 - t) * cn.origPt.y + t * targetY;
+      const curR = (1 - t) * 22 + t * R_st;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(curX, curY);
+
+      if(t < 0.1){
+        ctx.arc(curX, curY, curR, cn.startAng, cn.startAng + cn.th, false);
+      } else {
+        let sAng = (1 - t) * cn.startAng + t * cn.tgtStart;
+        let eAng = sAng - cn.th;
+        if(t > 0.7){
+          sAng = cn.tgtStart;
+          eAng = cn.tgtEnd;
+        }
+        ctx.arc(curX, curY, curR, sAng, eAng, true);
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = cn.color;
+      ctx.fill();
+      ctx.strokeStyle = cn.stroke;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // 100% 모였을 때(p >= 0.92) 반원 전체 외곽선 및 성공 표시
+    if(p >= 0.92){
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(targetX, targetY, R_st + 3, Math.PI, 0, false);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
       ctx.restore();
     }
+  }
+
+  // 100% 모였을 때 하단에 공식 하이라이트 배너
+  if(p >= 0.92){
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+    const bannerW = Math.min(380, cvs.clientWidth - 40);
+    ctx.fillRect((cvs.clientWidth - bannerW)/2, cvs.clientHeight - 86, bannerW, 30);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.strokeRect((cvs.clientWidth - bannerW)/2, cvs.clientHeight - 86, bannerW, 30);
+
+    ctx.fillStyle = '#065f46';
+    ctx.font = 'bold 13.5px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`180° × ${numTri}조각 = ${180 * numTri}° (다각형 내각의 합)`, cvs.clientWidth / 2, cvs.clientHeight - 71);
+    ctx.restore();
   }
 }
 
@@ -1025,6 +1228,53 @@ function renderRegularMode(){
 }
 
 /* ============================================================
+   공통 다각형 꼭짓점 증감 컨트롤러 (3각형 ~ 12각형)
+============================================================ */
+function renderPolyStepCtrls(container, onChange){
+  const div = document.createElement('div');
+  div.className = 'poly-step-ctrl';
+  div.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;width:100%;margin-top:4px';
+  div.innerHTML = `
+    <span style="font-size:13px;font-weight:800;color:var(--muted)">꼭짓점:</span>
+    <button class="ctrl-btn" id="btnMinusVertex" ${poly.n <= 3 ? 'disabled' : ''} style="padding:6px 14px;font-weight:800">➖ 빼기</button>
+    <span style="font-size:16px;font-weight:900;color:var(--primary);min-width:62px;text-align:center">${poly.n}각형</span>
+    <button class="ctrl-btn" id="btnPlusVertex" ${poly.n >= 12 ? 'disabled' : ''} style="padding:6px 14px;font-weight:800">➕ 추가</button>
+    <button class="ctrl-btn" id="btnResetShape" style="padding:6px 12px;font-size:13px" title="정다각형 모양으로 리셋">🔄 초기화</button>
+  `;
+  container.appendChild(div);
+
+  const btnMinus = div.querySelector('#btnMinusVertex');
+  const btnPlus = div.querySelector('#btnPlusVertex');
+  const nBadge = div.querySelector('span:nth-of-type(2)');
+
+  btnMinus.onclick = () => {
+    if(poly.n > 3){
+      SFX.click();
+      initPoints(poly.n - 1);
+      if(onChange) onChange();
+      btnMinus.disabled = poly.n <= 3;
+      btnPlus.disabled = poly.n >= 12;
+      nBadge.textContent = `${poly.n}각형`;
+    }
+  };
+  btnPlus.onclick = () => {
+    if(poly.n < 12){
+      SFX.click();
+      initPoints(poly.n + 1);
+      if(onChange) onChange();
+      btnMinus.disabled = poly.n <= 3;
+      btnPlus.disabled = poly.n >= 12;
+      nBadge.textContent = `${poly.n}각형`;
+    }
+  };
+  div.querySelector('#btnResetShape').onclick = () => {
+    SFX.pop();
+    initPoints(poly.n);
+    if(onChange) onChange();
+  };
+}
+
+/* ============================================================
    우측 패널 및 컨트롤 바 로더
 ============================================================ */
 function loadMission(){
@@ -1034,25 +1284,29 @@ function loadMission(){
   const ctrls = $('#canvasCtrls');
   ctrls.innerHTML = '';
 
-  // 캔버스 초기화
+  // 캔버스 및 기하 상태 초기화
   poly.diags.clear();
   poly.triClicked.clear();
+  poly.triOrder = [];
   poly.showAllDiags = false;
   poly.gatherProgress = 0;
+  poly.gatherDone = false;
   poly.shrinkProgress = 1;
+  poly.shrinkDone = false;
   poly.carProgress = 0;
   poly.carRunning = false;
 
+  if(m.n){
+    poly.n = m.n;
+  }
+
   if(m.type.startsWith('exp_')){
     G.mode = m.type.replace('exp_', '');
-    if(G.mode === 'sum_in') G.mode = 'sum_in';
     if(G.mode === 'car') G.mode = 'sum_out_car';
     if(G.mode === 'shrink') G.mode = 'sum_out_shrink';
-    if(G.mode === 'diag') G.mode = 'diag';
-    if(G.mode === 'tri') G.mode = 'tri';
-    if(G.mode === 'regular') G.mode = 'regular';
   } else {
-    G.mode = 'default';
+    // 퀴즈일 때도 스테이지의 기본 모드를 유지하여 캔버스 상호작용 지원
+    G.mode = STAGES[G.si].mode;
   }
 
   resizeCanvas();
@@ -1088,30 +1342,19 @@ function loadMission(){
 ============================================================ */
 function rExpDiag(m, card, ctrls){
   $('#canvasGuideText').textContent = '💡 기준점 A(노란점)를 제외한 다른 꼭짓점을 터치해 대각선을 그어보세요';
-  
-  ctrls.innerHTML = `
-    <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 변경:</span>
-    ${[4,5,6,7,8].map(n=>`<button class="ctrl-btn ${n===poly.n?'active':''}" data-n="${n}">${n}각형</button>`).join('')}
-  `;
-  ctrls.querySelectorAll('.ctrl-btn').forEach(btn=>{
-    btn.onclick = () => {
-      SFX.click();
-      ctrls.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      initPoints(+btn.dataset.n);
-      poly.diags.clear();
-      poly.showAllDiags = false;
-      updateDiagCard();
-    };
+  ctrls.innerHTML = '';
+  renderPolyStepCtrls(ctrls, () => {
+    poly.diags.clear();
+    poly.showAllDiags = false;
+    updateDiagCard();
   });
-
   updateDiagCard();
 }
 
 function updateDiagCard(){
   const card = $('#rightCard');
   const n = poly.n;
-  const target = n - 3;
+  const target = Math.max(0, n - 3);
   const cur = poly.diags.size;
   const isDone = cur === target;
 
@@ -1152,8 +1395,11 @@ function updateDiagCard(){
             <div class="ttl">🎉 모든 대각선 마법진 완성!</div>
             <div>꼭짓점 ${n}개마다 각각 ${target}개씩 그으면 ${n}×${target}개지만, 양방향 중복이므로 2로 나누어:</div>
             <div style="font-size:17px;font-weight:900;color:var(--primary);margin-top:4px">총 대각선의 개수 = ${n}(${n}-3) ÷ 2 = <b>${total}개</b>!</div>
+            <button class="btn primary big" id="btnDiagNext" style="margin-top:14px">다음 미션 진행하기 ▶</button>
           </div>
         `;
+        const btnNext = card.querySelector('#btnDiagNext');
+        if(btnNext) btnNext.onclick = () => $('#nextBtn').click();
         missionDone();
       };
     }
@@ -1161,39 +1407,28 @@ function updateDiagCard(){
 }
 
 /* ============================================================
-   2. 삼각형 피자 조각 분할 인터랙션
+   2. 삼각형 분할 인터랙션 (터치 순서대로 번호 부여)
 ============================================================ */
 function rExpTri(m, card, ctrls){
   $('#canvasGuideText').textContent = '💡 대각선으로 쪼개진 삼각형 조각들을 하나씩 터치해 번호표를 붙여보세요';
-  
-  ctrls.innerHTML = `
-    <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 변경:</span>
-    ${[4,5,6,7,8].map(n=>`<button class="ctrl-btn ${n===poly.n?'active':''}" data-n="${n}">${n}각형</button>`).join('')}
-  `;
-  ctrls.querySelectorAll('.ctrl-btn').forEach(btn=>{
-    btn.onclick = () => {
-      SFX.click();
-      ctrls.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      initPoints(+btn.dataset.n);
-      poly.triClicked.clear();
-      updateTriCard();
-    };
+  ctrls.innerHTML = '';
+  renderPolyStepCtrls(ctrls, () => {
+    poly.triOrder = [];
+    updateTriCard();
   });
-
   updateTriCard();
 }
 
 function updateTriCard(){
   const card = $('#rightCard');
   const n = poly.n;
-  const target = n - 2;
-  const cur = poly.triClicked.size;
+  const target = Math.max(1, n - 2);
+  const cur = poly.triOrder ? poly.triOrder.length : 0;
   const isDone = cur === target;
 
   card.innerHTML = `
     <span class="qtag t-exp">🔬 시각 탐구 2단계</span>
-    <div class="qtitle">피자 조각내기</div>
+    <div class="qtitle">삼각형으로 쪼개기</div>
     <div class="qdesc">한 꼭짓점에서 대각선을 그으면 다각형이 몇 개의 삼각형으로 쪼개질까요?</div>
     
     <div class="stat-box">
@@ -1202,8 +1437,8 @@ function updateTriCard(){
     </div>
 
     <div class="ex" style="background:#f8fafc;margin:12px 0">
-      <div>• 피자에 칼질(대각선) 1번 ➔ 2조각</div>
-      <div>• 칼질(대각선)을 <b>${n-3}번</b> 그었으므로 조각은 항상 1개 더 많음!</div>
+      <div>• 대각선으로 1번 자르면 ➔ 2조각</div>
+      <div>• 대각선을 <b>${n-3}번</b> 그었으므로 삼각형은 항상 1개 더 많음!</div>
       <div style="margin-top:4px"><b>👉 만들어지는 삼각형의 개수: <span style="color:var(--primary)">n - 2 = ${target}개</span></b></div>
     </div>
 
@@ -1214,10 +1449,13 @@ function updateTriCard(){
     SFX.correct();
     card.querySelector('#triDoneMsg').innerHTML = `
       <div class="fb ok" style="animation:fadeUp .3s">
-        <div class="ttl">🎉 모든 삼각형 조각 확인 완료!</div>
+        <div class="ttl">🎉 모든 삼각형 조각(${target}개) 확인 완료!</div>
         <div>꼭짓점을 드래그해서 다각형을 찌그러뜨려도 삼각형 조각 수는 항상 <b>${target}개</b>로 변하지 않아요!</div>
+        <button class="btn primary big" id="btnTriNext" style="margin-top:14px">다음 미션 진행하기 ▶</button>
       </div>
     `;
+    const btnNext = card.querySelector('#btnTriNext');
+    if(btnNext) btnNext.onclick = () => $('#nextBtn').click();
     missionDone();
   }
 }
@@ -1229,18 +1467,61 @@ function rExpSumIn(m, card, ctrls){
   $('#canvasGuideText').textContent = '💡 아래 [각 모으기] 슬라이더를 오른쪽으로 당겨 삼각형들의 각을 모아보세요';
   
   ctrls.innerHTML = `
-    <span style="font-size:13px;font-weight:800;color:var(--muted)">각 모으기:</span>
-    <input type="range" id="gatherSlider" min="0" max="100" value="0" style="flex:1;cursor:pointer">
+    <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:800;color:var(--muted)">각 모으기:</span>
+      <input type="range" id="gatherSlider" min="0" max="100" value="${Math.round(poly.gatherProgress*100)}" style="flex:1;min-width:140px;cursor:pointer">
+      <button class="ctrl-btn" id="btnAutoGather" style="padding:6px 14px;font-weight:800;background:var(--primary);color:#fff">▶ 한 번에 모으기</button>
+    </div>
   `;
+
   const slider = ctrls.querySelector('#gatherSlider');
-  slider.oninput = () => {
-    poly.gatherProgress = slider.value / 100;
-    if(slider.value >= 95 && !poly.gatherDone){
+  const btnAuto = ctrls.querySelector('#btnAutoGather');
+
+  const onProgress = val => {
+    poly.gatherProgress = val / 100;
+    if(val >= 90 && !poly.gatherDone){
       poly.gatherDone = true;
-      SFX.correct();
+      poly.gatherProgress = 1.0;
+      slider.value = 100;
+      SFX.fanfare();
       updateSumInCard(true);
     }
   };
+
+  slider.oninput = () => onProgress(+slider.value);
+  slider.onchange = () => onProgress(+slider.value);
+
+  btnAuto.onclick = () => {
+    SFX.click();
+    btnAuto.disabled = true;
+    let startVal = +slider.value;
+    const dur = 750;
+    const startTime = performance.now();
+    function step(now){
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / dur);
+      const val = Math.round(startVal + (100 - startVal) * t);
+      slider.value = val;
+      poly.gatherProgress = val / 100;
+      if(t < 1){
+        requestAnimationFrame(step);
+      } else {
+        poly.gatherProgress = 1.0;
+        poly.gatherDone = true;
+        SFX.fanfare();
+        updateSumInCard(true);
+      }
+    }
+    requestAnimationFrame(step);
+  };
+
+  renderPolyStepCtrls(ctrls, () => {
+    poly.gatherProgress = 0;
+    poly.gatherDone = false;
+    slider.value = 0;
+    btnAuto.disabled = false;
+    updateSumInCard(false);
+  });
 
   updateSumInCard(false);
 }
@@ -1248,13 +1529,13 @@ function rExpSumIn(m, card, ctrls){
 function updateSumInCard(done){
   const card = $('#rightCard');
   const n = poly.n;
-  const numTri = n - 2;
+  const numTri = Math.max(1, n - 2);
   const total = 180 * numTri;
 
   card.innerHTML = `
     <span class="qtag t-exp">🔬 시각 탐구 3단계</span>
     <div class="qtitle">각 모으기 축제</div>
-    <div class="qdesc">다각형의 모든 내각을 모으면 몇 도가 될까요? 삼각형들의 내각을 뜯어 모아봐요!</div>
+    <div class="qdesc">다각형의 모든 내각을 모으면 몇 도가 될까요? 각 삼각형의 세 내각을 뜯어 모아봐요!</div>
     
     <div class="stat-box">
       <div class="stat-row"><span>다각형</span><b>${n}각형</b></div>
@@ -1265,17 +1546,22 @@ function updateSumInCard(done){
 
     ${done ? `
       <div class="fb ok" style="animation:fadeUp .3s">
-        <div class="ttl">🎉 180° 반원 ${numTri}개 정렬 완료!</div>
-        <div>삼각형 1개의 내각은 180°이므로, ${numTri}개의 삼각형이 모인 <b>${n}각형의 내각의 총합은 180° × ${numTri} = ${total}°</b>입니다!</div>
+        <div class="ttl">🎉 180° 반원 ${numTri}개 조립 완료!</div>
+        <div>삼각형 1개의 내각의 합은 180°이므로, ${numTri}개의 삼각형이 모인 <b>${n}각형의 내각의 총합은 180° × ${numTri} = ${total}°</b>입니다!</div>
+        <button class="btn primary big" id="btnSumInNext" style="margin-top:14px">다음 미션 진행하기 ▶</button>
       </div>
     ` : `
       <div class="ex" style="background:#f8fafc">
-        슬라이더를 끝까지 당겨 캔버스 아래에 180° 반원들이 완성되는지 확인하세요!
+        [각 모으기] 슬라이더를 오른쪽 끝까지 당겨, 캔버스 아래에 180° 반원들이 완성되는지 확인하세요!
       </div>
     `}
   `;
 
-  if(done) missionDone();
+  if(done){
+    const btnNext = card.querySelector('#btnSumInNext');
+    if(btnNext) btnNext.onclick = () => $('#nextBtn').click();
+    missionDone();
+  }
 }
 
 /* ============================================================
@@ -1285,14 +1571,24 @@ function rExpCar(m, card, ctrls){
   $('#canvasGuideText').textContent = '💡 [주행 시작]을 누르고 자동차가 다각형 도로를 한 바퀴 도는 회전각을 관찰하세요';
   
   ctrls.innerHTML = `
-    <button class="btn primary" id="btnStartCar">🚗 자동차 주행 시작</button>
+    <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap">
+      <button class="btn primary" id="btnStartCar">🚗 자동차 주행 시작</button>
+    </div>
   `;
-  ctrls.querySelector('#btnStartCar').onclick = () => {
+  const btnCar = ctrls.querySelector('#btnStartCar');
+  btnCar.onclick = () => {
     SFX.click();
     poly.carProgress = 0;
     poly.carRunning = true;
-    ctrls.querySelector('#btnStartCar').disabled = true;
+    btnCar.disabled = true;
   };
+
+  renderPolyStepCtrls(ctrls, () => {
+    poly.carProgress = 0;
+    poly.carRunning = false;
+    btnCar.disabled = false;
+    updateCarCard(false);
+  });
 
   updateCarCard(false);
 }
@@ -1300,7 +1596,7 @@ function rExpCar(m, card, ctrls){
 function updateCarCard(done){
   const card = $('#rightCard');
   const n = poly.n;
-  const extAngle = 360 / n;
+  const extAngle = (360 / n).toFixed(1).replace(/\.0$/, '');
 
   card.innerHTML = `
     <span class="qtag t-exp">🚗 실생활 탐구 4단계-A</span>
@@ -1317,6 +1613,7 @@ function updateCarCard(done){
       <div class="fb ok" style="animation:fadeUp .3s">
         <div class="ttl">🏁 제자리 360° 한 바퀴 완주!</div>
         <div>자동차가 다각형 둘레를 한 바퀴 돌아 제자리로 돌아오면, <b>무조건 정확히 360° 제자리 회전</b>을 하게 돼요. 다각형 모양에 상관없이 외각의 합이 360°인 이유입니다!</div>
+        <button class="btn primary big" id="btnCarNext" style="margin-top:14px">다음 미션 진행하기 ▶</button>
       </div>
     ` : `
       <div class="ex" style="background:#f8fafc">
@@ -1325,7 +1622,11 @@ function updateCarCard(done){
     `}
   `;
 
-  if(done) missionDone();
+  if(done){
+    const btnNext = card.querySelector('#btnCarNext');
+    if(btnNext) btnNext.onclick = () => $('#nextBtn').click();
+    missionDone();
+  }
 }
 
 /* ============================================================
@@ -1335,18 +1636,29 @@ function rExpShrink(m, card, ctrls){
   $('#canvasGuideText').textContent = '💡 [다각형 축소] 슬라이더를 오른쪽으로 당겨 다각형을 한 점으로 쪼그라뜨려 보세요';
   
   ctrls.innerHTML = `
-    <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 축소:</span>
-    <input type="range" id="shrinkSlider" min="0" max="100" value="0" style="flex:1;cursor:pointer">
+    <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:800;color:var(--muted)">다각형 축소:</span>
+      <input type="range" id="shrinkSlider" min="0" max="100" value="0" style="flex:1;min-width:140px;cursor:pointer">
+    </div>
   `;
   const slider = ctrls.querySelector('#shrinkSlider');
   slider.oninput = () => {
     poly.shrinkProgress = 1 - (slider.value / 100);
-    if(slider.value >= 92 && !poly.shrinkDone){
+    if(slider.value >= 90 && !poly.shrinkDone){
       poly.shrinkDone = true;
+      poly.shrinkProgress = 0;
+      slider.value = 100;
       SFX.correct();
       updateShrinkCard(true);
     }
   };
+
+  renderPolyStepCtrls(ctrls, () => {
+    poly.shrinkProgress = 1;
+    poly.shrinkDone = false;
+    slider.value = 0;
+    updateShrinkCard(false);
+  });
 
   updateShrinkCard(false);
 }
@@ -1368,7 +1680,8 @@ function updateShrinkCard(done){
     ${done ? `
       <div class="fb ok" style="animation:fadeUp .3s">
         <div class="ttl">🎉 빈틈없는 완벽한 360° 원 완성!</div>
-        <div>다각형을 점으로 수축하면 외각들이 한 점 주위에 모여 <b>정확히 360° 피자 한 판</b>을 만들어요. 삼각형이든 십각형이든 언제나 똑같습니다!</div>
+        <div>다각형을 점으로 수축하면 외각들이 한 점 주위에 모여 <b>정확히 360° 완벽한 원</b>을 만들어요. 삼각형이든 십각형이든 언제나 똑같습니다!</div>
+        <button class="btn primary big" id="btnShrinkNext" style="margin-top:14px">다음 미션 진행하기 ▶</button>
       </div>
     ` : `
       <div class="ex" style="background:#f8fafc">
@@ -1377,37 +1690,30 @@ function updateShrinkCard(done){
     `}
   `;
 
-  if(done) missionDone();
+  if(done){
+    const btnNext = card.querySelector('#btnShrinkNext');
+    if(btnNext) btnNext.onclick = () => $('#nextBtn').click();
+    missionDone();
+  }
 }
 
 /* ============================================================
    5. 정다각형 외각 꿀팁 연구
 ============================================================ */
 function rExpRegular(m, card, ctrls){
-  $('#canvasGuideText').textContent = '💡 다각형 버튼을 눌러 정다각형의 외각과 내각의 관계를 탐구하세요';
-  
-  ctrls.innerHTML = `
-    <span style="font-size:13px;font-weight:800;color:var(--muted)">정다각형:</span>
-    ${[3,4,5,6,8,10].map(n=>`<button class="ctrl-btn ${n===poly.n?'active':''}" data-n="${n}">정${n}각형</button>`).join('')}
-  `;
-  ctrls.querySelectorAll('.ctrl-btn').forEach(btn=>{
-    btn.onclick = () => {
-      SFX.click();
-      ctrls.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      initPoints(+btn.dataset.n);
-      updateRegCard();
-    };
+  $('#canvasGuideText').textContent = '💡 꼭짓점을 조절하며 정다각형의 외각과 내각의 관계를 탐구하세요';
+  ctrls.innerHTML = '';
+  renderPolyStepCtrls(ctrls, () => {
+    updateRegCard();
   });
-
   updateRegCard();
 }
 
 function updateRegCard(){
   const card = $('#rightCard');
   const n = poly.n;
-  const outAng = 360 / n;
-  const inAng = 180 - outAng;
+  const outAng = (360 / n).toFixed(1).replace(/\.0$/, '');
+  const inAng = (180 - 360 / n).toFixed(1).replace(/\.0$/, '');
 
   card.innerHTML = `
     <span class="qtag t-exp">👑 보스 연구 5단계</span>
@@ -1437,10 +1743,17 @@ function updateRegCard(){
    공통 퀴즈 엔진
 ============================================================ */
 function rQuiz(m, card){
-  $('#canvasGuideText').textContent = '💡 캔버스의 다각형을 참고해 질문에 답해 보세요';
+  $('#canvasGuideText').textContent = '💡 캔버스의 다각형을 참고하고, 꼭짓점을 조절하며 직접 확인해 보세요';
   
+  const ctrls = $('#canvasCtrls');
+  ctrls.innerHTML = '';
+  renderPolyStepCtrls(ctrls, () => {
+    poly.diags.clear();
+    poly.triOrder = [];
+  });
+
   const correctVal = m.ans;
-  const decoys = [correctVal + 1, Math.max(1, correctVal - 1), correctVal + 2, correctVal - 2, correctVal + 10].filter(x=>x!==correctVal);
+  const decoys = [correctVal + 1, Math.max(1, correctVal - 1), correctVal + 2, Math.max(1, correctVal - 2), correctVal + 10].filter(x=>x!==correctVal);
   const opts = shuffle([correctVal, ...shuffle([...new Set(decoys)]).slice(0,3)]);
 
   card.innerHTML = `

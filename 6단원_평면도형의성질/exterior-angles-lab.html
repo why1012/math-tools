@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>다각형 외각의 합 360° 비밀 탐험실 · Exterior Angles Lab</title>
+<style>
+:root {
+  --primary: #2563eb;
+  --primary-d: #1d4ed8;
+  --primary-soft: #eff6ff;
+  --accent: #f59e0b;
+  --accent-d: #d97706;
+  --accent-soft: #fef3c7;
+  --success: #10b981;
+  --success-d: #059669;
+  --success-soft: #ecfdf5;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --purple: #8b5cf6;
+  --purple-soft: #f5f3ff;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+  --radius: 20px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  touch-action: manipulation;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* TOP HEADER */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), #3b82f6);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+}
+
+.logo-text h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-text p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sub-tag {
+  font-size: 11px;
+  background: var(--primary-soft);
+  color: var(--primary-d);
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.chip-btn:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-d);
+}
+
+/* TABS */
+.tab-nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  background: #e2e8f0;
+  padding: 6px;
+  border-radius: 18px;
+}
+
+.tab-btn {
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.tab-btn:hover {
+  color: var(--ink);
+}
+.tab-btn.active {
+  background: #fff;
+  color: var(--primary-d);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+.tab-btn .badge-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.08);
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900;
+}
+.tab-btn.active .badge-num {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* MAIN LAYOUT */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 16px;
+}
+@media (max-width: 960px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CANVAS CARD */
+.stage-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--line);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stage-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stage-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.stage-desc {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+@media (max-width: 600px) {
+  .canvas-wrapper {
+    height: 400px;
+  }
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* FLOATING OVERLAYS IN CANVAS */
+.canvas-hint {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.congrats-banner {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.4);
+  font-weight: 800;
+  font-size: 15.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+  z-index: 10;
+}
+.congrats-banner.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* MASCOT BUBBLE (Tab 2: Bear, Tab 3: Turtle) */
+.mascot-bubble {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+  max-width: 320px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  pointer-events: none;
+}
+.mascot-bubble .avatar {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+/* INTERACTION CONTROLS BAR */
+.control-bar {
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+}
+.slider-group label {
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.slider-group input[type="range"] {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  accent-color: var(--primary);
+  background: #cbd5e1;
+  outline: none;
+  cursor: pointer;
+}
+.slider-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--primary-d);
+  min-width: 48px;
+  text-align: right;
+}
+
+.action-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-d);
+}
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+}
+.btn-accent:hover:not(:disabled) {
+  background: var(--accent-d);
+}
+.btn-ghost {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+.btn.active-opt {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-d);
+}
+
+/* SIDE PANEL */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.side-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--line);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* POLYGON SELECTOR */
+.poly-selector {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.poly-btn {
+  padding: 10px 4px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-weight: 800;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.poly-btn span {
+  font-size: 16px;
+}
+.poly-btn:hover {
+  border-color: var(--primary);
+}
+.poly-btn.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary-d);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
+.mode-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.toggle-btn {
+  padding: 9px 8px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  transition: all 0.15s;
+}
+.toggle-btn.active {
+  background: #fff;
+  border-color: var(--primary);
+  color: var(--primary-d);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ANGLE LIVE SUM BOARD */
+.angle-board {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+}
+
+.board-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+.board-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.board-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.angle-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.angle-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.angle-chip .c-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.angle-chip .val {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sum-formula-row {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.sum-label {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+}
+.sum-highlight {
+  font-size: 24px;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.sum-highlight .star {
+  color: #fbbf24;
+  animation: spinSlow 8s linear infinite;
+}
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* COMPASS / TURTLE GAUGES (Tab 3 specific) */
+.turtle-gauge-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+}
+.compass-box {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  flex-shrink: 0;
+}
+.compass-box canvas {
+  width: 100%;
+  height: 100%;
+}
+.gauge-info {
+  flex: 1;
+}
+.gauge-info .g-title {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+}
+.gauge-info .g-val {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--primary-d);
+}
+.gauge-info .g-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* PEDAGOGY SUMMARY / TIPS */
+.tip-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 14px;
+  border-left: 4px solid var(--primary);
+  font-size: 13.5px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+.tip-card b {
+  color: var(--primary-d);
+}
+
+/* FOOTER */
+.footer-bar {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(30px);
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="logo-group">
+      <div class="logo-badge">📐</div>
+      <div class="logo-text">
+        <h1>다각형 외각의 합 탐구실 <span class="sub-tag">중1 수학</span></h1>
+        <p>어떤 다각형이든 외각의 크기의 합은 언제나 360°!</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="chip-btn" id="soundBtn" onclick="toggleSound()">
+        <span id="soundIcon">🔊</span> <span id="soundLabel">소리 켬</span>
+      </button>
+      <button class="chip-btn" onclick="resetPolygon()">
+        <span>↺</span> 도형 초기화
+      </button>
+    </div>
+  </header>
+
+  <!-- TAB NAVIGATION -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" id="tab0" onclick="switchTab(0)">
+      <span class="badge-num">1</span>
+      <span>평행이동 모으기</span>
+    </button>
+    <button class="tab-btn" id="tab1" onclick="switchTab(1)">
+      <span class="badge-num">2</span>
+      <span>조리개 축소 마술</span>
+    </button>
+    <button class="tab-btn" id="tab2" onclick="switchTab(2)">
+      <span class="badge-num">3</span>
+      <span>거북이 둘레 산책</span>
+    </button>
+  </nav>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <!-- LEFT: STAGE & CANVAS -->
+    <div class="stage-card">
+      <div class="stage-header">
+        <div class="stage-title">
+          <div id="tabIcon" style="font-size:24px;">🧩</div>
+          <div>
+            <h2 id="tabTitle">방법 1: 외각을 평행이동하여 한 점으로 모으기</h2>
+            <div class="stage-desc" id="tabDesc">각 꼭짓점의 외각 조각들을 회전 없이 그대로 평행이동해 한 점에 모아보세요.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="mainCanvas"></canvas>
+        <div class="canvas-hint" id="canvasHint">
+          <span>🖐️ 꼭짓점을 드래그해서 다각형 모양을 자유롭게 바꿔보세요!</span>
+        </div>
+        <div class="mascot-bubble" id="mascotBubble" style="display:none;">
+          <span class="avatar" id="mascotAvatar">🐻</span>
+          <span id="mascotMsg">다각형의 외각의 크기의 합은 360°야!</span>
+        </div>
+        <div class="congrats-banner" id="congratsBanner">
+          <span>🎉</span> <span id="congratsText">외각이 빈틈없이 모여 완벽한 360° 원 완성!</span>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE CONTROLLER (TAB SPECIFIC) -->
+      <div class="control-bar" id="ctrlBar">
+        <!-- Will be populated dynamically based on current tab -->
+      </div>
+    </div>
+
+    <!-- RIGHT: TOOLBOX & ANGLE STATS -->
+    <aside class="side-panel">
+      <!-- POLYGON CONTROLS -->
+      <div class="side-card">
+        <div class="card-title">
+          <span>도형 설정</span>
+          <span style="font-size:12px; color:var(--muted); font-weight:600;">꼭짓점 수 선택</span>
+        </div>
+        
+        <div class="poly-selector">
+          <button class="poly-btn" data-n="3" onclick="setN(3)">
+            <span>▲</span>
+            <span>삼각형</span>
+          </button>
+          <button class="poly-btn" data-n="4" onclick="setN(4)">
+            <span>■</span>
+            <span>사각형</span>
+          </button>
+          <button class="poly-btn active" data-n="5" onclick="setN(5)">
+            <span>⬠</span>
+            <span>오각형</span>
+          </button>
+          <button class="poly-btn" data-n="6" onclick="setN(6)">
+            <span>⬡</span>
+            <span>육각형</span>
+          </button>
+          <button class="poly-btn" data-n="8" onclick="setN(8)">
+            <span>⯃</span>
+            <span>팔각형</span>
+          </button>
+        </div>
+
+        <div class="mode-toggle-group">
+          <button class="toggle-btn active" id="btnRegular" onclick="makeRegular()">
+            ✨ 반듯한 정다각형
+          </button>
+          <button class="toggle-btn" id="btnIrregular" onclick="makeIrregular()">
+            🎲 울퉁불퉁 다각형
+          </button>
+        </div>
+      </div>
+
+      <!-- TURTLE GAUGE BOX (Visible in Tab 3) -->
+      <div class="side-card" id="turtleSideCard" style="display:none;">
+        <div class="card-title">
+          <span>🐢 거북이 회전 나침반</span>
+          <span style="font-size:11px; background:var(--primary-soft); color:var(--primary-d); padding:2px 8px; border-radius:99px; font-weight:800;">실시간 각도</span>
+        </div>
+        <div class="turtle-gauge-card">
+          <div class="compass-box">
+            <canvas id="compassCanvas" width="160" height="160"></canvas>
+          </div>
+          <div class="gauge-info">
+            <div class="g-title">현재 누적 회전각</div>
+            <div class="g-val" id="turtleRotDeg">0°</div>
+            <div class="g-sub" id="turtleStatusText">출발 대기 중</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVE ANGLE SUM BOARD -->
+      <div class="angle-board">
+        <div class="board-top">
+          <div class="board-title">
+            <span>📊</span> 각 꼭짓점 외각의 크기
+          </div>
+          <div class="board-badge" id="nBadge">5각형</div>
+        </div>
+
+        <div class="angle-chips-grid" id="angleChips">
+          <!-- Dynamic Angle Chips -->
+        </div>
+
+        <div class="sum-formula-row">
+          <div class="sum-label">모든 외각의 크기의 합</div>
+          <div class="sum-highlight">
+            <span class="star">★</span>
+            <span id="sumTotal">360°</span>
+            <span class="star">★</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRINCIPLE TIP BOX -->
+      <div class="tip-card" id="pedagogyTip">
+        <!-- Dynamic Pedagogical Tip -->
+      </div>
+    </aside>
+  </div>
+
+  <footer class="footer-bar">
+    중학교 1학년 수학 · 다각형의 성질 (내각과 외각) 탐구 도구
+  </footer>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   AUDIO SYSTEM (Web Audio API)
+   ========================================================= */
+const Sound = {
+  enabled: true,
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+  playTone(freq, type, duration, gainVal = 0.1) {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  },
+  click() {
+    this.playTone(600, 'sine', 0.06, 0.08);
+  },
+  step() {
+    this.playTone(420, 'triangle', 0.05, 0.05);
+  },
+  turn() {
+    this.playTone(523.25, 'sine', 0.12, 0.1); // C5
+  },
+  shutter() {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const bufferSize = this.ctx.sampleRate * 0.09;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1600;
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start();
+    } catch(e) {}
+  },
+  fanfare() {
+    if (!this.enabled) return;
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    notes.forEach((freq, idx) => {
+      setTimeout(() => {
+        this.playTone(freq, 'triangle', 0.25, 0.12);
+      }, idx * 90);
+    });
+  }
+};
+
+function toggleSound() {
+  Sound.enabled = !Sound.enabled;
+  document.getElementById('soundIcon').textContent = Sound.enabled ? '🔊' : '🔇';
+  document.getElementById('soundLabel').textContent = Sound.enabled ? '소리 켬' : '소리 끔';
+  toast(Sound.enabled ? '소리가 켜졌습니다.' : '소리가 꺼졌습니다.');
+  if (Sound.enabled) Sound.click();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   COLOR PALETTE
+   ========================================================= */
+const PALETTE = [
+  { fill: '#ef4444', stroke: '#dc2626', name: '빨강' },
+  { fill: '#f59e0b', stroke: '#d97706', name: '주황' },
+  { fill: '#10b981', stroke: '#059669', name: '초록' },
+  { fill: '#06b6d4', stroke: '#0891b2', name: '하늘' },
+  { fill: '#6366f1', stroke: '#4f46e5', name: '남색' },
+  { fill: '#ec4899', stroke: '#db2777', name: '분홍' },
+  { fill: '#8b5cf6', stroke: '#7c3aed', name: '보라' },
+  { fill: '#84cc16', stroke: '#65a30d', name: '연두' }
+];
+
+/* =========================================================
+   STATE MANAGEMENT
+   ========================================================= */
+const state = {
+  tab: 0, // 0: 평행이동, 1: 조리개 축소, 2: 거북이 산책
+  n: 5,
+  pts: [],          // 꼭짓점 좌표 배열 [{x, y}]
+  angles: [],       // 각 꼭짓점 외각 크기(도 단위)
+  edgeAngles: [],   // 변 (i -> i+1) 방향각 (rad)
+  turnAngles: [],   // 각 꼭짓점 외각 크기(rad)
+  center: { x: 0, y: 0 },
+  radius: 140,
+  isRegular: true,
+  dragIdx: -1,
+
+  // Tab 0: 평행이동
+  gatherProgress: 0, // 0 ~ 1
+  showParallelLines: true,
+
+  // Tab 1: 조리개 축소
+  shrinkScale: 1.0,  // 1 (원본) -> 0 (점으로 축소)
+
+  // Tab 2: 거북이
+  turtle: {
+    running: false,
+    stepIdx: 0,        // 0 ~ n-1 (현재 변 또는 꼭짓점)
+    phase: 'walk',     // 'walk' (직진 중) or 'turn' (꼭짓점에서 회전 중)
+    progress: 0,       // 0 ~ 1 (walk 또는 turn 내의 진행도)
+    speed: 1,          // 1: 보통, 0.6: 느림, 2: 빠름
+    accumRotDeg: 0,    // 현재까지 누적된 회전각 (도)
+    completed: false
+  }
+};
+
+/* =========================================================
+   CANVAS & RESIZING
+   ========================================================= */
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const compassCanvas = document.getElementById('compassCanvas');
+const compassCtx = compassCanvas.getContext('2d');
+
+let dpr = window.devicePixelRatio || 1;
+let cw = 0, ch = 0;
+
+function resizeCanvas() {
+  const wrapper = document.getElementById('canvasWrapper');
+  const rect = wrapper.getBoundingClientRect();
+  cw = rect.width;
+  ch = rect.height;
+  dpr = window.devicePixelRatio || 1;
+
+  canvas.width = cw * dpr;
+  canvas.height = ch * dpr;
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+
+  state.center = { x: cw / 2, y: ch / 2 };
+  state.radius = Math.min(cw, ch) * 0.32;
+
+  if (state.pts.length !== state.n || state.isRegular) {
+    initRegularPoints();
+  }
+  recomputeGeometry();
+  render();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+/* =========================================================
+   GEOMETRY CALCULATIONS
+   ========================================================= */
+// 시계 방향(CW)으로 꼭짓점 배치
+function initRegularPoints() {
+  const pts = [];
+  const cx = state.center.x;
+  const cy = state.center.y;
+  const R = state.radius;
+  const n = state.n;
+
+  const startAng = -Math.PI / 2;
+  for (let i = 0; i < n; i++) {
+    const ang = startAng + (i * 2 * Math.PI) / n;
+    pts.push({
+      x: cx + R * Math.cos(ang),
+      y: cy + R * Math.sin(ang)
+    });
+  }
+  state.pts = pts;
+  state.isRegular = true;
+  document.getElementById('btnRegular').classList.add('active');
+  document.getElementById('btnIrregular').classList.remove('active');
+}
+
+function makeRegular() {
+  Sound.click();
+  initRegularPoints();
+  recomputeGeometry();
+  resetTabStates();
+  render();
+  toast('반듯한 정다각형으로 맞췄습니다.');
+}
+
+function makeIrregular() {
+  Sound.click();
+  const cx = state.center.x;
+  const cy = state.center.y;
+  const R = state.radius;
+  const n = state.n;
+  const startAng = -Math.PI / 2;
+  const pts = [];
+
+  for (let i = 0; i < n; i++) {
+    const angleJitter = (Math.random() - 0.5) * (0.35 * (2 * Math.PI / n));
+    const ang = startAng + (i * 2 * Math.PI) / n + angleJitter;
+    const rJitter = R * (0.75 + Math.random() * 0.45);
+    pts.push({
+      x: cx + rJitter * Math.cos(ang),
+      y: cy + rJitter * Math.sin(ang)
+    });
+  }
+  state.pts = pts;
+  state.isRegular = false;
+  document.getElementById('btnRegular').classList.remove('active');
+  document.getElementById('btnIrregular').classList.add('active');
+  recomputeGeometry();
+  resetTabStates();
+  render();
+  toast('모양이 제각각인 울퉁불퉁 다각형을 만들었습니다.');
+}
+
+function setN(n) {
+  if (state.n === n) return;
+  Sound.click();
+  state.n = n;
+  document.querySelectorAll('.poly-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.n) === n);
+  });
+  document.getElementById('nBadge').textContent = `${n}각형`;
+  initRegularPoints();
+  recomputeGeometry();
+  resetTabStates();
+  render();
+  updateUI();
+}
+
+function resetPolygon() {
+  Sound.click();
+  initRegularPoints();
+  recomputeGeometry();
+  resetTabStates();
+  render();
+  toast('도형을 초기화했습니다.');
+}
+
+// 다각형의 무게중심(Center of mass) 계산
+function computeCentroid(pts) {
+  let cx = 0, cy = 0;
+  pts.forEach(p => { cx += p.x; cy += p.y; });
+  return { x: cx / pts.length, y: cy / pts.length };
+}
+
+// 변 방향각 및 외각 계산 (수학적 일관성)
+function recomputeGeometry() {
+  const n = state.n;
+  const pts = state.pts;
+
+  state.center = computeCentroid(pts);
+
+  // 변 (i -> i+1)의 방향각 edgeAngles[i]
+  state.edgeAngles = [];
+  for (let i = 0; i < n; i++) {
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % n];
+    state.edgeAngles.push(Math.atan2(p2.y - p1.y, p2.x - p1.x));
+  }
+
+  // 꼭짓점 i에서의 외각:
+  // 들어오는 변은 (i-1 -> i)이므로 방향각은 edgeAngles[(i-1+n)%n]
+  // 나가는 변은 (i -> i+1)이므로 방향각은 edgeAngles[i]
+  // 꺾이는 각도 = edgeAngles[i] - edgeAngles[(i-1+n)%n]
+  state.turnAngles = [];
+  state.angles = [];
+
+  for (let i = 0; i < n; i++) {
+    const inAng = state.edgeAngles[(i - 1 + n) % n];
+    const outAng = state.edgeAngles[i];
+
+    let diff = outAng - inAng;
+    while (diff <= 0) diff += 2 * Math.PI;
+    while (diff > 2 * Math.PI) diff -= 2 * Math.PI;
+
+    state.turnAngles.push(diff);
+    state.angles.push(Math.round((diff * 180 / Math.PI) * 10) / 10);
+  }
+
+  renderAngleBoard();
+}
+
+function renderAngleBoard() {
+  const container = document.getElementById('angleChips');
+  container.innerHTML = '';
+  let sum = 0;
+
+  state.angles.forEach((deg, i) => {
+    sum += deg;
+    const color = PALETTE[i % PALETTE.length];
+    const chip = document.createElement('div');
+    chip.className = 'angle-chip';
+    chip.innerHTML = `
+      <span style="display:flex; align-items:center; gap:6px;">
+        <span class="c-dot" style="background:${color.fill};"></span>
+        <span>∠${i + 1}</span>
+      </span>
+      <span class="val" style="color:#f8fafc;">${deg.toFixed(1)}°</span>
+    `;
+    container.appendChild(chip);
+  });
+
+  const sumEl = document.getElementById('sumTotal');
+  sumEl.textContent = `${Math.round(sum)}°`;
+}
+
+/* =========================================================
+   TAB SWITCHING & CONTROLS SETUP
+   ========================================================= */
+const TAB_INFOS = [
+  {
+    icon: '🧩',
+    title: '방법 1: 외각을 평행이동하여 한 점으로 모으기',
+    desc: '각 꼭짓점의 외각 부채꼴 조각을 평행선을 따라 중앙으로 미끄러뜨려 보세요. 회전 없이 딱 맞물립니다!',
+    tip: '💡 <b>교과서 탐구 원리 (동위각과 평행이동)</b><br>각 꼭짓점의 외각을 <b>회전시키지 않고 그대로 평행이동</b>시키면, 앞 변의 연장선 각도와 다음 변의 시작 각도가 정확히 이어지므로 중앙에서 빈틈없이 <b>360° 원</b>을 이룹니다. <b>평행선 안내</b>를 켜서 동위각의 관계를 직접 확인해 보세요!'
+  },
+  {
+    icon: '📸',
+    title: '방법 2: 카메라 조리개처럼 다각형 축소하기',
+    desc: '다각형을 한 점으로 쪼그라뜨려(줌아웃) 보세요! 꼭짓점들이 중심으로 모이며 360°가 됩니다.',
+    tip: '💡 <b>교과서 탐구 원리 (도형의 축소 / 카메라 조리개)</b><br>다각형을 한 점으로 수축(Shrink)시키면, 다각형 면적은 점 $O$로 사라지고 모든 꼭짓점의 외각들이 그 중심점 둘레에 모여 <b>완벽한 360°</b>를 이룹니다. 카메라 셔터 조리개가 닫히는 원리와 같아요!'
+  },
+  {
+    icon: '🐢',
+    title: '방법 3: 거북이 둘레 산책 (회전각 누적)',
+    desc: '거북이가 다각형 둘레를 한 바퀴 돌며 꼭짓점마다 외각만큼 꺾여서 제자리로 돌아옵니다.',
+    tip: '💡 <b>교과서 탐구 원리 (터틀 회전과 경로 보행)</b><br>거북이가 둘레를 따라 걸을 때, 꼭짓점마다 <b>외각의 크기만큼 몸을 회전</b>합니다. 둘레를 돌아 시작점 A로 복귀했을 때 원래 방향을 바라보고 있다는 것은 <b>정확히 한 바퀴(360°) 회전</b>했음을 뜻합니다.'
+  }
+];
+
+function switchTab(idx) {
+  if (state.tab === idx) return;
+  Sound.click();
+  state.tab = idx;
+
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+
+  const info = TAB_INFOS[idx];
+  document.getElementById('tabIcon').textContent = info.icon;
+  document.getElementById('tabTitle').textContent = info.title;
+  document.getElementById('tabDesc').textContent = info.desc;
+  document.getElementById('pedagogyTip').innerHTML = info.tip;
+
+  // 거북이 나침반 사이드 패널 보이기/숨기기
+  document.getElementById('turtleSideCard').style.display = idx === 2 ? 'flex' : 'none';
+
+  // 말풍선 캐릭터 업데이트
+  updateMascotBubble();
+
+  resetTabStates();
+  setupControlBar();
+  render();
+}
+
+function updateMascotBubble() {
+  const bubble = document.getElementById('mascotBubble');
+  const avatar = document.getElementById('mascotAvatar');
+  const msg = document.getElementById('mascotMsg');
+
+  if (state.tab === 0) {
+    bubble.style.display = 'flex';
+    avatar.textContent = '👧';
+    msg.textContent = '다각형의 외각들을 한 점으로 모으면 항상 합이 360°야!';
+  } else if (state.tab === 1) {
+    bubble.style.display = 'flex';
+    avatar.textContent = '🐻';
+    msg.textContent = '카메라 조리개처럼 다각형을 점으로 줄이면 외각이 360°로 찰칵!';
+  } else if (state.tab === 2) {
+    bubble.style.display = 'flex';
+    avatar.textContent = '🐢';
+    msg.textContent = '한 점 A에서 출발해 다각형을 한 바퀴 돌면 꼭 360° 회전해!';
+  }
+}
+
+function resetTabStates() {
+  state.gatherProgress = 0;
+  state.shrinkScale = 1.0;
+  state.turtle.running = false;
+  state.turtle.stepIdx = 0;
+  state.turtle.phase = 'walk';
+  state.turtle.progress = 0;
+  state.turtle.accumRotDeg = 0;
+  state.turtle.completed = false;
+
+  hideCongrats();
+  updateTurtleCompass();
+  setupControlBar();
+}
+
+function setupControlBar() {
+  const bar = document.getElementById('ctrlBar');
+  bar.innerHTML = '';
+
+  if (state.tab === 0) {
+    bar.innerHTML = `
+      <div class="slider-group">
+        <label for="gatherSlider">🧩 외각 모으기</label>
+        <input type="range" id="gatherSlider" min="0" max="100" value="${Math.round(state.gatherProgress * 100)}" oninput="onGatherInput(this.value)">
+        <span class="slider-val" id="gatherVal">${Math.round(state.gatherProgress * 100)}%</span>
+      </div>
+      <div class="action-btns">
+        <button class="btn ${state.showParallelLines ? 'btn-ghost active-opt' : 'btn-ghost'}" id="parLineBtn" onclick="toggleParallelLines()">
+          <span id="parLineIcon">${state.showParallelLines ? '👁️' : '🕶️'}</span>
+          <span>동위각 평행선</span>
+        </button>
+        <button class="btn btn-primary" onclick="animateGather()">
+          <span>▶️ 한 번에 모으기</span>
+        </button>
+      </div>
+    `;
+  } else if (state.tab === 1) {
+    bar.innerHTML = `
+      <div class="slider-group">
+        <label for="shrinkSlider">📸 도형 크기 (축소)</label>
+        <input type="range" id="shrinkSlider" min="0" max="100" value="${Math.round(state.shrinkScale * 100)}" oninput="onShrinkInput(this.value)">
+        <span class="slider-val" id="shrinkVal">${Math.round(state.shrinkScale * 100)}%</span>
+      </div>
+      <div class="action-btns">
+        <button class="btn btn-accent" onclick="animateShrink()">
+          <span>📸 찰칵! 조리개 축소</span>
+        </button>
+        <button class="btn btn-ghost" onclick="resetShrink()">
+          <span>↺ 100% 원위치</span>
+        </button>
+      </div>
+    `;
+  } else if (state.tab === 2) {
+    const isRun = state.turtle.running;
+    bar.innerHTML = `
+      <div class="action-btns" style="flex:1; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:8px;">
+          <button class="btn ${isRun ? 'btn-ghost' : 'btn-primary'}" onclick="toggleTurtleRun()">
+            <span>${isRun ? '⏸️ 일시정지' : '▶️ 거북이 출발'}</span>
+          </button>
+          <button class="btn btn-ghost" onclick="turtleNextStep()" ${isRun ? 'disabled' : ''}>
+            <span>⏭️ 다음 꼭짓점</span>
+          </button>
+          <button class="btn btn-ghost" onclick="resetTurtle()">
+            <span>↺ 처음으로</span>
+          </button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:13px; font-weight:700; color:var(--muted);">속도:</span>
+          <button class="btn btn-ghost" style="padding:6px 10px; font-size:12px;" onclick="setTurtleSpeed(0.6)">느림</button>
+          <button class="btn btn-ghost" style="padding:6px 10px; font-size:12px;" onclick="setTurtleSpeed(1.0)">보통</button>
+          <button class="btn btn-ghost" style="padding:6px 10px; font-size:12px;" onclick="setTurtleSpeed(2.0)">빠름</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function updateUI() {
+  setupControlBar();
+}
+
+function showCongrats(text) {
+  const banner = document.getElementById('congratsBanner');
+  document.getElementById('congratsText').textContent = text;
+  banner.classList.add('show');
+}
+
+function hideCongrats() {
+  const banner = document.getElementById('congratsBanner');
+  banner.classList.remove('show');
+}
+
+/* =========================================================
+   TAB 0: 평행이동 인터랙션
+   ========================================================= */
+function onGatherInput(val) {
+  state.gatherProgress = parseFloat(val) / 100;
+  document.getElementById('gatherVal').textContent = `${Math.round(state.gatherProgress * 100)}%`;
+  if (state.gatherProgress >= 0.99) {
+    showCongrats('외각 조각들이 평행이동하여 완벽한 360° 원 완성!');
+    Sound.fanfare();
+  } else {
+    hideCongrats();
+  }
+  render();
+}
+
+function toggleParallelLines() {
+  Sound.click();
+  state.showParallelLines = !state.showParallelLines;
+  const btn = document.getElementById('parLineBtn');
+  if (btn) btn.classList.toggle('active-opt', state.showParallelLines);
+  const icon = document.getElementById('parLineIcon');
+  if (icon) icon.textContent = state.showParallelLines ? '👁️' : '🕶️';
+  render();
+}
+
+function animateGather() {
+  Sound.click();
+  const start = performance.now();
+  const initVal = state.gatherProgress;
+  const target = initVal > 0.8 ? 0 : 1;
+  const duration = 1200;
+
+  function step(time) {
+    const elapsed = time - start;
+    const p = Math.min(1, elapsed / duration);
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    state.gatherProgress = initVal + (target - initVal) * ease;
+    
+    const slider = document.getElementById('gatherSlider');
+    const valEl = document.getElementById('gatherVal');
+    if (slider) slider.value = Math.round(state.gatherProgress * 100);
+    if (valEl) valEl.textContent = `${Math.round(state.gatherProgress * 100)}%`;
+
+    render();
+
+    if (p < 1) {
+      requestAnimationFrame(step);
+    } else {
+      if (target === 1) {
+        showCongrats('외각 조각들이 평행이동하여 완벽한 360° 원 완성!');
+        Sound.fanfare();
+      } else {
+        hideCongrats();
+      }
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+/* =========================================================
+   TAB 1: 조리개 축소 인터랙션
+   ========================================================= */
+function onShrinkInput(val) {
+  state.shrinkScale = parseFloat(val) / 100;
+  document.getElementById('shrinkVal').textContent = `${Math.round(state.shrinkScale * 100)}%`;
+  if (state.shrinkScale <= 0.05) {
+    showCongrats('도형이 한 점으로 축소되어 외각들이 360°로 모였습니다!');
+    Sound.fanfare();
+  } else {
+    hideCongrats();
+  }
+  render();
+}
+
+function resetShrink() {
+  Sound.click();
+  state.shrinkScale = 1.0;
+  const slider = document.getElementById('shrinkSlider');
+  const valEl = document.getElementById('shrinkVal');
+  if (slider) slider.value = 100;
+  if (valEl) valEl.textContent = '100%';
+  hideCongrats();
+  render();
+}
+
+function animateShrink() {
+  Sound.shutter();
+  const start = performance.now();
+  const initVal = state.shrinkScale;
+  const target = initVal < 0.2 ? 1.0 : 0.0;
+  const duration = 1400;
+
+  function step(time) {
+    const elapsed = time - start;
+    const p = Math.min(1, elapsed / duration);
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    state.shrinkScale = initVal + (target - initVal) * ease;
+
+    const slider = document.getElementById('shrinkSlider');
+    const valEl = document.getElementById('shrinkVal');
+    if (slider) slider.value = Math.round(state.shrinkScale * 100);
+    if (valEl) valEl.textContent = `${Math.round(state.shrinkScale * 100)}%`;
+
+    render();
+
+    if (p < 1) {
+      requestAnimationFrame(step);
+    } else {
+      if (target === 0.0) {
+        showCongrats('도형이 한 점으로 축소되어 외각들이 360°로 모였습니다!');
+        Sound.fanfare();
+      } else {
+        hideCongrats();
+      }
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+/* =========================================================
+   TAB 2: 거북이 둘레 산책 시뮬레이션
+   ========================================================= */
+function toggleTurtleRun() {
+  Sound.click();
+  if (state.turtle.completed) {
+    resetTurtle();
+  }
+  state.turtle.running = !state.turtle.running;
+  setupControlBar();
+  if (state.turtle.running) {
+    lastTurtleTime = performance.now();
+    requestAnimationFrame(turtleLoop);
+  }
+}
+
+function setTurtleSpeed(spd) {
+  Sound.click();
+  state.turtle.speed = spd;
+  toast(`거북이 속도: ${spd}x`);
+}
+
+function resetTurtle() {
+  Sound.click();
+  state.turtle.running = false;
+  state.turtle.stepIdx = 0;
+  state.turtle.phase = 'walk';
+  state.turtle.progress = 0;
+  state.turtle.accumRotDeg = 0;
+  state.turtle.completed = false;
+  hideCongrats();
+  updateTurtleCompass();
+  setupControlBar();
+  render();
+}
+
+function turtleNextStep() {
+  Sound.click();
+  if (state.turtle.completed) {
+    resetTurtle();
+    return;
+  }
+  const n = state.n;
+  if (state.turtle.phase === 'walk') {
+    state.turtle.progress = 1;
+    state.turtle.phase = 'turn';
+    state.turtle.progress = 0;
+    Sound.step();
+  } else {
+    const curV = (state.turtle.stepIdx + 1) % n;
+    state.turtle.accumRotDeg += state.angles[curV];
+    Sound.turn();
+
+    if (state.turtle.stepIdx + 1 >= n) {
+      state.turtle.completed = true;
+      state.turtle.running = false;
+      state.turtle.accumRotDeg = 360;
+      showCongrats('거북이가 둘레를 한 바퀴 돌아 총 360° 회전했습니다!');
+      Sound.fanfare();
+    } else {
+      state.turtle.stepIdx++;
+      state.turtle.phase = 'walk';
+      state.turtle.progress = 0;
+    }
+  }
+  updateTurtleCompass();
+  setupControlBar();
+  render();
+}
+
+let lastTurtleTime = 0;
+function turtleLoop(now) {
+  if (!state.turtle.running || state.tab !== 2) return;
+  const dt = Math.min(50, now - lastTurtleTime) / 1000;
+  lastTurtleTime = now;
+
+  const t = state.turtle;
+  const n = state.n;
+
+  if (t.phase === 'walk') {
+    t.progress += (dt / 1.6) * t.speed;
+    if (t.progress >= 1) {
+      t.progress = 1;
+      t.phase = 'turn';
+      t.progress = 0;
+      Sound.step();
+    }
+  } else if (t.phase === 'turn') {
+    t.progress += (dt / 1.1) * t.speed;
+    if (t.progress >= 1) {
+      t.progress = 1;
+      const curV = (t.stepIdx + 1) % n;
+      t.accumRotDeg += state.angles[curV];
+      Sound.turn();
+
+      if (t.stepIdx + 1 >= n) {
+        t.completed = true;
+        t.running = false;
+        t.accumRotDeg = 360;
+        showCongrats('거북이가 둘레를 한 바퀴 돌아 총 360° 회전했습니다!');
+        Sound.fanfare();
+        updateTurtleCompass();
+        setupControlBar();
+        render();
+        return;
+      } else {
+        t.stepIdx++;
+        t.phase = 'walk';
+        t.progress = 0;
+      }
+    }
+  }
+
+  updateTurtleCompass();
+  render();
+  requestAnimationFrame(turtleLoop);
+}
+
+function updateTurtleCompass() {
+  const t = state.turtle;
+  const n = state.n;
+
+  let currentDeg = t.accumRotDeg;
+  if (t.phase === 'turn' && !t.completed) {
+    const curV = (t.stepIdx + 1) % n;
+    currentDeg += state.angles[curV] * t.progress;
+  }
+
+  const degEl = document.getElementById('turtleRotDeg');
+  if (degEl) degEl.textContent = `${Math.min(360, Math.round(currentDeg))}°`;
+
+  const statusEl = document.getElementById('turtleStatusText');
+  if (statusEl) {
+    if (t.completed) {
+      statusEl.textContent = '🎉 360° 완주 완료!';
+    } else if (t.running) {
+      statusEl.textContent = t.phase === 'walk' ? `변 ${t.stepIdx + 1} 직진 중...` : `꼭짓점 ${((t.stepIdx + 1) % n) + 1}에서 외각 회전 중!`;
+    } else {
+      statusEl.textContent = '출발 대기 중';
+    }
+  }
+
+  drawMiniCompass(currentDeg);
+}
+
+function drawMiniCompass(currentDeg) {
+  const cctx = compassCtx;
+  const w = 160, h = 160;
+  cctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2, cy = h / 2, r = 62;
+
+  cctx.beginPath();
+  cctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  cctx.fillStyle = '#f8fafc';
+  cctx.fill();
+  cctx.lineWidth = 4;
+  cctx.strokeStyle = '#e2e8f0';
+  cctx.stroke();
+
+  for (let a = 0; a < 360; a += 45) {
+    const rad = (a - 90) * Math.PI / 180;
+    cctx.beginPath();
+    cctx.moveTo(cx + (r - 8) * Math.cos(rad), cy + (r - 8) * Math.sin(rad));
+    cctx.lineTo(cx + r * Math.cos(rad), cy + r * Math.sin(rad));
+    cctx.lineWidth = a % 90 === 0 ? 3 : 1.5;
+    cctx.strokeStyle = a % 90 === 0 ? '#94a3b8' : '#cbd5e1';
+    cctx.stroke();
+  }
+
+  const radStart = -Math.PI / 2;
+  const radEnd = radStart + (currentDeg * Math.PI / 180);
+
+  cctx.beginPath();
+  cctx.moveTo(cx, cy);
+  cctx.arc(cx, cy, r - 3, radStart, radEnd, false);
+  cctx.closePath();
+  cctx.fillStyle = 'rgba(37, 99, 235, 0.25)';
+  cctx.fill();
+
+  cctx.beginPath();
+  cctx.arc(cx, cy, r - 3, radStart, radEnd, false);
+  cctx.lineWidth = 3;
+  cctx.strokeStyle = '#2563eb';
+  cctx.stroke();
+
+  cctx.save();
+  cctx.translate(cx, cy);
+  cctx.rotate(radEnd);
+
+  cctx.beginPath();
+  cctx.moveTo(0, 0);
+  cctx.lineTo(r - 12, 0);
+  cctx.lineWidth = 4;
+  cctx.strokeStyle = '#ef4444';
+  cctx.lineCap = 'round';
+  cctx.stroke();
+
+  cctx.beginPath();
+  cctx.arc(0, 0, 6, 0, 2 * Math.PI);
+  cctx.fillStyle = '#1e293b';
+  cctx.fill();
+  cctx.restore();
+}
+
+/* =========================================================
+   MAIN RENDER DISPATCHER
+   ========================================================= */
+function render() {
+  ctx.clearRect(0, 0, cw, ch);
+
+  if (state.tab === 0) {
+    renderTab0_Gather();
+  } else if (state.tab === 1) {
+    renderTab1_Shrink();
+  } else if (state.tab === 2) {
+    renderTab2_Turtle();
+  }
+
+  renderVertexHandles();
+}
+
+/* ---------------------------------------------------------
+   RENDER TAB 0: 평행이동으로 모으기
+   --------------------------------------------------------- */
+function renderTab0_Gather() {
+  const n = state.n;
+  const pts = state.pts;
+  const t = state.gatherProgress;
+  const arcR = 38;
+  const centerC = state.center;
+
+  // 1. 교과서 1번 그림 스타일: 각 변과 평행한 관통선 (동위각 증명 보조선)
+  if (state.showParallelLines) {
+    ctx.save();
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+
+    for (let i = 0; i < n; i++) {
+      const ang = state.edgeAngles[i];
+      const color = PALETTE[i % PALETTE.length];
+      ctx.strokeStyle = color.stroke;
+      ctx.globalAlpha = 0.45;
+
+      // 중앙 중심점을 관통하는 긴 직선
+      const diag = Math.hypot(cw, ch);
+      ctx.beginPath();
+      ctx.moveTo(centerC.x - Math.cos(ang) * diag, centerC.y - Math.sin(ang) * diag);
+      ctx.lineTo(centerC.x + Math.cos(ang) * diag, centerC.y + Math.sin(ang) * diag);
+      ctx.stroke();
+
+      // 꼭짓점과 중심점을 잇는 이동 레일 점선
+      ctx.strokeStyle = 'rgba(100, 116, 139, 0.25)';
+      ctx.beginPath();
+      ctx.moveTo(pts[i].x, pts[i].y);
+      ctx.lineTo(centerC.x, centerC.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 2. 다각형 본체 그리기
+  drawPolygonBody(pts, 'rgba(241, 245, 249, 0.75)', '#64748b');
+
+  // 3. 변의 연장선들 그리기 (교과서처럼 꼭짓점에서 뻗어나가는 선)
+  for (let i = 0; i < n; i++) {
+    const pCur = pts[i];
+    const inAng = state.edgeAngles[(i - 1 + n) % n];
+    const extLen = 65;
+
+    ctx.save();
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pCur.x, pCur.y);
+    ctx.lineTo(pCur.x + Math.cos(inAng) * extLen, pCur.y + Math.sin(inAng) * extLen);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 4. 중앙 모음 기준점 표시
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerC.x, centerC.y, 6, 0, 2 * Math.PI);
+  ctx.fillStyle = '#2563eb';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#475569';
+  ctx.font = '800 13px Pretendard, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('한 점 O', centerC.x, centerC.y + 22);
+  ctx.restore();
+
+  // 5. 각 외각 부채꼴 그리기 (평행이동)
+  for (let i = 0; i < n; i++) {
+    const pCur = pts[i];
+    const color = PALETTE[i % PALETTE.length];
+
+    const curX = pCur.x + (centerC.x - pCur.x) * t;
+    const curY = pCur.y + (centerC.y - pCur.y) * t;
+
+    const startAng = state.edgeAngles[(i - 1 + n) % n];
+    const diff = state.turnAngles[i];
+    const endAng = startAng + diff;
+
+    // 원래 위치에 잔상 표시 (이동 중일 때)
+    if (t > 0.05 && t < 0.95) {
+      drawSector(pCur.x, pCur.y, arcR, startAng, endAng, color.fill, 0.22, color.stroke, 1.5);
+    }
+
+    // 이동 중인 부채꼴
+    const currentRadius = arcR + (t * 14);
+    drawSector(curX, curY, currentRadius, startAng, endAng, color.fill, 0.85, color.stroke, 2.5);
+
+    // 각도 번호 라벨
+    const midAng = startAng + diff / 2;
+    const labelDist = currentRadius * 0.65;
+    const lx = curX + Math.cos(midAng) * labelDist;
+    const ly = curY + Math.sin(midAng) * labelDist;
+
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 12.5px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(`${i + 1}`, lx, ly);
+    ctx.restore();
+  }
+
+  // 100% 모였을 때 중앙 원 둘레 강조
+  if (t >= 0.98) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerC.x, centerC.y, arcR + 14, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* ---------------------------------------------------------
+   RENDER TAB 1: 조리개 축소 마술
+   --------------------------------------------------------- */
+function renderTab1_Shrink() {
+  const n = state.n;
+  const pts = state.pts;
+  const s = state.shrinkScale;
+  const centerC = state.center;
+  const arcR = 36;
+
+  drawCameraViewfinder();
+
+  const shrunkPts = pts.map(p => ({
+    x: centerC.x + (p.x - centerC.x) * s,
+    y: centerC.y + (p.y - centerC.y) * s
+  }));
+
+  // 1. 축소된 다각형 본체
+  if (s > 0.02) {
+    drawPolygonBody(shrunkPts, 'rgba(100, 116, 139, 0.25)', '#475569');
+  }
+
+  // 2. 조리개 날개 연장선
+  for (let i = 0; i < n; i++) {
+    const pCur = shrunkPts[i];
+    const inAng = state.edgeAngles[(i - 1 + n) % n];
+    const extLen = 95 + (1 - s) * 55;
+
+    const extX = pCur.x + Math.cos(inAng) * extLen;
+    const extY = pCur.y + Math.sin(inAng) * extLen;
+
+    ctx.save();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(pCur.x, pCur.y);
+    ctx.lineTo(extX, extY);
+    ctx.stroke();
+    ctx.restore();
+
+    // 외각 부채꼴
+    const color = PALETTE[i % PALETTE.length];
+    const diff = state.turnAngles[i];
+    const endAng = inAng + diff;
+    const curR = arcR + (1 - s) * 16;
+
+    drawSector(pCur.x, pCur.y, curR, inAng, endAng, color.fill, 0.85, color.stroke, 2.2);
+
+    const midAng = inAng + diff / 2;
+    const labelDist = curR * 0.65;
+    const lx = pCur.x + Math.cos(midAng) * labelDist;
+    const ly = pCur.y + Math.sin(midAng) * labelDist;
+
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 12.5px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(`${i + 1}`, lx, ly);
+    ctx.restore();
+  }
+
+  // 중심점 표시
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerC.x, centerC.y, 4.5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0f172a';
+  ctx.fill();
+  ctx.restore();
+
+  // 조리개 원형 가이드
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(centerC.x, centerC.y, arcR + (1 - s) * 16, 0, 2 * Math.PI);
+  ctx.strokeStyle = s < 0.05 ? '#10b981' : 'rgba(203, 213, 225, 0.6)';
+  ctx.lineWidth = s < 0.05 ? 3.5 : 1.5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCameraViewfinder() {
+  const margin = 24;
+  const len = 22;
+  ctx.save();
+  ctx.strokeStyle = '#cbd5e1';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(margin, margin + len); ctx.lineTo(margin, margin); ctx.lineTo(margin + len, margin);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cw - margin - len, margin); ctx.lineTo(cw - margin, margin); ctx.lineTo(cw - margin, margin + len);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(margin, ch - margin - len); ctx.lineTo(margin, ch - margin); ctx.lineTo(margin + len, ch - margin);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cw - margin - len, ch - margin); ctx.lineTo(cw - margin, ch - margin); ctx.lineTo(cw - margin, ch - margin - len);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(state.center.x - 14, state.center.y); ctx.lineTo(state.center.x + 14, state.center.y);
+  ctx.moveTo(state.center.x, state.center.y - 14); ctx.lineTo(state.center.x, state.center.y + 14);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------------------------------------------------------
+   RENDER TAB 2: 거북이 둘레 산책
+   --------------------------------------------------------- */
+function renderTab2_Turtle() {
+  const n = state.n;
+  const pts = state.pts;
+  const t = state.turtle;
+  const arcR = 40;
+
+  drawPolygonBody(pts, 'rgba(241, 245, 249, 0.8)', '#64748b');
+
+  // 시작점 A 마커
+  const startP = pts[0];
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(startP.x, startP.y, 8, 0, 2 * Math.PI);
+  ctx.fillStyle = '#10b981';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '900 15px Pretendard, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('A', startP.x, startP.y - 18);
+  ctx.restore();
+
+  // 이미 통과한 꼭짓점 외각 호 표시
+  const passedVerts = t.stepIdx;
+  for (let i = 0; i <= passedVerts; i++) {
+    const vIdx = (i + 1) % n;
+    if (i < passedVerts || (i === passedVerts && t.phase === 'turn') || t.completed) {
+      const pCur = pts[vIdx];
+      const inAng = state.edgeAngles[i];
+      const totalDiff = state.turnAngles[vIdx];
+      const color = PALETTE[vIdx % PALETTE.length];
+
+      // 직진 연장선 (교과서 3번 사진처럼 길게 뻗어나간 선)
+      ctx.save();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pCur.x, pCur.y);
+      ctx.lineTo(pCur.x + Math.cos(inAng) * 65, pCur.y + Math.sin(inAng) * 65);
+      ctx.stroke();
+      ctx.restore();
+
+      // 외각 호 (회전각 표시 빨간 호)
+      const sweep = (i === passedVerts && t.phase === 'turn' && !t.completed) ? totalDiff * t.progress : totalDiff;
+      drawSector(pCur.x, pCur.y, arcR, inAng, inAng + sweep, color.fill, 0.45, color.stroke, 2.5);
+
+      if (sweep >= totalDiff * 0.6) {
+        const midAng = inAng + totalDiff / 2;
+        const lx = pCur.x + Math.cos(midAng) * (arcR + 18);
+        const ly = pCur.y + Math.sin(midAng) * (arcR + 18);
+        ctx.save();
+        ctx.fillStyle = color.stroke;
+        ctx.font = '900 13px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`+${state.angles[vIdx]}°`, lx, ly);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 거북이 위치 & 각도 계산
+  const curV = t.stepIdx % n;
+  const nextV = (curV + 1) % n;
+  const p1 = pts[curV];
+  const p2 = pts[nextV];
+
+  let turtleX = p1.x;
+  let turtleY = p1.y;
+  let turtleHeading = state.edgeAngles[curV];
+
+  if (t.phase === 'walk') {
+    turtleX = p1.x + (p2.x - p1.x) * t.progress;
+    turtleY = p1.y + (p2.y - p1.y) * t.progress;
+    turtleHeading = state.edgeAngles[curV];
+  } else if (t.phase === 'turn') {
+    turtleX = p2.x;
+    turtleY = p2.y;
+    const startAng = state.edgeAngles[curV];
+    const turnSweep = state.turnAngles[nextV];
+    turtleHeading = startAng + (turnSweep * t.progress);
+  }
+
+  if (t.completed) {
+    turtleX = pts[0].x;
+    turtleY = pts[0].y;
+    turtleHeading = state.edgeAngles[0];
+  }
+
+  drawTurtleTrail(curV, t.phase === 'walk' ? t.progress : 1);
+  drawTurtleCharacter(turtleX, turtleY, turtleHeading);
+}
+
+function drawTurtleTrail(curV, progress) {
+  const pts = state.pts;
+  const n = state.n;
+
+  ctx.save();
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+
+  for (let i = 0; i < curV; i++) {
+    const pNext = pts[(i + 1) % n];
+    ctx.lineTo(pNext.x, pNext.y);
+  }
+
+  const p1 = pts[curV];
+  const p2 = pts[(curV + 1) % n];
+  ctx.lineTo(p1.x + (p2.x - p1.x) * progress, p1.y + (p2.y - p1.y) * progress);
+
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTurtleCharacter(x, y, heading) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(heading);
+
+  // 그림자
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+  ctx.beginPath();
+  ctx.ellipse(0, 3, 17, 13, 0, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // 4개 발
+  ctx.fillStyle = '#059669';
+  ctx.beginPath(); ctx.ellipse(10, -12, 5.5, 3.2, -0.4, 0, 2 * Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(10, 12, 5.5, 3.2, 0.4, 0, 2 * Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-10, -11, 4.8, 3, 0.4, 0, 2 * Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-10, 11, 4.8, 3, -0.4, 0, 2 * Math.PI); ctx.fill();
+  // 꼬리
+  ctx.beginPath(); ctx.ellipse(-16, 0, 4.5, 2.2, 0, 0, 2 * Math.PI); ctx.fill();
+
+  // 머리
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.ellipse(16, 0, 7.5, 6.5, 0, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // 눈
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath(); ctx.arc(18, -2.5, 1.5, 0, 2 * Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.arc(18, 2.5, 1.5, 0, 2 * Math.PI); ctx.fill();
+
+  // 등껍질
+  ctx.fillStyle = '#047857';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 15, 12, 0, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.strokeStyle = '#065f46';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // 등껍질 중앙 육각형
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(0, 0, 6.5, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // 전방 화살표
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(25, 0); ctx.lineTo(33, 0); ctx.lineTo(29, -4);
+  ctx.moveTo(33, 0); ctx.lineTo(29, 4);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/* =========================================================
+   GENERIC DRAWING HELPERS
+   ========================================================= */
+function drawPolygonBody(pts, fillColor, strokeColor) {
+  if (pts.length < 3) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    ctx.lineTo(pts[i].x, pts[i].y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSector(cx, cy, r, startAng, endAng, fill, alpha = 0.8, stroke = null, strokeWidth = 2) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, r, startAng, endAng, false);
+  ctx.closePath();
+
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  if (stroke) {
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = strokeWidth;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function renderVertexHandles() {
+  const n = state.n;
+  const pts = state.pts;
+
+  if (state.tab === 1 && state.shrinkScale < 0.15) return;
+
+  for (let i = 0; i < n; i++) {
+    const p = pts[i];
+    const isHover = state.dragIdx === i;
+    const color = PALETTE[i % PALETTE.length];
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, isHover ? 11 : 8, 0, 2 * Math.PI);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = color.stroke;
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = color.fill;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* =========================================================
+   POINTER & DRAG INTERACTIONS (Vertex Modification)
+   ========================================================= */
+function getCanvasPoint(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top
+  };
+}
+
+canvas.addEventListener('mousedown', onPointerDown);
+canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+
+window.addEventListener('mousemove', onPointerMove);
+window.addEventListener('touchmove', onPointerMove, { passive: false });
+
+window.addEventListener('mouseup', onPointerUp);
+window.addEventListener('touchend', onPointerUp);
+
+function onPointerDown(e) {
+  const p = getCanvasPoint(e);
+  const pts = state.pts;
+  let found = -1;
+
+  for (let i = 0; i < pts.length; i++) {
+    const dist = Math.hypot(pts[i].x - p.x, pts[i].y - p.y);
+    if (dist < 26) {
+      found = i;
+      break;
+    }
+  }
+
+  if (found !== -1) {
+    if (e.cancelable) e.preventDefault();
+    state.dragIdx = found;
+    state.isRegular = false;
+    document.getElementById('btnRegular').classList.remove('active');
+    document.getElementById('btnIrregular').classList.add('active');
+    Sound.click();
+    render();
+  }
+}
+
+function onPointerMove(e) {
+  if (state.dragIdx === -1) return;
+  if (e.cancelable) e.preventDefault();
+
+  const p = getCanvasPoint(e);
+  const margin = 35;
+  p.x = Math.max(margin, Math.min(cw - margin, p.x));
+  p.y = Math.max(margin, Math.min(ch - margin, p.y));
+
+  state.pts[state.dragIdx] = p;
+  recomputeGeometry();
+
+  if (state.tab === 2 && state.turtle.running) {
+    resetTurtle();
+  }
+
+  render();
+}
+
+function onPointerUp() {
+  if (state.dragIdx !== -1) {
+    state.dragIdx = -1;
+    render();
+  }
+}
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+window.addEventListener('DOMContentLoaded', () => {
+  resizeCanvas();
+  switchTab(0);
+});
+</script>
+</body>
+</html>
