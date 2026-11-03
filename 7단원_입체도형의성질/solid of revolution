@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>중1 수학 · 회전체와 단면 탐구실</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Pretendard 한글 웹폰트 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    * {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 커스텀 슬라이더 스타일 */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4f46e5;
+      cursor: pointer;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+
+    input[type="range"].orange-slider::-webkit-slider-thumb {
+      background: #ea580c;
+      box-shadow: 0 2px 6px rgba(234, 88, 12, 0.4);
+    }
+
+    /* 스크롤바 다듬기 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+
+    /* 터치 드래그 시 화면 밀림 방지 */
+    .touch-none-canvas {
+      touch-action: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col">
+
+  <!-- 상단 헤더 -->
+  <header class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-sm z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm">
+        <!-- 회전체 아이콘 -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M8 6c2.5-1.2 5.5-1.2 8 0M6 18c3.5 1.8 8.5 1.8 12 0M7 9l5-5 5 5" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-xs font-bold bg-indigo-50 text-indigo-700 rounded-md border border-indigo-200">중학교 1학년 수학</span>
+          <h1 class="text-base sm:text-lg font-extrabold text-slate-800 tracking-tight">회전체와 단면 탐구실</h1>
+        </div>
+        <p class="text-xs text-slate-500 hidden sm:block">평면도형을 회전축을 중심으로 한 바퀴 돌렸을 때 생기는 입체도형과 단면의 성질을 관찰해 봅시다.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div id="statusToast" class="hidden px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-md transition-all"></div>
+      <button id="btnResetAll" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M5.5 9A7.5 7.5 0 0118.3 6.7L20 9M18.5 15a7.5 7.5 0 01-12.8 2.3L4 15" />
+        </svg>
+        처음 상태로
+      </button>
+    </div>
+  </header>
+
+  <!-- 메인 3단 분할 대시보드 -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 lg:overflow-hidden">
+
+    <!-- ==================== [1. 좌측 패널: 평면도형 준비 및 그리기] ==================== -->
+    <section class="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:overflow-y-auto p-3.5 gap-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-extrabold">1</span>
+          평면도형 선택 및 그리기
+        </h2>
+        <span id="currentShapeBadge" class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">원뿔 (직각삼각형)</span>
+      </div>
+
+      <!-- 기본 회전체 도형 버튼 -->
+      <div>
+        <p class="text-xs font-semibold text-slate-500 mb-1.5">기본 도형 바로 불러오기</p>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button data-shape="cylinder" class="shape-btn px-2 py-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-slate-50 hover:bg-indigo-50/50 text-xs font-semibold text-slate-700 transition flex flex-col items-center gap-0.5">
+            <span>원기둥</span>
+            <span class="text-[10px] text-slate-400 font-normal">직사각형</span>
+          </button>
+          <button data-shape="cone" class="shape-btn px-2 py-2 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-xs font-bold text-indigo-700 transition flex flex-col items-center gap-0.5">
+            <span>원뿔</span>
+            <span class="text-[10px] text-indigo-500 font-normal">직각삼각형</span>
+          </button>
+          <button data-shape="frustum" class="shape-btn px-2 py-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-slate-50 hover:bg-indigo-50/50 text-xs font-semibold text-slate-700 transition flex flex-col items-center gap-0.5">
+            <span>원뿔대</span>
+            <span class="text-[10px] text-slate-400 font-normal">사다리꼴</span>
+          </button>
+          <button data-shape="sphere" class="shape-btn px-2 py-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-slate-50 hover:bg-indigo-50/50 text-xs font-semibold text-slate-700 transition flex flex-col items-center gap-0.5">
+            <span>구</span>
+            <span class="text-[10px] text-slate-400 font-normal">반원</span>
+          </button>
+          <button data-shape="hollowCylinder" class="shape-btn col-span-2 px-2 py-2 rounded-xl border border-slate-200 hover:border-indigo-300 bg-slate-50 hover:bg-indigo-50/50 text-xs font-semibold text-slate-700 transition flex flex-col items-center gap-0.5">
+            <span>가운데가 뚫린 원기둥</span>
+            <span class="text-[10px] text-slate-400 font-normal">회전축에서 떨어진 직사각형</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 직접 그리기 모드 전환 탭 -->
+      <div class="border-t border-slate-100 pt-2.5">
+        <div class="flex items-center justify-between mb-1.5">
+          <p class="text-xs font-semibold text-slate-500">내 손으로 직접 그리기</p>
+          <button id="btnClearDraw" class="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-md transition">
+            새로 그리기
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl">
+          <button id="tabPolygon" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-sm transition">
+            점 찍어 그리기
+          </button>
+          <button id="tabFreehand" class="py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 transition">
+            자유롭게 그리기
+          </button>
+        </div>
+
+        <!-- 점 찍어 그리기 세부 도구 -->
+        <div id="polygonTools" class="mt-2 flex flex-col gap-1.5">
+          <div class="flex items-center justify-between px-1">
+            <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer select-none">
+              <input type="checkbox" id="chkSnapGrid" checked class="w-3.5 h-3.5 accent-indigo-600 rounded" />
+              <span>모눈에 맞추기</span>
+            </label>
+            <span id="polyPointCount" class="text-[11px] text-slate-400">모눈 위를 눌러 꼭짓점을 찍으세요</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button id="btnClosePoly" disabled class="py-1.5 px-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition">
+              도형 닫기
+            </button>
+            <button id="btnCloseToAxis" disabled class="py-1.5 px-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition">
+              회전축에 붙여 완성
+            </button>
+          </div>
+        </div>
+
+        <!-- 자유롭게 그리기 세부 도구 -->
+        <div id="freehandTools" class="hidden mt-2 flex flex-col gap-1 px-1">
+          <label class="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer select-none">
+            <input type="checkbox" id="chkAutoFillAxis" checked class="w-3.5 h-3.5 accent-indigo-600 rounded" />
+            <span>회전축까지 자동으로 채우기</span>
+          </label>
+          <p class="text-[11px] text-slate-400 leading-snug">
+            체크하면 그린 옆선에서 회전축까지 수직으로 이어 속이 찬 꽃병·모래시계 모양을 만들고, 해제하면 그린 선끼리 닫아 고리 모양을 만듭니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2D 모눈 작도 보드 -->
+      <div class="flex-1 flex flex-col min-h-[260px]">
+        <div class="relative flex-1 w-full rounded-xl border-2 border-slate-200 bg-slate-50 overflow-hidden shadow-inner">
+          <canvas id="drawCanvas" class="w-full h-full block touch-none-canvas cursor-crosshair"></canvas>
+        </div>
+        <p id="drawGuideText" class="text-[11px] text-slate-500 mt-1.5 text-center">
+          회전축 오른쪽 모눈에 점을 찍어 다각형을 그려 보세요.
+        </p>
+      </div>
+    </section>
+
+    <!-- ==================== [2. 중앙 패널: 3D 회전체 관찰 공간] ==================== -->
+    <section class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden relative min-h-[420px]">
+      <!-- 상단 플로팅 바: 제목 & 시점 버튼 -->
+      <div class="px-4 py-2.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-white z-10">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-extrabold">2</span>
+          입체로 회전체 관찰하기
+        </h2>
+
+        <div class="flex items-center gap-1">
+          <button data-cam="front" class="cam-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-xs font-semibold text-slate-600 transition">앞에서 보기</button>
+          <button data-cam="top" class="cam-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-xs font-semibold text-slate-600 transition">위에서 보기</button>
+          <button data-cam="iso" class="cam-btn px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold transition">입체로 보기</button>
+        </div>
+      </div>
+
+      <!-- 3D 뷰포트 -->
+      <div id="threeContainer" class="flex-1 w-full relative bg-gradient-to-b from-slate-50 to-slate-100/90 touch-none-canvas overflow-hidden">
+        <!-- 회전축 안내 배지 -->
+        <div class="absolute top-3 left-3 pointer-events-none flex flex-col gap-1 bg-white/85 backdrop-blur px-3 py-2 rounded-xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+            <span>빨간 세로 직선: 회전축</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+            <span class="w-2.5 h-2.5 rounded-sm bg-blue-600 inline-block"></span>
+            <span>파란 테두리 면: 처음 평면도형</span>
+          </div>
+          <div id="legendSectionBadge" class="hidden items-center gap-1.5 text-xs font-bold text-orange-600">
+            <span class="w-2.5 h-2.5 rounded-sm bg-orange-400 border border-orange-600 inline-block"></span>
+            <span>주황색 면: 평면으로 자른 단면</span>
+          </div>
+        </div>
+
+        <div class="absolute bottom-2.5 right-3 pointer-events-none text-[11px] text-slate-400 bg-white/75 px-2.5 py-1 rounded-full">
+          끌어서 돌려보기 · 두 손가락 또는 휠로 확대/축소
+        </div>
+      </div>
+
+      <!-- 하단 조작 바: 회전 각도 슬라이더 & 보기 옵션 -->
+      <div class="p-3.5 border-t border-slate-200 bg-white flex flex-col gap-2.5 z-10">
+        <!-- 회전 각도 조절 -->
+        <div class="flex items-center gap-3">
+          <button id="btnPlaySweep" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 shrink-0">
+            <svg id="iconPlay" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+            </svg>
+            <span id="txtPlaySweep">한 바퀴 돌리기</span>
+          </button>
+
+          <div class="flex-1 flex flex-col gap-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-700">회전 각도</span>
+              <span id="lblSweepAngle" class="font-extrabold text-indigo-600 text-sm">360°</span>
+            </div>
+            <input type="range" id="sliderSweep" min="0" max="360" step="1" value="360" class="w-full" />
+          </div>
+        </div>
+
+        <!-- 보기 옵션 토글 버튼 -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+          <span class="text-xs font-semibold text-slate-500">입체 보기 설정</span>
+          <div class="flex items-center gap-2">
+            <button id="btnToggleTransparent" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-400" id="dotTransparent"></span>
+              반투명 보기
+            </button>
+            <button id="btnToggleGeneratrix" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-400" id="dotGeneratrix"></span>
+              모선 표시
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== [3. 우측 패널: 평면으로 잘라 단면 관찰하기] ==================== -->
+    <section class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:overflow-y-auto p-3.5 gap-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-orange-100 text-orange-700 text-xs flex items-center justify-center font-extrabold">3</span>
+          평면으로 잘라 단면 관찰하기
+        </h2>
+      </div>
+
+      <!-- 자르기 방식 선택 버튼 4종 -->
+      <div class="grid grid-cols-2 gap-1.5">
+        <button data-cut="none" class="cut-btn py-2 px-2.5 rounded-xl border-2 border-orange-500 bg-orange-50 text-orange-800 text-xs font-bold transition text-center">
+          자르지 않음
+        </button>
+        <button data-cut="axial" class="cut-btn py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50/40 text-slate-700 text-xs font-semibold transition text-center">
+          회전축을 포함하는 평면
+        </button>
+        <button data-cut="perpendicular" class="cut-btn py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50/40 text-slate-700 text-xs font-semibold transition text-center">
+          회전축에 수직인 평면
+        </button>
+        <button data-cut="oblique" class="cut-btn py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50/40 text-slate-700 text-xs font-semibold transition text-center">
+          비스듬한 평면
+        </button>
+      </div>
+
+      <!-- 자르기 세부 슬라이더 및 보조 옵션 -->
+      <div id="cutControlPanel" class="hidden bg-orange-50/60 border border-orange-200/80 rounded-xl p-3 flex-col gap-2.5">
+        <!-- 회전축 포함: 방향 돌리기 -->
+        <div id="ctrlAxialAngle" class="hidden flex-col gap-1">
+          <div class="flex justify-between text-xs">
+            <span class="font-bold text-slate-700">자르는 방향 돌리기</span>
+            <span id="lblAxialAngle" class="font-extrabold text-orange-600">0°</span>
+          </div>
+          <input type="range" id="sliderAxialAngle" min="0" max="180" step="1" value="0" class="w-full orange-slider" />
+        </div>
+
+        <!-- 회전축 수직 & 비스듬한 평면: 자르는 높이 조절 -->
+        <div id="ctrlCutHeight" class="hidden flex-col gap-1">
+          <div class="flex justify-between text-xs">
+            <span class="font-bold text-slate-700">자르는 높이 조절 (아래 ~ 위)</span>
+            <span id="lblCutHeight" class="font-extrabold text-orange-600">가운데</span>
+          </div>
+          <input type="range" id="sliderCutHeight" min="-3.6" max="3.6" step="0.05" value="0" class="w-full orange-slider" />
+        </div>
+
+        <!-- 비스듬한 평면: 기울기 조절 -->
+        <div id="ctrlCutTilt" class="hidden flex-col gap-1">
+          <div class="flex justify-between text-xs">
+            <span class="font-bold text-slate-700">기울기 조절</span>
+            <span id="lblCutTilt" class="font-extrabold text-orange-600">30°</span>
+          </div>
+          <input type="range" id="sliderCutTilt" min="10" max="75" step="1" value="30" class="w-full orange-slider" />
+        </div>
+
+        <!-- 보조 체크박스 -->
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1.5 border-t border-orange-200/60">
+          <label class="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer select-none">
+            <input type="checkbox" id="chkShowPlaneFrame" checked class="w-3.5 h-3.5 accent-orange-600 rounded" />
+            <span>자르는 평면 틀 보이기</span>
+          </label>
+          <label class="flex items-center gap-1.5 text-xs text-slate-700 font-medium cursor-pointer select-none">
+            <input type="checkbox" id="chkShowCutGhost" checked class="w-3.5 h-3.5 accent-orange-600 rounded" />
+            <span>잘라낸 부분 흐리게 남기기</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 단면을 똑바로 본 모양 (2D 전용 캔버스) -->
+      <div class="flex-1 flex flex-col min-h-[210px]">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-bold text-slate-700">단면을 똑바로 본 모양</span>
+          <span id="sectionViewSubLabel" class="text-[11px] font-semibold text-orange-600">자르기 방식을 선택해 보세요</span>
+        </div>
+        <div class="relative flex-1 rounded-xl border-2 border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+          <canvas id="section2DCanvas" class="w-full h-full block"></canvas>
+        </div>
+      </div>
+
+      <!-- 중1 눈높이 핵심 성질 안내 카드 -->
+      <div class="bg-indigo-50/70 border border-indigo-200/80 rounded-xl p-3 flex gap-2.5 items-start">
+        <div class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-extrabold">
+          핵심
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <h3 id="noteTitle" class="text-xs font-extrabold text-indigo-900">회전체의 뜻</h3>
+          <p id="noteBody" class="text-xs text-slate-700 leading-relaxed">
+            평면도형을 한 직선(회전축)을 축으로 하여 1회전 시킬 때 생기는 입체도형을 <strong>회전체</strong>라고 합니다. 회전시킬 때 옆면을 만드는 선분을 <strong>모선</strong>이라고 합니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /**
+     * ============================================================================
+     * 중학교 1학년 수학 '회전체와 단면' 인터랙티브 웹 애플리케이션
+     * - 모든 UI 안내 및 설명은 중학교 1학년 수학 교육과정 이하 용어만 사용합니다.
+     * - 고해상도 내부 판별 격자를 이용해 3D 단면 채우기와 2D 단면 보기를 일치시킵니다.
+     * ============================================================================
+     */
+
+    // 도형 공간 범위 상수 (반지름 0 ~ 5, 높이 -5 ~ +5)
+    const MAX_R = 4.5;
+    const MAX_Y = 4.5;
+    const SECTION_HALF_SIZE = 4.6; // 단면 평면 및 2D 단면 창 반폭
+
+    // 애플리케이션 전체 상태
+    const state = {
+      currentPreset: 'cone',        // 'cylinder' | 'cone' | 'frustum' | 'sphere' | 'hollowCylinder' | 'custom'
+      shapePoints: [],              // 닫힌 평면도형 꼭짓점 배열 [{r, y}, ...]
+      drawMode: 'polygon',          // 'polygon' | 'freehand'
+      snapToGrid: true,
+      autoFillAxis: true,
+
+      // 그리기 진행 중인 임시 점들
+      draftPoints: [],
+      hoverPoint: null,
+      isDraggingFreehand: false,
+
+      // 3D 회전 및 보기 상태
+      sweepDeg: 360,                // 0 ~ 360
+      isPlayingSweep: false,
+      isTransparent: false,
+      showGeneratrix: false,
+
+      // 단면 자르기 상태
+      cutMode: 'none',              // 'none' | 'axial' | 'perpendicular' | 'oblique'
+      axialAngleDeg: 0,             // 0 ~ 180
+      cutHeight: 0,                 // -3.6 ~ 3.6
+      cutTiltDeg: 30,               // 10 ~ 75
+      showPlaneFrame: true,
+      showCutGhost: true
+    };
+
+    // 기본 회전체 5종 정의
+    function getBasicShapePoints(key) {
+      switch (key) {
+        case 'cylinder':
+          // 직사각형 -> 원기둥
+          return [
+            { r: 0, y: 3.0 },
+            { r: 2.5, y: 3.0 },
+            { r: 2.5, y: -3.0 },
+            { r: 0, y: -3.0 }
+          ];
+        case 'cone':
+          // 직각삼각형 -> 원뿔
+          return [
+            { r: 0, y: 3.2 },
+            { r: 2.8, y: -2.8 },
+            { r: 0, y: -2.8 }
+          ];
+        case 'frustum':
+          // 사다리꼴 -> 원뿔대
+          return [
+            { r: 0, y: 2.8 },
+            { r: 1.4, y: 2.8 },
+            { r: 3.0, y: -2.8 },
+            { r: 0, y: -2.8 }
+          ];
+        case 'sphere': {
+          // 반원 -> 구
+          const pts = [];
+          const radius = 3.0;
+          const steps = 48;
+          for (let i = 0; i <= steps; i++) {
+            const ang = (Math.PI / 2) - (Math.PI * i) / steps; // +90도 -> -90도
+            pts.push({
+              r: Math.max(0, Math.cos(ang) * radius),
+              y: Math.sin(ang) * radius
+            });
+          }
+          return pts;
+        }
+        case 'hollowCylinder':
+          // 회전축에서 떨어진 직사각형 -> 가운데가 뚫린 원기둥
+          return [
+            { r: 1.2, y: 2.8 },
+            { r: 3.0, y: 2.8 },
+            { r: 3.0, y: -2.8 },
+            { r: 1.2, y: -2.8 }
+          ];
+        default:
+          return [];
+      }
+    }
+
+    const SHAPE_NAMES = {
+      cylinder: '원기둥 (직사각형)',
+      cone: '원뿔 (직각삼각형)',
+      frustum: '원뿔대 (사다리꼴)',
+      sphere: '구 (반원)',
+      hollowCylinder: '가운데가 뚫린 원기둥',
+      custom: '내가 그린 회전체'
+    };
+
+    // ==================== [고해상도 평면도형 내부 판별 격자] ====================
+    // (r, y) 영역에 대해 512x512 오프스크린 캔버스에 도형을 채워 빠른 내부 판별에 사용
+    const MASK_SIZE = 512;
+    const maskCanvas = document.createElement('canvas');
+    maskCanvas.width = MASK_SIZE;
+    maskCanvas.height = MASK_SIZE;
+    const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+    let maskData = null;
+
+    function rebuildInsideMask() {
+      maskCtx.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
+      const pts = state.shapePoints;
+      if (!pts || pts.length < 3) {
+        maskData = null;
+        return;
+      }
+
+      maskCtx.fillStyle = '#ffffff';
+      maskCtx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        // r: 0 ~ SECTION_HALF_SIZE -> 0 ~ MASK_SIZE
+        // y: -SECTION_HALF_SIZE ~ +SECTION_HALF_SIZE -> MASK_SIZE ~ 0
+        const mx = (pts[i].r / SECTION_HALF_SIZE) * (MASK_SIZE - 1);
+        const my = ((SECTION_HALF_SIZE - pts[i].y) / (2 * SECTION_HALF_SIZE)) * (MASK_SIZE - 1);
+        if (i === 0) maskCtx.moveTo(mx, my);
+        else maskCtx.lineTo(mx, my);
+      }
+      maskCtx.closePath();
+      maskCtx.fill();
+
+      maskData = maskCtx.getImageData(0, 0, MASK_SIZE, MASK_SIZE).data;
+    }
+
+    // 주어진 반지름 r >= 0, 높이 y가 평면도형 내부인지 고속 판별
+    function isInsideProfile(r, y) {
+      if (!maskData) return false;
+      if (r < 0 || r > SECTION_HALF_SIZE || y < -SECTION_HALF_SIZE || y > SECTION_HALF_SIZE) return false;
+      const mx = Math.round((r / SECTION_HALF_SIZE) * (MASK_SIZE - 1));
+      const my = Math.round(((SECTION_HALF_SIZE - y) / (2 * SECTION_HALF_SIZE)) * (MASK_SIZE - 1));
+      if (mx < 0 || mx >= MASK_SIZE || my < 0 || my >= MASK_SIZE) return false;
+      const idx = (my * MASK_SIZE + mx) * 4 + 3; // 알파 채널 확인
+      return maskData[idx] > 127;
+    }
+
+    // 다각형 정점 방향을 일정하게 정렬 (바깥쪽 면 음영이 올바르게 보이도록 정렬)
+    function normalizePolygonOrder(pts) {
+      if (pts.length < 3) return pts.slice();
+      // 부호 있는 넓이 계산
+      let area2 = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const p1 = pts[i];
+        const p2 = pts[(i + 1) % pts.length];
+        area2 += (p1.r * p2.y - p2.r * p1.y);
+      }
+      // area2 > 0 이면 반시계방향 (오른쪽 외곽선이 아래에서 위로 진행 -> Three.js LatheGeometry 바깥 면)
+      const ordered = area2 < 0 ? pts.slice().reverse() : pts.slice();
+      return ordered;
+    }
+
+    // 토스트 알림 표시 (alert 대체)
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('statusToast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 2400);
+    }
+
+    // ==================== [좌측 2D 모눈 작도 캔버스] ====================
+    const drawCanvas = document.getElementById('drawCanvas');
+    const drawCtx = drawCanvas.getContext('2d');
+
+    // 2D 캔버스 좌표 변환 도우미
+    function getDrawLayout() {
+      const w = drawCanvas.clientWidth || 280;
+      const h = drawCanvas.clientHeight || 280;
+      const axisX = Math.round(w * 0.22); // 왼쪽에서 22% 위치에 회전축 배치
+      const centerY = Math.round(h * 0.52);
+      const scale = Math.min((w - axisX - 18) / MAX_R, (h * 0.84) / (2 * MAX_Y));
+      return { w, h, axisX, centerY, scale };
+    }
+
+    function modelToCanvas2D(r, y, layout) {
+      return {
+        cx: layout.axisX + r * layout.scale,
+        cy: layout.centerY - y * layout.scale
+      };
+    }
+
+    function canvas2DToModel(cx, cy, layout, applySnap) {
+      let r = (cx - layout.axisX) / layout.scale;
+      let y = (layout.centerY - cy) / layout.scale;
+      // 회전축 왼쪽을 누르면 회전축(r=0)에 자동으로 맞춤
+      r = Math.max(0, Math.min(MAX_R, r));
+      y = Math.max(-MAX_Y, Math.min(MAX_Y, y));
+
+      if (applySnap) {
+        const step = 0.4; // 모눈 1칸 간격
+        r = Math.round(r / step) * step;
+        y = Math.round(y / step) * step;
+      }
+      // 회전축에 아주 가까우면 0으로 밀착
+      if (r < 0.12) r = 0;
+      return { r: Number(r.toFixed(3)), y: Number(y.toFixed(3)) };
+    }
+
+    function renderDrawCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = drawCanvas.clientWidth;
+      const h = drawCanvas.clientHeight;
+      if (w === 0 || h === 0) return;
+
+      if (drawCanvas.width !== Math.round(w * dpr) || drawCanvas.height !== Math.round(h * dpr)) {
+        drawCanvas.width = Math.round(w * dpr);
+        drawCanvas.height = Math.round(h * dpr);
+      }
+
+      drawCtx.save();
+      drawCtx.scale(dpr, dpr);
+      drawCtx.clearRect(0, 0, w, h);
+
+      const layout = getDrawLayout();
+      const gridStep = 0.4 * layout.scale;
+
+      // 1. 회전축 왼쪽 비활성 영역 연한 음영
+      drawCtx.fillStyle = '#f1f5f9';
+      drawCtx.fillRect(0, 0, layout.axisX, h);
+
+      // 오른쪽 그리기 영역 흰색 배경
+      drawCtx.fillStyle = '#ffffff';
+      drawCtx.fillRect(layout.axisX, 0, w - layout.axisX, h);
+
+      // 2. 모눈 그리기
+      drawCtx.strokeStyle = '#e2e8f0';
+      drawCtx.lineWidth = 1;
+      drawCtx.beginPath();
+      for (let x = layout.axisX; x <= w; x += gridStep) {
+        drawCtx.moveTo(x, 0);
+        drawCtx.lineTo(x, h);
+      }
+      for (let x = layout.axisX - gridStep; x >= 0; x -= gridStep) {
+        drawCtx.moveTo(x, 0);
+        drawCtx.lineTo(x, h);
+      }
+      for (let y = layout.centerY; y <= h; y += gridStep) {
+        drawCtx.moveTo(0, y);
+        drawCtx.lineTo(w, y);
+      }
+      for (let y = layout.centerY - gridStep; y >= 0; y -= gridStep) {
+        drawCtx.moveTo(0, y);
+        drawCtx.lineTo(w, y);
+      }
+      drawCtx.stroke();
+
+      // 가운데 가로 기준선 (연한 점선)
+      drawCtx.save();
+      drawCtx.setLineDash([4, 4]);
+      drawCtx.strokeStyle = '#cbd5e1';
+      drawCtx.beginPath();
+      drawCtx.moveTo(layout.axisX, layout.centerY);
+      drawCtx.lineTo(w, layout.centerY);
+      drawCtx.stroke();
+      drawCtx.restore();
+
+      // 3. 완성된 평면도형 반투명 파란색 채우기
+      if (state.shapePoints.length >= 3 && state.draftPoints.length === 0) {
+        drawCtx.save();
+        drawCtx.beginPath();
+        state.shapePoints.forEach((pt, idx) => {
+          const { cx, cy } = modelToCanvas2D(pt.r, pt.y, layout);
+          if (idx === 0) drawCtx.moveTo(cx, cy);
+          else drawCtx.lineTo(cx, cy);
+        });
+        drawCtx.closePath();
+        drawCtx.fillStyle = 'rgba(59, 130, 246, 0.24)';
+        drawCtx.fill();
+        drawCtx.strokeStyle = '#2563eb';
+        drawCtx.lineWidth = 2.5;
+        drawCtx.lineJoin = 'round';
+        drawCtx.stroke();
+
+        // 다각형일 때 꼭짓점 표시 (구처럼 점이 아주 많을 때는 생략)
+        if (state.shapePoints.length <= 20) {
+          state.shapePoints.forEach((pt) => {
+            const { cx, cy } = modelToCanvas2D(pt.r, pt.y, layout);
+            drawCtx.beginPath();
+            drawCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+            drawCtx.fillStyle = '#ffffff';
+            drawCtx.fill();
+            drawCtx.strokeStyle = '#1d4ed8';
+            drawCtx.lineWidth = 2;
+            drawCtx.stroke();
+          });
+        }
+        drawCtx.restore();
+      }
+
+      // 4. 회전축 세로 직선 및 회전 화살표 기호 그리기
+      drawCtx.save();
+      drawCtx.strokeStyle = '#e11d48';
+      drawCtx.lineWidth = 2.5;
+      drawCtx.beginPath();
+      drawCtx.moveTo(layout.axisX, 14);
+      drawCtx.lineTo(layout.axisX, h - 10);
+      drawCtx.stroke();
+
+      // 회전 화살표 기호 (상단)
+      const arrowY = 28;
+      drawCtx.strokeStyle = '#e11d48';
+      drawCtx.lineWidth = 2;
+      drawCtx.beginPath();
+      drawCtx.arc(layout.axisX, arrowY, 11, -Math.PI * 0.8, Math.PI * 0.35, false);
+      drawCtx.stroke();
+      // 화살촉
+      const tipAngle = Math.PI * 0.35;
+      const tipX = layout.axisX + 11 * Math.cos(tipAngle);
+      const tipY = arrowY + 11 * Math.sin(tipAngle);
+      drawCtx.fillStyle = '#e11d48';
+      drawCtx.beginPath();
+      drawCtx.moveTo(tipX + 3, tipY + 2);
+      drawCtx.lineTo(tipX - 5, tipY + 2);
+      drawCtx.lineTo(tipX - 1, tipY - 5);
+      drawCtx.closePath();
+      drawCtx.fill();
+
+      // '회전축' 텍스트 라벨
+      drawCtx.fillStyle = '#be123c';
+      drawCtx.font = 'bold 11px Pretendard, sans-serif';
+      drawCtx.textAlign = 'center';
+      drawCtx.fillText('회전축', layout.axisX - 22, 32);
+      drawCtx.restore();
+
+      // 5. 그리기 진행 중인 임시 선분 및 꼭짓점 표시
+      if (state.draftPoints.length > 0) {
+        drawCtx.save();
+        drawCtx.beginPath();
+        state.draftPoints.forEach((pt, idx) => {
+          const { cx, cy } = modelToCanvas2D(pt.r, pt.y, layout);
+          if (idx === 0) drawCtx.moveTo(cx, cy);
+          else drawCtx.lineTo(cx, cy);
+        });
+        if (state.drawMode === 'polygon' && state.hoverPoint) {
+          const { cx, cy } = modelToCanvas2D(state.hoverPoint.r, state.hoverPoint.y, layout);
+          drawCtx.lineTo(cx, cy);
+        }
+        drawCtx.strokeStyle = '#4f46e5';
+        drawCtx.lineWidth = 2.5;
+        drawCtx.lineJoin = 'round';
+        drawCtx.stroke();
+
+        // 점 찍어 그리기 모드의 꼭짓점 표시
+        if (state.drawMode === 'polygon') {
+          state.draftPoints.forEach((pt, idx) => {
+            const { cx, cy } = modelToCanvas2D(pt.r, pt.y, layout);
+            drawCtx.beginPath();
+            drawCtx.arc(cx, cy, idx === 0 ? 6 : 4.5, 0, Math.PI * 2);
+            drawCtx.fillStyle = idx === 0 ? '#4f46e5' : '#ffffff';
+            drawCtx.fill();
+            drawCtx.strokeStyle = '#4f46e5';
+            drawCtx.lineWidth = 2;
+            drawCtx.stroke();
+          });
+        }
+        drawCtx.restore();
+      } else if (state.drawMode === 'polygon' && state.hoverPoint) {
+        // 마우스 위치 미리보기 점
+        const { cx, cy } = modelToCanvas2D(state.hoverPoint.r, state.hoverPoint.y, layout);
+        drawCtx.save();
+        drawCtx.beginPath();
+        drawCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+        drawCtx.fillStyle = 'rgba(79, 70, 229, 0.45)';
+        drawCtx.fill();
+        drawCtx.restore();
+      }
+
+      drawCtx.restore();
+    }
+
+    // ==================== [중앙 3D Three.js 관찰 공간] ====================
+    const threeContainer = document.getElementById('threeContainer');
+    let scene, camera, renderer, controls;
+    let solidGroup, capGroup, planeHelperGroup, initialProfileGroup;
+
+    // 3D 단면 채우기용 오프스크린 캔버스 & 텍스처
+    const sectionTexCanvas = document.createElement('canvas');
+    sectionTexCanvas.width = 512;
+    sectionTexCanvas.height = 512;
+    const sectionTexCtx = sectionTexCanvas.getContext('2d');
+    let sectionTexture = null;
+
+    function initThreeJS() {
+      scene = new THREE.Scene();
+
+      const w = threeContainer.clientWidth || 500;
+      const h = threeContainer.clientHeight || 420;
+
+      camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+      camera.position.set(7.5, 5.8, 10.5);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h);
+      renderer.localClippingEnabled = true; // 평면 자르기 활성화
+      threeContainer.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.minDistance = 5;
+      controls.maxDistance = 26;
+      controls.target.set(0, 0, 0);
+
+      // 조명 설정 (단면과 입체감이 또렷하게 보이도록 다방향 조명 구성)
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambientLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.65);
+      dirLight1.position.set(8, 12, 10);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0xe0e7ff, 0.38);
+      dirLight2.position.set(-9, -6, -8);
+      scene.add(dirLight2);
+
+      // 바닥 원형 안내 보드 (은은한 동심원 눈금)
+      const floorGroup = new THREE.Group();
+      floorGroup.position.y = -4.3;
+      [1.5, 3.0, 4.5].forEach((rad) => {
+        const ringGeo = new THREE.RingGeometry(rad - 0.02, rad + 0.02, 64);
+        ringGeo.rotateX(-Math.PI / 2);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xcbd5e1,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.55
+        });
+        floorGroup.add(new THREE.Mesh(ringGeo, ringMat));
+      });
+      scene.add(floorGroup);
+
+      // 3D 회전축 기둥 및 회전 화살표 생성
+      buildRotationAxis3D();
+
+      // 그룹 초기화
+      solidGroup = new THREE.Group();
+      capGroup = new THREE.Group();
+      planeHelperGroup = new THREE.Group();
+      initialProfileGroup = new THREE.Group();
+
+      scene.add(solidGroup);
+      scene.add(capGroup);
+      scene.add(planeHelperGroup);
+      scene.add(initialProfileGroup);
+
+      sectionTexture = new THREE.CanvasTexture(sectionTexCanvas);
+      sectionTexture.minFilter = THREE.LinearFilter;
+      sectionTexture.magFilter = THREE.LinearFilter;
+    }
+
+    // 3D 공간 한가운데 세로 회전축 표시
+    function buildRotationAxis3D() {
+      const axisGroup = new THREE.Group();
+
+      // 빨간 회전축 기둥
+      const rodGeo = new THREE.CylinderGeometry(0.045, 0.045, 9.6, 16);
+      const rodMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.35 });
+      const rodMesh = new THREE.Mesh(rodGeo, rodMat);
+      axisGroup.add(rodMesh);
+
+      // 상단 회전 화살표 고리
+      const torusGeo = new THREE.TorusGeometry(0.45, 0.035, 12, 36, Math.PI * 1.45);
+      torusGeo.rotateX(Math.PI / 2);
+      const torusMat = new THREE.MeshBasicMaterial({ color: 0xe11d48 });
+      const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+      torusMesh.position.y = 4.55;
+      axisGroup.add(torusMesh);
+
+      // 화살촉 원뿔
+      const coneGeo = new THREE.ConeGeometry(0.11, 0.26, 12);
+      coneGeo.rotateZ(-Math.PI / 2);
+      const coneMesh = new THREE.Mesh(coneGeo, torusMat);
+      const endAng = Math.PI * 1.45;
+      coneMesh.position.set(0.45 * Math.cos(endAng), 4.55, 0.45 * Math.sin(endAng));
+      coneMesh.rotation.y = -endAng + Math.PI / 2;
+      axisGroup.add(coneMesh);
+
+      // '회전축' 텍스트 이름표 스프라이트
+      const labelCanvas = document.createElement('canvas');
+      labelCanvas.width = 160;
+      labelCanvas.height = 64;
+      const lctx = labelCanvas.getContext('2d');
+      lctx.fillStyle = 'rgba(225, 29, 72, 0.92)';
+      roundRect(lctx, 14, 10, 132, 44, 22);
+      lctx.fill();
+      lctx.fillStyle = '#ffffff';
+      lctx.font = 'bold 24px Pretendard, sans-serif';
+      lctx.textAlign = 'center';
+      lctx.textBaseline = 'middle';
+      lctx.fillText('회전축', 80, 33);
+
+      const labelTex = new THREE.CanvasTexture(labelCanvas);
+      const spriteMat = new THREE.SpriteMaterial({ map: labelTex, depthTest: false });
+      const sprite = new THREE.Sprite(spriteMat);
+      sprite.position.set(0, 5.25, 0);
+      sprite.scale.set(1.5, 0.6, 1);
+      sprite.renderOrder = 20;
+      axisGroup.add(sprite);
+
+      scene.add(axisGroup);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // 그룹 내부 메모리 해제 도우미
+    function clearThreeGroup(group) {
+      while (group.children.length > 0) {
+        const obj = group.children[0];
+        group.remove(obj);
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      }
+    }
+
+    // 현재 자르기 설정에 따른 평면 정보 계산
+    function getCutPlaneInfo() {
+      if (state.cutMode === 'none') return null;
+
+      let normal, pointOnPlane, eu, ev, outDir;
+
+      if (state.cutMode === 'axial') {
+        // 회전축을 포함하는 평면
+        const alpha = (state.axialAngleDeg * Math.PI) / 180;
+        // 앞쪽을 잘라내어 정면에서 주황색 단면이 잘 보이도록 설정
+        outDir = new THREE.Vector3(Math.sin(alpha), 0, Math.cos(alpha)).normalize();
+        normal = outDir.clone().negate();
+        pointOnPlane = new THREE.Vector3(0, 0, 0);
+        ev = new THREE.Vector3(0, 1, 0);
+        eu = new THREE.Vector3().crossVectors(ev, outDir).normalize(); // (cos α, 0, -sin α)
+      } else if (state.cutMode === 'perpendicular') {
+        // 회전축에 수직인 평면 (위쪽을 잘라내고 아래쪽을 남김)
+        const h = state.cutHeight;
+        outDir = new THREE.Vector3(0, 1, 0);
+        normal = new THREE.Vector3(0, -1, 0);
+        pointOnPlane = new THREE.Vector3(0, h, 0);
+        eu = new THREE.Vector3(1, 0, 0);
+        ev = new THREE.Vector3(0, 0, -1);
+      } else if (state.cutMode === 'oblique') {
+        // 비스듬한 평면 (앞쪽을 향해 기울어져 단면이 한눈에 보이도록 설정)
+        const beta = (state.cutTiltDeg * Math.PI) / 180;
+        const h = state.cutHeight;
+        outDir = new THREE.Vector3(0, Math.cos(beta), Math.sin(beta)).normalize();
+        normal = outDir.clone().negate();
+        pointOnPlane = new THREE.Vector3(0, h, 0);
+        eu = new THREE.Vector3(1, 0, 0);
+        ev = new THREE.Vector3(0, Math.sin(beta), -Math.cos(beta)).normalize();
+      }
+
+      const constant = -normal.dot(pointOnPlane);
+      const clipPlane = new THREE.Plane(normal, constant);
+      const oppositePlane = new THREE.Plane(normal.clone().negate(), -constant);
+
+      return { clipPlane, oppositePlane, normal, outDir, pointOnPlane, eu, ev };
+    }
+
+    // ==================== [3D 회전체 및 단면 업데이트] ====================
+    function rebuild3DScene() {
+      clearThreeGroup(solidGroup);
+      clearThreeGroup(capGroup);
+      clearThreeGroup(planeHelperGroup);
+      clearThreeGroup(initialProfileGroup);
+
+      const rawPts = state.shapePoints;
+      if (!rawPts || rawPts.length < 3) {
+        updateSectionCanvases(null);
+        return;
+      }
+
+      // 1. 처음 그린 원래 '평면도형'을 3D 공간(오른쪽 시작 위치)에 강조 표시
+      const orderedPts = normalizePolygonOrder(rawPts);
+      const shape2D = new THREE.Shape();
+      orderedPts.forEach((pt, idx) => {
+        if (idx === 0) shape2D.moveTo(pt.r, pt.y);
+        else shape2D.lineTo(pt.r, pt.y);
+      });
+      shape2D.closePath();
+
+      const profileGeo = new THREE.ShapeGeometry(shape2D);
+      const profileFillMat = new THREE.MeshBasicMaterial({
+        color: 0x3b82f6,
+        transparent: true,
+        opacity: state.sweepDeg === 0 ? 0.55 : 0.22,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      const profileMesh = new THREE.Mesh(profileGeo, profileFillMat);
+      initialProfileGroup.add(profileMesh);
+
+      // 원래 평면도형 파란색 진한 테두리
+      const borderVecs = orderedPts.map(p => new THREE.Vector3(p.r, p.y, 0));
+      borderVecs.push(borderVecs[0].clone());
+      const borderGeo = new THREE.BufferGeometry().setFromPoints(borderVecs);
+      const borderMat = new THREE.LineBasicMaterial({ color: 0x1d4ed8, linewidth: 2 });
+      const borderLine = new THREE.Line(borderGeo, borderMat);
+      borderLine.renderOrder = 5;
+      initialProfileGroup.add(borderLine);
+
+      // 회전 각도가 0°일 때는 평면도형만 보여줌
+      const cutInfo = getCutPlaneInfo();
+      const activeClipPlanes = cutInfo ? [cutInfo.clipPlane] : [];
+
+      if (state.sweepDeg > 0.2) {
+        const sweepRad = (state.sweepDeg * Math.PI) / 180;
+        const segments = Math.max(16, Math.round((state.sweepDeg / 360) * 96));
+
+        // LatheGeometry용 닫힌 점 배열 구성
+        // phiStart = Math.PI / 2 로 설정하면 시작 위치가 정확히 오른쪽(+X, z=0) 평면과 일치함!
+        const latheVecs = orderedPts.map(p => new THREE.Vector2(p.r, p.y));
+        latheVecs.push(new THREE.Vector2(orderedPts[0].r, orderedPts[0].y));
+
+        const latheGeo = new THREE.LatheGeometry(latheVecs, segments, Math.PI / 2, sweepRad);
+
+        const isTrans = state.isTransparent;
+        const mainMat = new THREE.MeshPhongMaterial({
+          color: 0x4f46e5,
+          emissive: 0x1e1b4b,
+          emissiveIntensity: 0.12,
+          shininess: 45,
+          specular: 0x93c5fd,
+          side: THREE.DoubleSide,
+          transparent: isTrans,
+          opacity: isTrans ? 0.45 : 1.0,
+          clippingPlanes: activeClipPlanes,
+          clipShadows: true
+        });
+
+        const mainMesh = new THREE.Mesh(latheGeo, mainMat);
+        solidGroup.add(mainMesh);
+
+        // 360° 미만일 때 양 끝 단면(시작 면, 끝 면)을 막아 속이 꽉 찬 입체로 표현
+        if (state.sweepDeg < 359.8) {
+          const endCapMat = new THREE.MeshPhongMaterial({
+            color: 0x6366f1,
+            emissive: 0x1e1b4b,
+            emissiveIntensity: 0.1,
+            side: THREE.DoubleSide,
+            transparent: isTrans,
+            opacity: isTrans ? 0.5 : 1.0,
+            clippingPlanes: activeClipPlanes
+          });
+
+          const startCapMesh = new THREE.Mesh(profileGeo.clone(), endCapMat);
+          solidGroup.add(startCapMesh);
+
+          const endCapMesh = new THREE.Mesh(profileGeo.clone(), endCapMat);
+          endCapMesh.rotation.y = sweepRad;
+          solidGroup.add(endCapMesh);
+        }
+
+        // 잘라낸 부분 흐리게 남기기 (유령 조각)
+        if (cutInfo && state.showCutGhost) {
+          const ghostMat = new THREE.MeshPhongMaterial({
+            color: 0x94a3b8,
+            transparent: true,
+            opacity: 0.14,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            clippingPlanes: [cutInfo.oppositePlane]
+          });
+          const ghostMesh = new THREE.Mesh(latheGeo.clone(), ghostMat);
+          solidGroup.add(ghostMesh);
+        }
+
+        // '모선 표시' 켜짐 시 옆면 모선들과 둘레 안내선 표시
+        if (state.showGeneratrix) {
+          const linePoints = [];
+          const stepDeg = 22.5;
+          const numSteps = Math.floor(state.sweepDeg / stepDeg);
+
+          for (let s = 0; s <= numSteps; s++) {
+            const ang = (s * stepDeg * Math.PI) / 180;
+            const cosA = Math.cos(ang);
+            const sinA = -Math.sin(ang);
+            for (let i = 0; i < orderedPts.length; i++) {
+              const p1 = orderedPts[i];
+              const p2 = orderedPts[(i + 1) % orderedPts.length];
+              // 회전축 위에 붙은 선분은 내부 선이므로 바깥 옆면 모선만 강조
+              if (p1.r === 0 && p2.r === 0) continue;
+              linePoints.push(new THREE.Vector3(p1.r * cosA, p1.y, p1.r * sinA));
+              linePoints.push(new THREE.Vector3(p2.r * cosA, p2.y, p2.r * sinA));
+            }
+          }
+
+          // 꼭짓점 궤적 둘레선 추가 (구처럼 점이 많은 경우 일부 간격으로 표시)
+          const stride = orderedPts.length > 20 ? 6 : 1;
+          for (let i = 0; i < orderedPts.length; i += stride) {
+            const pt = orderedPts[i];
+            if (pt.r < 0.05) continue;
+            const arcSegs = Math.max(12, Math.round((state.sweepDeg / 360) * 48));
+            for (let k = 0; k < arcSegs; k++) {
+              const a1 = (k / arcSegs) * sweepRad;
+              const a2 = ((k + 1) / arcSegs) * sweepRad;
+              linePoints.push(new THREE.Vector3(pt.r * Math.cos(a1), pt.y, -pt.r * Math.sin(a1)));
+              linePoints.push(new THREE.Vector3(pt.r * Math.cos(a2), pt.y, -pt.r * Math.sin(a2)));
+            }
+          }
+
+          const genGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+          const genMat = new THREE.LineBasicMaterial({
+            color: 0xe0e7ff,
+            transparent: true,
+            opacity: 0.75,
+            clippingPlanes: activeClipPlanes
+          });
+          const genLines = new THREE.LineSegments(genGeo, genMat);
+          solidGroup.add(genLines);
+        }
+      }
+
+      // 2. 평면으로 자른 단면 채우기(주황/노란 색상) 및 자르는 평면 틀 표시
+      updateSectionCanvases(cutInfo);
+
+      const legendSectionBadge = document.getElementById('legendSectionBadge');
+      if (cutInfo) {
+        legendSectionBadge.classList.remove('hidden');
+        legendSectionBadge.classList.add('flex');
+
+        const planeSize = SECTION_HALF_SIZE * 2;
+        const basisMatrix = new THREE.Matrix4().makeBasis(cutInfo.eu, cutInfo.ev, cutInfo.outDir);
+
+        // 잘린 단면 채우기 평면 (속이 꽉 찬 단면 표현)
+        if (state.sweepDeg > 0.2) {
+          const capPlaneGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+          const capPlaneMat = new THREE.MeshBasicMaterial({
+            map: sectionTexture,
+            transparent: true,
+            alphaTest: 0.08,
+            side: THREE.DoubleSide
+          });
+          const capMesh = new THREE.Mesh(capPlaneGeo, capPlaneMat);
+          capMesh.rotation.setFromRotationMatrix(basisMatrix);
+          // 겹침 깜빡임 방지를 위해 바깥 방향으로 아주 미세하게 이동
+          capMesh.position.copy(cutInfo.pointOnPlane).addScaledVector(cutInfo.outDir, 0.004);
+          capMesh.renderOrder = 8;
+          capGroup.add(capMesh);
+        }
+
+        // '자르는 평면 틀 보이기' 켜짐 시 반투명 평면 사각형과 테두리 표시
+        if (state.showPlaneFrame) {
+          const frameSize = 8.4;
+          const frameGeo = new THREE.PlaneGeometry(frameSize, frameSize);
+          const frameMat = new THREE.MeshBasicMaterial({
+            color: 0xf97316,
+            transparent: true,
+            opacity: 0.11,
+            side: THREE.DoubleSide,
+            depthWrite: false
+          });
+          const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+          frameMesh.rotation.setFromRotationMatrix(basisMatrix);
+          frameMesh.position.copy(cutInfo.pointOnPlane);
+          planeHelperGroup.add(frameMesh);
+
+          const halfF = frameSize / 2;
+          const corners = [
+            new THREE.Vector3(-halfF, -halfF, 0),
+            new THREE.Vector3(halfF, -halfF, 0),
+            new THREE.Vector3(halfF, halfF, 0),
+            new THREE.Vector3(-halfF, halfF, 0),
+            new THREE.Vector3(-halfF, -halfF, 0)
+          ];
+          const frameBorderGeo = new THREE.BufferGeometry().setFromPoints(corners);
+          const frameBorderMat = new THREE.LineBasicMaterial({ color: 0xea580c, transparent: true, opacity: 0.75 });
+          const frameBorder = new THREE.Line(frameBorderGeo, frameBorderMat);
+          frameBorder.rotation.setFromRotationMatrix(basisMatrix);
+          frameBorder.position.copy(cutInfo.pointOnPlane);
+          planeHelperGroup.add(frameBorder);
+        }
+      } else {
+        legendSectionBadge.classList.add('hidden');
+        legendSectionBadge.classList.remove('flex');
+      }
+    }
+
+    // ==================== [3D 단면 텍스처 & 우측 2D '단면을 똑바로 본 모양' 동시 계산] ====================
+    const section2DCanvas = document.getElementById('section2DCanvas');
+    const section2DCtx = section2DCanvas.getContext('2d');
+
+    // 절단 평면 위의 모든 점 (u, v)를 3D 위치로 바꿔 회전체 내부인지 판별하여 단면 이미지 생성
+    function updateSectionCanvases(cutInfo) {
+      const N = 512;
+      sectionTexCtx.clearRect(0, 0, N, N);
+
+      if (cutInfo && maskData && state.sweepDeg > 0.2) {
+        const imgData = sectionTexCtx.createImageData(N, N);
+        const data = imgData.data;
+        const insideArr = new Uint8Array(N * N);
+
+        const p0x = cutInfo.pointOnPlane.x;
+        const p0y = cutInfo.pointOnPlane.y;
+        const p0z = cutInfo.pointOnPlane.z;
+
+        const ux = cutInfo.eu.x, uy = cutInfo.eu.y, uz = cutInfo.eu.z;
+        const vx = cutInfo.ev.x, vy = cutInfo.ev.y, vz = cutInfo.ev.z;
+
+        const sweepRad = (state.sweepDeg * Math.PI) / 180;
+        const isFullCircle = state.sweepDeg >= 359.8;
+
+        // 1단계: 각 픽셀의 내부 여부 판별
+        for (let py = 0; py < N; py++) {
+          const v = SECTION_HALF_SIZE * (1 - (2 * py) / (N - 1));
+          for (let px = 0; px < N; px++) {
+            const u = SECTION_HALF_SIZE * ((2 * px) / (N - 1) - 1);
+
+            const wx = p0x + u * ux + v * vx;
+            const wy = p0y + u * uy + v * vy;
+            const wz = p0z + u * uz + v * vz;
+
+            const r = Math.hypot(wx, wz);
+            if (!isInsideProfile(r, wy)) continue;
+
+            if (!isFullCircle && r > 0.001) {
+              let ang = Math.atan2(-wz, wx);
+              if (ang < 0) ang += Math.PI * 2;
+              if (ang > sweepRad) continue;
+            }
+
+            insideArr[py * N + px] = 1;
+          }
+        }
+
+        // 2단계: 단면 내부(선명한 노랑-주황) 및 경계선(진한 주황 테두리) 색칠
+        const borderRadius = 2;
+        for (let py = 0; py < N; py++) {
+          for (let px = 0; px < N; px++) {
+            const idx = py * N + px;
+            if (!insideArr[idx]) continue;
+
+            let isEdge = false;
+            for (let dy = -borderRadius; dy <= borderRadius && !isEdge; dy++) {
+              const ny = py + dy;
+              if (ny < 0 || ny >= N) { isEdge = true; break; }
+              for (let dx = -borderRadius; dx <= borderRadius; dx++) {
+                const nx = px + dx;
+                if (nx < 0 || nx >= N || !insideArr[ny * N + nx]) {
+                  isEdge = true;
+                  break;
+                }
+              }
+            }
+
+            const pIdx = idx * 4;
+            if (isEdge) {
+              // 또렷한 진주황 외곽선
+              data[pIdx] = 194;
+              data[pIdx + 1] = 65;
+              data[pIdx + 2] = 12;
+              data[pIdx + 3] = 255;
+            } else {
+              // 밝고 선명한 주황/호박색 단면 내부 채우기
+              data[pIdx] = 253;
+              data[pIdx + 1] = 186;
+              data[pIdx + 2] = 116;
+              data[pIdx + 3] = 248;
+            }
+          }
+        }
+
+        sectionTexCtx.putImageData(imgData, 0, 0);
+      }
+
+      if (sectionTexture) {
+        sectionTexture.needsUpdate = true;
+      }
+
+      // 우측 2D '단면을 똑바로 본 모양' 캔버스 그리기
+      renderSection2DView(cutInfo);
+      updateEducationalNote();
+    }
+
+    // 우측 하단 2D 단면 전용 캔버스 렌더링
+    function renderSection2DView(cutInfo) {
+      const dpr = window.devicePixelRatio || 1;
+      const w = section2DCanvas.clientWidth;
+      const h = section2DCanvas.clientHeight;
+      if (w === 0 || h === 0) return;
+
+      if (section2DCanvas.width !== Math.round(w * dpr) || section2DCanvas.height !== Math.round(h * dpr)) {
+        section2DCanvas.width = Math.round(w * dpr);
+        section2DCanvas.height = Math.round(h * dpr);
+      }
+
+      section2DCtx.save();
+      section2DCtx.scale(dpr, dpr);
+      section2DCtx.clearRect(0, 0, w, h);
+
+      // 배경 흰색
+      section2DCtx.fillStyle = '#ffffff';
+      section2DCtx.fillRect(0, 0, w, h);
+
+      const cx = w / 2;
+      const cy = h / 2;
+      const drawSize = Math.min(w, h) * 0.88;
+      const gridPx = (0.8 / (2 * SECTION_HALF_SIZE)) * drawSize;
+
+      // 모눈 배경 그리기
+      section2DCtx.strokeStyle = '#f1f5f9';
+      section2DCtx.lineWidth = 1;
+      section2DCtx.beginPath();
+      for (let x = cx; x <= w; x += gridPx) { section2DCtx.moveTo(x, 0); section2DCtx.lineTo(x, h); }
+      for (let x = cx - gridPx; x >= 0; x -= gridPx) { section2DCtx.moveTo(x, 0); section2DCtx.lineTo(x, h); }
+      for (let y = cy; y <= h; y += gridPx) { section2DCtx.moveTo(0, y); section2DCtx.lineTo(w, y); }
+      for (let y = cy - gridPx; y >= 0; y -= gridPx) { section2DCtx.moveTo(0, y); section2DCtx.lineTo(w, y); }
+      section2DCtx.stroke();
+
+      const subLabel = document.getElementById('sectionViewSubLabel');
+
+      if (!cutInfo) {
+        subLabel.textContent = '자르기 방식을 선택해 보세요';
+        section2DCtx.fillStyle = '#94a3b8';
+        section2DCtx.font = '600 12px Pretendard, sans-serif';
+        section2DCtx.textAlign = 'center';
+        section2DCtx.textBaseline = 'middle';
+        section2DCtx.fillText('위에서 평면으로 자르기 버튼을 눌러', cx, cy - 10);
+        section2DCtx.fillText('잘린 단면 모양을 확인해 보세요!', cx, cy + 10);
+        section2DCtx.restore();
+        return;
+      }
+
+      // 계산해 둔 고해상도 단면 이미지를 정중앙에 똑바로 배치
+      section2DCtx.drawImage(
+        sectionTexCanvas,
+        cx - drawSize / 2,
+        cy - drawSize / 2,
+        drawSize,
+        drawSize
+      );
+
+      // 자르기 방식별 보조 기준선 및 안내 표시
+      if (state.cutMode === 'axial') {
+        subLabel.textContent = '회전축(대칭축) 기준 선대칭도형';
+        // 가운데 세로 점선으로 회전축(대칭축) 표시
+        section2DCtx.save();
+        section2DCtx.setLineDash([5, 4]);
+        section2DCtx.strokeStyle = '#e11d48';
+        section2DCtx.lineWidth = 1.8;
+        section2DCtx.beginPath();
+        section2DCtx.moveTo(cx, 10);
+        section2DCtx.lineTo(cx, h - 10);
+        section2DCtx.stroke();
+
+        section2DCtx.fillStyle = '#be123c';
+        section2DCtx.font = 'bold 11px Pretendard, sans-serif';
+        section2DCtx.textAlign = 'left';
+        section2DCtx.fillText('회전축 (대칭축)', cx + 6, 18);
+        section2DCtx.restore();
+      } else if (state.cutMode === 'perpendicular') {
+        subLabel.textContent = '위에서 똑바로 내려다본 단면';
+        // 가운데 회전축 위치를 빨간 점으로 표시
+        section2DCtx.save();
+        section2DCtx.beginPath();
+        section2DCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+        section2DCtx.fillStyle = '#e11d48';
+        section2DCtx.fill();
+        section2DCtx.strokeStyle = '#ffffff';
+        section2DCtx.lineWidth = 1.5;
+        section2DCtx.stroke();
+
+        section2DCtx.fillStyle = '#be123c';
+        section2DCtx.font = 'bold 11px Pretendard, sans-serif';
+        section2DCtx.textAlign = 'center';
+        section2DCtx.fillText('회전축 위치', cx, cy + 16);
+        section2DCtx.restore();
+      } else if (state.cutMode === 'oblique') {
+        subLabel.textContent = '비스듬한 평면에 수직으로 마주 본 모양';
+      }
+
+      section2DCtx.restore();
+    }
+
+    // ==================== [중1 눈높이 단면 성질 안내 카드 업데이트] ====================
+    function updateEducationalNote() {
+      const titleEl = document.getElementById('noteTitle');
+      const bodyEl = document.getElementById('noteBody');
+      const preset = state.currentPreset;
+
+      if (state.cutMode === 'none') {
+        const shapeDescriptions = {
+          cylinder: '직사각형을 한 변을 회전축으로 하여 1회전 시키면 <strong>원기둥</strong>이 됩니다. 두 밑면은 서로 평행하고 합동인 원입니다.',
+          cone: '직각삼각형을 직각을 낀 한 변을 회전축으로 하여 1회전 시키면 <strong>원뿔</strong>이 됩니다.',
+          frustum: '원뿔을 밑면에 평행한 평면으로 자를 때 생기는 두 입체도형 중 원뿔이 아닌 쪽의 입체도형을 <strong>원뿔대</strong>라고 합니다.',
+          sphere: '반원을 지름을 회전축으로 하여 1회전 시키면 <strong>구</strong>가 됩니다. 구는 어떤 방향에서 보아도 모양이 같습니다.',
+          hollowCylinder: '회전축에서 떨어진 직사각형을 1회전 시키면 <strong>가운데가 뚫린 원기둥</strong> 모양의 회전체가 만들어집니다.',
+          custom: '내가 그린 평면도형을 회전축을 중심으로 한 바퀴(360°) 돌리면 회전축 둘레로 대칭을 이루는 <strong>회전체</strong>가 만들어집니다.'
+        };
+        titleEl.textContent = SHAPE_NAMES[preset] || '회전체 관찰하기';
+        bodyEl.innerHTML = shapeDescriptions[preset] || shapeDescriptions.custom;
+      } else if (state.cutMode === 'axial') {
+        const axialDetails = {
+          cylinder: '원기둥을 회전축을 포함하는 평면으로 자른 단면은 항상 <strong>직사각형</strong>입니다.',
+          cone: '원뿔을 회전축을 포함하는 평면으로 자른 단면은 항상 <strong>이등변삼각형</strong>입니다.',
+          frustum: '원뿔대를 회전축을 포함하는 평면으로 자른 단면은 항상 좌우 대칭인 <strong>사다리꼴(등변사다리꼴)</strong>입니다.',
+          sphere: '구를 회전축(구에서는 중심을 지나는 직선)을 포함하는 평면으로 자른 단면은 가장 큰 <strong>원</strong>입니다.',
+          hollowCylinder: '회전축에서 떨어진 직사각형을 돌려 만든 회전체를 회전축을 포함하는 평면으로 자르면 서로 합동인 <strong>두 개의 직사각형</strong>이 나타납니다.',
+          custom: ''
+        };
+        titleEl.textContent = '회전축을 포함하는 평면으로 자를 때의 성질';
+        const extra = axialDetails[preset] ? ` ${axialDetails[preset]}` : '';
+        bodyEl.innerHTML = `회전체를 회전축을 포함하는 평면으로 자른 단면은 자르는 방향을 돌려도 <strong>모두 합동</strong>이며, 회전축을 대칭축으로 하는 <strong>선대칭도형</strong>입니다.${extra}`;
+      } else if (state.cutMode === 'perpendicular') {
+        titleEl.textContent = '회전축에 수직인 평면으로 자를 때의 성질';
+        if (preset === 'hollowCylinder') {
+          bodyEl.innerHTML = '회전축에 수직인 평면으로 회전체를 자르면 단면의 경계는 항상 <strong>원</strong>입니다. 가운데가 비어 있는 회전체이므로 크기가 다른 두 원 사이의 <strong>고리 모양</strong>이 나타납니다.';
+        } else if (preset === 'cylinder') {
+          bodyEl.innerHTML = '원기둥을 회전축에 수직인 평면으로 자른 단면은 자르는 높이에 관계없이 항상 밑면과 합동인 <strong>원</strong>입니다.';
+        } else {
+          bodyEl.innerHTML = '회전체를 회전축에 수직인 평면으로 자르면 그 단면은 항상 <strong>원</strong>(또는 가운데가 빈 고리 모양)입니다. 높이를 위아래로 바꾸며 원의 크기 변화를 관찰해 보세요!';
+        }
+      } else if (state.cutMode === 'oblique') {
+        titleEl.textContent = '비스듬한 평면으로 자를 때의 단면 관찰';
+        if (preset === 'sphere') {
+          bodyEl.innerHTML = '<strong>구</strong>는 어느 방향으로 평면을 기울여 잘라도 그 단면이 항상 <strong>원</strong>입니다! 기울기와 높이를 바꿔 확인해 보세요.';
+        } else {
+          bodyEl.innerHTML = '회전체를 비스듬한 평면으로 자르면 길쭉하게 둥근 모양이나 밑면과 만나 일부가 곧은 선분으로 잘린 모양 등 다양한 단면을 관찰할 수 있습니다.';
+        }
+      }
+    }
+
+    // ==================== [이벤트 연결 및 상호작용 로직] ====================
+    function applyNewShape(points, presetKey) {
+      state.shapePoints = points;
+      state.currentPreset = presetKey;
+      state.draftPoints = [];
+      state.hoverPoint = null;
+
+      document.getElementById('currentShapeBadge').textContent = SHAPE_NAMES[presetKey] || '내가 그린 회전체';
+
+      // 기본 도형 버튼 강조 표시 갱신
+      document.querySelectorAll('.shape-btn').forEach(btn => {
+        const isSelected = btn.dataset.shape === presetKey;
+        btn.classList.toggle('border-2', isSelected);
+        btn.classList.toggle('border-indigo-600', isSelected);
+        btn.classList.toggle('bg-indigo-50', isSelected);
+        btn.classList.toggle('text-indigo-700', isSelected);
+        btn.classList.toggle('font-bold', isSelected);
+
+        btn.classList.toggle('border', !isSelected);
+        btn.classList.toggle('border-slate-200', !isSelected);
+        btn.classList.toggle('bg-slate-50', !isSelected);
+        btn.classList.toggle('text-slate-700', !isSelected);
+      });
+
+      updatePolygonToolButtons();
+      rebuildInsideMask();
+      renderDrawCanvas();
+      rebuild3DScene();
+    }
+
+    function updatePolygonToolButtons() {
+      const cnt = state.draftPoints.length;
+      const btnClosePoly = document.getElementById('btnClosePoly');
+      const btnCloseToAxis = document.getElementById('btnCloseToAxis');
+      const countEl = document.getElementById('polyPointCount');
+
+      if (cnt === 0) {
+        countEl.textContent = '모눈 위를 눌러 꼭짓점을 찍으세요';
+      } else {
+        countEl.textContent = `찍은 꼭짓점: ${cnt}개`;
+      }
+
+      const canClosePoly = cnt >= 3;
+      const canCloseAxis = cnt >= 2;
+
+      btnClosePoly.disabled = !canClosePoly;
+      btnClosePoly.className = canClosePoly
+        ? 'py-1.5 px-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition'
+        : 'py-1.5 px-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition';
+
+      btnCloseToAxis.disabled = !canCloseAxis;
+      btnCloseToAxis.className = canCloseAxis
+        ? 'py-1.5 px-2 rounded-lg text-xs font-bold bg-indigo-100 hover:bg-indigo-200 text-indigo-800 transition'
+        : 'py-1.5 px-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition';
+    }
+
+    // 자유 곡선 점 간소화 (너무 촘촘한 점 정리)
+    function simplifyFreehandPoints(pts, minDist = 0.14) {
+      if (pts.length <= 2) return pts.slice();
+      const result = [pts[0]];
+      for (let i = 1; i < pts.length - 1; i++) {
+        const prev = result[result.length - 1];
+        const dist = Math.hypot(pts[i].r - prev.r, pts[i].y - prev.y);
+        if (dist >= minDist) {
+          result.push(pts[i]);
+        }
+      }
+      result.push(pts[pts.length - 1]);
+      return result;
+    }
+
+    function setupEvents() {
+      // 1. 기본 도형 버튼
+      document.querySelectorAll('.shape-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.shape;
+          applyNewShape(getBasicShapePoints(key), key);
+        });
+      });
+
+      // 2. 그리기 탭 전환
+      const tabPolygon = document.getElementById('tabPolygon');
+      const tabFreehand = document.getElementById('tabFreehand');
+      const polygonTools = document.getElementById('polygonTools');
+      const freehandTools = document.getElementById('freehandTools');
+      const drawGuideText = document.getElementById('drawGuideText');
+
+      tabPolygon.addEventListener('click', () => {
+        state.drawMode = 'polygon';
+        state.draftPoints = [];
+        tabPolygon.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-sm transition';
+        tabFreehand.className = 'py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 transition';
+        polygonTools.classList.remove('hidden');
+        freehandTools.classList.add('hidden');
+        drawGuideText.textContent = '회전축 오른쪽 모눈에 점을 찍어 다각형을 그려 보세요.';
+        updatePolygonToolButtons();
+        renderDrawCanvas();
+      });
+
+      tabFreehand.addEventListener('click', () => {
+        state.drawMode = 'freehand';
+        state.draftPoints = [];
+        tabFreehand.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-sm transition';
+        tabPolygon.className = 'py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 transition';
+        freehandTools.classList.remove('hidden');
+        polygonTools.classList.add('hidden');
+        drawGuideText.textContent = '모눈 위를 끌어서 원하는 옆선(모선) 모양을 자유롭게 그려 보세요.';
+        renderDrawCanvas();
+      });
+
+      document.getElementById('chkSnapGrid').addEventListener('change', (e) => {
+        state.snapToGrid = e.target.checked;
+      });
+
+      document.getElementById('chkAutoFillAxis').addEventListener('change', (e) => {
+        state.autoFillAxis = e.target.checked;
+      });
+
+      // 새로 그리기 버튼
+      document.getElementById('btnClearDraw').addEventListener('click', () => {
+        state.draftPoints = [];
+        state.shapePoints = [];
+        state.currentPreset = 'custom';
+        document.getElementById('currentShapeBadge').textContent = '새 도형 그리기 중';
+        document.querySelectorAll('.shape-btn').forEach(b => {
+          b.classList.remove('border-2', 'border-indigo-600', 'bg-indigo-50', 'text-indigo-700', 'font-bold');
+          b.classList.add('border', 'border-slate-200', 'bg-slate-50', 'text-slate-700');
+        });
+        updatePolygonToolButtons();
+        rebuildInsideMask();
+        renderDrawCanvas();
+        rebuild3DScene();
+        showToast('모눈 위에서 새로운 평면도형을 그려 보세요!');
+      });
+
+      // 다각형 닫기 버튼
+      document.getElementById('btnClosePoly').addEventListener('click', () => {
+        if (state.draftPoints.length >= 3) {
+          applyNewShape(state.draftPoints.slice(), 'custom');
+          showToast('다각형이 완성되어 회전체를 만들었습니다!');
+        }
+      });
+
+      // 회전축에 붙여 완성 버튼 (시작점과 끝점에서 회전축에 수직으로 선분을 내려 완성)
+      document.getElementById('btnCloseToAxis').addEventListener('click', () => {
+        if (state.draftPoints.length >= 2) {
+          const pts = state.draftPoints.slice();
+          const first = pts[0];
+          const last = pts[pts.length - 1];
+          if (last.r > 0.01) pts.push({ r: 0, y: last.y });
+          if (first.r > 0.01) pts.push({ r: 0, y: first.y });
+          applyNewShape(pts, 'custom');
+          showToast('회전축에 수직으로 이어 평면도형을 완성했습니다!');
+        }
+      });
+
+      // 3. 2D 캔버스 마우스/터치 통합(Pointer Events) 그리기
+      drawCanvas.addEventListener('pointerdown', (e) => {
+        const rect = drawCanvas.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        const layout = getDrawLayout();
+
+        if (state.drawMode === 'polygon') {
+          const pt = canvas2DToModel(cx, cy, layout, state.snapToGrid);
+
+          // 첫 번째 점 근처를 다시 누르면 자동으로 도형 닫기
+          if (state.draftPoints.length >= 3) {
+            const firstCanvas = modelToCanvas2D(state.draftPoints[0].r, state.draftPoints[0].y, layout);
+            const distPx = Math.hypot(cx - firstCanvas.cx, cy - firstCanvas.cy);
+            if (distPx < 16) {
+              applyNewShape(state.draftPoints.slice(), 'custom');
+              showToast('꼭짓점을 이어 평면도형을 완성했습니다!');
+              return;
+            }
+          }
+
+          state.draftPoints.push(pt);
+          updatePolygonToolButtons();
+          renderDrawCanvas();
+        } else {
+          // 자유롭게 그리기 시작
+          drawCanvas.setPointerCapture(e.pointerId);
+          state.isDraggingFreehand = true;
+          const pt = canvas2DToModel(cx, cy, layout, false);
+          state.draftPoints = [pt];
+          renderDrawCanvas();
+        }
+      });
+
+      drawCanvas.addEventListener('pointermove', (e) => {
+        const rect = drawCanvas.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        const layout = getDrawLayout();
+
+        if (state.drawMode === 'polygon') {
+          state.hoverPoint = canvas2DToModel(cx, cy, layout, state.snapToGrid);
+          renderDrawCanvas();
+        } else if (state.isDraggingFreehand) {
+          const pt = canvas2DToModel(cx, cy, layout, false);
+          state.draftPoints.push(pt);
+          renderDrawCanvas();
+        }
+      });
+
+      drawCanvas.addEventListener('pointerleave', () => {
+        if (state.drawMode === 'polygon') {
+          state.hoverPoint = null;
+          renderDrawCanvas();
+        }
+      });
+
+      const finishFreehand = () => {
+        if (!state.isDraggingFreehand) return;
+        state.isDraggingFreehand = false;
+
+        let simplified = simplifyFreehandPoints(state.draftPoints, 0.14);
+        if (simplified.length < 2) {
+          state.draftPoints = [];
+          renderDrawCanvas();
+          return;
+        }
+
+        if (state.autoFillAxis) {
+          const first = simplified[0];
+          const last = simplified[simplified.length - 1];
+          // 위아래 높이가 너무 같으면 안내
+          if (Math.abs(first.y - last.y) < 0.25 && simplified.length < 4) {
+            state.draftPoints = [];
+            renderDrawCanvas();
+            showToast('위아래로 조금 더 길게 옆선을 그려 보세요!');
+            return;
+          }
+          if (last.r > 0.01) simplified.push({ r: 0, y: last.y });
+          if (first.r > 0.01) simplified.push({ r: 0, y: first.y });
+        } else if (simplified.length < 3) {
+          state.draftPoints = [];
+          renderDrawCanvas();
+          showToast('조금 더 크게 도형을 그려 주세요!');
+          return;
+        }
+
+        applyNewShape(simplified, 'custom');
+        showToast('내가 그린 모양으로 회전체를 만들었습니다!');
+      };
+
+      drawCanvas.addEventListener('pointerup', finishFreehand);
+      drawCanvas.addEventListener('pointercancel', finishFreehand);
+
+      // 4. 중앙 3D 회전 각도 슬라이더 및 한 바퀴 돌리기 애니메이션
+      const sliderSweep = document.getElementById('sliderSweep');
+      const lblSweepAngle = document.getElementById('lblSweepAngle');
+      const btnPlaySweep = document.getElementById('btnPlaySweep');
+
+      sliderSweep.addEventListener('input', (e) => {
+        state.isPlayingSweep = false;
+        updatePlayButtonUI();
+        state.sweepDeg = Number(e.target.value);
+        lblSweepAngle.textContent = `${Math.round(state.sweepDeg)}°`;
+        rebuild3DScene();
+      });
+
+      btnPlaySweep.addEventListener('click', () => {
+        if (state.isPlayingSweep) {
+          state.isPlayingSweep = false;
+        } else {
+          if (state.sweepDeg >= 359) {
+            state.sweepDeg = 0;
+          }
+          state.isPlayingSweep = true;
+        }
+        updatePlayButtonUI();
+      });
+
+      // 반투명 보기 & 모선 표시 토글
+      document.getElementById('btnToggleTransparent').addEventListener('click', (e) => {
+        state.isTransparent = !state.isTransparent;
+        const btn = e.currentTarget;
+        const dot = document.getElementById('dotTransparent');
+        btn.classList.toggle('bg-indigo-50', state.isTransparent);
+        btn.classList.toggle('border-indigo-400', state.isTransparent);
+        btn.classList.toggle('text-indigo-700', state.isTransparent);
+        dot.className = state.isTransparent ? 'w-2 h-2 rounded-full bg-indigo-600' : 'w-2 h-2 rounded-full bg-slate-400';
+        rebuild3DScene();
+      });
+
+      document.getElementById('btnToggleGeneratrix').addEventListener('click', (e) => {
+        state.showGeneratrix = !state.showGeneratrix;
+        const btn = e.currentTarget;
+        const dot = document.getElementById('dotGeneratrix');
+        btn.classList.toggle('bg-indigo-50', state.showGeneratrix);
+        btn.classList.toggle('border-indigo-400', state.showGeneratrix);
+        btn.classList.toggle('text-indigo-700', state.showGeneratrix);
+        dot.className = state.showGeneratrix ? 'w-2 h-2 rounded-full bg-indigo-600' : 'w-2 h-2 rounded-full bg-slate-400';
+        rebuild3DScene();
+      });
+
+      // 시점 빠른 이동 버튼
+      document.querySelectorAll('.cam-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.cam-btn').forEach(b => {
+            b.className = 'cam-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-xs font-semibold text-slate-600 transition';
+          });
+          btn.className = 'cam-btn px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold transition';
+
+          const mode = btn.dataset.cam;
+          controls.target.set(0, 0, 0);
+          if (mode === 'front') {
+            camera.position.set(0, 0.4, 13.5);
+          } else if (mode === 'top') {
+            camera.position.set(0, 14.0, 0.01);
+          } else {
+            camera.position.set(7.5, 5.8, 10.5);
+          }
+          controls.update();
+        });
+      });
+
+      // 5. 우측 단면 자르기 컨트롤
+      document.querySelectorAll('.cut-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.cutMode = btn.dataset.cut;
+
+          document.querySelectorAll('.cut-btn').forEach(b => {
+            const active = b.dataset.cut === state.cutMode;
+            b.className = active
+              ? 'cut-btn py-2 px-2.5 rounded-xl border-2 border-orange-500 bg-orange-50 text-orange-800 text-xs font-bold transition text-center'
+              : 'cut-btn py-2 px-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-orange-50/40 text-slate-700 text-xs font-semibold transition text-center';
+          });
+
+          const panel = document.getElementById('cutControlPanel');
+          const ctrlAxial = document.getElementById('ctrlAxialAngle');
+          const ctrlHeight = document.getElementById('ctrlCutHeight');
+          const ctrlTilt = document.getElementById('ctrlCutTilt');
+
+          if (state.cutMode === 'none') {
+            panel.classList.add('hidden');
+            panel.classList.remove('flex');
+          } else {
+            panel.classList.remove('hidden');
+            panel.classList.add('flex');
+
+            ctrlAxial.className = state.cutMode === 'axial' ? 'flex flex-col gap-1' : 'hidden';
+            ctrlHeight.className = (state.cutMode === 'perpendicular' || state.cutMode === 'oblique') ? 'flex flex-col gap-1' : 'hidden';
+            ctrlTilt.className = state.cutMode === 'oblique' ? 'flex flex-col gap-1' : 'hidden';
+          }
+
+          rebuild3DScene();
+        });
+      });
+
+      // 단면 조절 슬라이더들
+      document.getElementById('sliderAxialAngle').addEventListener('input', (e) => {
+        state.axialAngleDeg = Number(e.target.value);
+        document.getElementById('lblAxialAngle').textContent = `${state.axialAngleDeg}°`;
+        rebuild3DScene();
+      });
+
+      document.getElementById('sliderCutHeight').addEventListener('input', (e) => {
+        state.cutHeight = Number(e.target.value);
+        const h = state.cutHeight;
+        const lbl = document.getElementById('lblCutHeight');
+        if (Math.abs(h) < 0.15) lbl.textContent = '가운데';
+        else if (h > 0) lbl.textContent = `위쪽 (+${h.toFixed(1)})`;
+        else lbl.textContent = `아래쪽 (${h.toFixed(1)})`;
+        rebuild3DScene();
+      });
+
+      document.getElementById('sliderCutTilt').addEventListener('input', (e) => {
+        state.cutTiltDeg = Number(e.target.value);
+        document.getElementById('lblCutTilt').textContent = `${state.cutTiltDeg}°`;
+        rebuild3DScene();
+      });
+
+      document.getElementById('chkShowPlaneFrame').addEventListener('change', (e) => {
+        state.showPlaneFrame = e.target.checked;
+        rebuild3DScene();
+      });
+
+      document.getElementById('chkShowCutGhost').addEventListener('change', (e) => {
+        state.showCutGhost = e.target.checked;
+        rebuild3DScene();
+      });
+
+      // 처음 상태로 초기화 버튼
+      document.getElementById('btnResetAll').addEventListener('click', () => {
+        state.sweepDeg = 360;
+        state.isPlayingSweep = false;
+        updatePlayButtonUI();
+        document.getElementById('sliderSweep').value = 360;
+        document.getElementById('lblSweepAngle').textContent = '360°';
+
+        state.cutMode = 'none';
+        state.axialAngleDeg = 0;
+        state.cutHeight = 0;
+        state.cutTiltDeg = 30;
+        document.getElementById('sliderAxialAngle').value = 0;
+        document.getElementById('lblAxialAngle').textContent = '0°';
+        document.getElementById('sliderCutHeight').value = 0;
+        document.getElementById('lblCutHeight').textContent = '가운데';
+        document.getElementById('sliderCutTilt').value = 30;
+        document.getElementById('lblCutTilt').textContent = '30°';
+
+        document.querySelector('[data-cut="none"]').click();
+        camera.position.set(7.5, 5.8, 10.5);
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        applyNewShape(getBasicShapePoints('cone'), 'cone');
+        showToast('처음 상태로 되돌렸습니다.');
+      });
+
+      // 창 크기 변경 대응
+      window.addEventListener('resize', handleResize);
+    }
+
+    function updatePlayButtonUI() {
+      const txt = document.getElementById('txtPlaySweep');
+      const icon = document.getElementById('iconPlay');
+      if (state.isPlayingSweep) {
+        txt.textContent = '멈추기';
+        icon.innerHTML = '<path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z" />';
+      } else {
+        txt.textContent = '한 바퀴 돌리기';
+        icon.innerHTML = '<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />';
+      }
+    }
+
+    function handleResize() {
+      renderDrawCanvas();
+
+      if (renderer && camera) {
+        const w = threeContainer.clientWidth;
+        const h = threeContainer.clientHeight;
+        if (w > 0 && h > 0) {
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
+      }
+
+      renderSection2DView(getCutPlaneInfo());
+    }
+
+    // ==================== [메인 애니메이션 루프] ====================
+    let lastTime = performance.now();
+    function animate(now) {
+      requestAnimationFrame(animate);
+
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      if (state.isPlayingSweep) {
+        state.sweepDeg += dt * 110; // 약 3.2초 동안 부드럽게 1회전
+        if (state.sweepDeg >= 360) {
+          state.sweepDeg = 360;
+          state.isPlayingSweep = false;
+          updatePlayButtonUI();
+        }
+        document.getElementById('sliderSweep').value = state.sweepDeg;
+        document.getElementById('lblSweepAngle').textContent = `${Math.round(state.sweepDeg)}°`;
+        rebuild3DScene();
+      }
+
+      if (controls) controls.update();
+      if (renderer && scene && camera) renderer.render(scene, camera);
+    }
+
+    // ==================== [초기 실행] ====================
+    window.onload = function () {
+      initThreeJS();
+      setupEvents();
+      applyNewShape(getBasicShapePoints('cone'), 'cone');
+      handleResize();
+      lastTime = performance.now();
+      animate(lastTime);
+    };
+  </script>
+</body>
+</html>
